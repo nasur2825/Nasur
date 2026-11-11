@@ -1,19 +1,1911 @@
-<!doctype html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>My static Space</title>
-		<link rel="stylesheet" href="style.css" />
-	</head>
-	<body>
-		<div class="card">
-			<h1>Welcome to your static Space!</h1>
-			<p>You can modify this app directly by editing <i>index.html</i> in the Files and versions tab.</p>
-			<p>
-				Also don't forget to check the
-				<a href="https://huggingface.co/docs/hub/spaces" target="_blank">Spaces documentation</a>.
-			</p>
-		</div>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>NASUR - Personal Industrial HSE Operating System</title>
+
+    <style>
+        :root {
+            --bg: #f4f7f9;
+            --card: #ffffff;
+            --text: #1f2933;
+            --muted: #64748b;
+            --primary: #0f766e;
+            --danger: #b91c1c;
+            --warning: #b45309;
+            --border: #dbe3e8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 18px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        header p {
+            margin: 5px 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav button {
+            white-space: nowrap;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: auto;
+            padding: 16px;
+        }
+
+        .module {
+            display: none;
+        }
+
+        .module.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        h2, h3 {
+            margin-top: 0;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .secondary {
+            background: #475569;
+        }
+
+        .danger {
+            background: var(--danger);
+        }
+
+        .risk-result {
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .risk-low {
+            background: #dcfce7;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+        }
+
+        .risk-high {
+            background: #fee2e2;
+        }
+
+        .risk-critical {
+            background: #fecaca;
+        }
+
+        .observation-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            background: #fff;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .user-message {
+            background: #e0f2fe;
+        }
+
+        .ai-message {
+            background: #f1f5f9;
+        }
+
+        .small {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            background: #e2e8f0;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>NASUR</h1>
+    <p>Personal Industrial HSE Operating System</p>
+</header>
+
+
+<nav>
+    <button onclick="showModule('dashboard')">Dashboard</button>
+    <button onclick="showModule('observation')">Observation</button>
+    <button onclick="showModule('risk')">Risk Engine</button>
+    <button onclick="showModule('paperwork')">Paperwork</button>
+    <button onclick="showModule('learn')">Learn</button>
+    <button onclick="showModule('chat')">NASUR AI</button>
+    <button onclick="showModule('data')">Backup</button>
+    <button onclick="showModule('settings')">Profile</button>
+</nav>
+
+
+<main>
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section id="dashboard" class="module active">
+
+        <div class="card">
+            <h2>Safety Command Center</h2>
+
+            <p id="profileSummary">
+                Loading your NASUR profile...
+            </p>
+        </div>
+
+        <div class="grid">
+
+            <div class="card">
+                <h3>Today's Work</h3>
+                <p>Plan inspections, meetings, TBT and follow-up activities.</p>
+            </div>
+
+            <div class="card">
+                <h3>Open Observations</h3>
+                <h2 id="openObservationCount">0</h2>
+            </div>
+
+            <div class="card">
+                <h3>Risk Engine</h3>
+                <p>Calculate and record risk assessments.</p>
+            </div>
+
+            <div class="card">
+                <h3>Future Modules</h3>
+                <p>PTW, JSA, HIRA, Equipment, Audit and Power BI.</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         OBSERVATION MODULE
+    ====================================================== -->
+
+    <section id="observation" class="module">
+
+        <div class="card">
+
+            <h2>Safety Observation</h2>
+
+            <p class="small">
+                NASUR Observation Core Foundation
+            </p>
+
+            <label>Observation Number</label>
+            <input id="obsNumber" placeholder="OBS-001">
+
+            <label>Date</label>
+            <input id="obsDate" type="date">
+
+            <label>Time</label>
+            <input id="obsTime" type="time">
+
+            <label>Project Name</label>
+            <input id="projectName">
+
+            <label>Contractor</label>
+            <input id="contractor">
+
+            <label>Exact Location</label>
+            <input id="location">
+
+            <label>Activity</label>
+            <input id="activity">
+
+            <label>Hazard Category</label>
+            <select id="hazardCategory">
+                <option value="">Select</option>
+                <option>Work at Height</option>
+                <option>Electrical</option>
+                <option>Lifting</option>
+                <option>Housekeeping</option>
+                <option>Machine Safety</option>
+                <option>Fire</option>
+                <option>Chemical</option>
+                <option>Other</option>
+            </select>
+
+            <label>Record Type</label>
+            <select id="recordType">
+                <option>Observation</option>
+                <option>Near Miss</option>
+                <option>Incident</option>
+            </select>
+
+            <label>Risk Rating</label>
+            <input id="riskRating" readonly placeholder="Use Risk Engine">
+
+            <label>Description</label>
+            <textarea id="description"></textarea>
+
+            <label>Immediate Action</label>
+            <textarea id="immediateAction"></textarea>
+
+            <label>Root Cause</label>
+            <textarea id="rootCause"></textarea>
+
+            <label>Corrective Action</label>
+            <textarea id="correctiveAction"></textarea>
+
+            <label>Responsible Person</label>
+            <input id="responsiblePerson">
+
+            <label>Target Date</label>
+            <input id="targetDate" type="date">
+
+            <label>Status</label>
+            <select id="status">
+                <option>Open</option>
+                <option>In Progress</option>
+                <option>Closed</option>
+                <option>Verified</option>
+            </select>
+
+            <button onclick="saveObservation()">
+                Save Observation
+            </button>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Saved Observations</h3>
+
+            <div id="observationList"></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         RISK ENGINE
+    ====================================================== -->
+
+    <section id="risk" class="module">
+
+        <div class="card">
+
+            <h2>Interactive Risk Engine</h2>
+
+            <label>Risk Matrix</label>
+
+            <select id="matrixType" onchange="updateRiskOptions()">
+                <option value="5">5 × 5 Matrix</option>
+                <option value="3">3 × 3 Matrix</option>
+            </select>
+
+            <label>Likelihood</label>
+
+            <select id="likelihood" onchange="calculateRisk()"></select>
+
+            <label>Severity</label>
+
+            <select id="severity" onchange="calculateRisk()"></select>
+
+            <div id="riskResult" class="risk-result">
+                Select Likelihood and Severity.
+            </div>
+
+            <button onclick="sendRiskToObservation()">
+                Send Risk Rating to Observation
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PAPERWORK MODULE
+    ====================================================== -->
+
+    <section id="paperwork" class="module">
+
+        <div class="card">
+
+            <h2>Paperwork Master Hub</h2>
+
+            <p>
+                This is the future foundation for NASUR paperwork modules.
+            </p>
+
+            <ul>
+                <li>JSA / HIRA</li>
+                <li>Permit to Work</li>
+                <li>Hot Work Permit</li>
+                <li>Confined Space Entry</li>
+                <li>LOTO</li>
+                <li>Daily Safety Report</li>
+                <li>Incident Investigation</li>
+                <li>Audit Checklists</li>
+                <li>Equipment Inspections</li>
+            </ul>
+
+            <p class="small">
+                Each paperwork module will later have its own structured form,
+                guidance, terminology and authorization workflow.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         LEARNING MODULE
+    ====================================================== -->
+
+    <section id="learn" class="module">
+
+        <div class="card">
+
+            <h2>NASUR Learning Center</h2>
+
+            <p>
+                Future learning modules will adapt according to:
+            </p>
+
+            <ul>
+                <li>Career Level</li>
+                <li>Industry</li>
+                <li>Region</li>
+                <li>Learning Progress</li>
+            </ul>
+
+            <h3>Planned Topics</h3>
+
+            <ul>
+                <li>Hazard and Risk</li>
+                <li>Work at Height</li>
+                <li>Scaffolding</li>
+                <li>Excavation</li>
+                <li>Lifting Operations</li>
+                <li>Electrical Safety</li>
+                <li>PTW and LOTO</li>
+                <li>Gas Detection</li>
+                <li>Machine Safety</li>
+                <li>Incident Investigation</li>
+            </ul>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         AI CHAT
+    ====================================================== -->
+
+    <section id="chat" class="module">
+
+        <div class="card">
+
+            <h2>NASUR AI Assistant</h2>
+
+            <div id="chatBox" class="chat-box">
+
+                <div class="message ai-message">
+                    Vanakkam! I am NASUR. Ask me about HSE learning,
+                    safety paperwork, risk assessment or site safety.
+                </div>
+
+            </div>
+
+            <textarea
+                id="chatInput"
+                placeholder="Ask NASUR..."
+            ></textarea>
+
+            <button onclick="sendChat()">
+                Ask NASUR
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         BACKUP AND RESTORE
+    ====================================================== -->
+
+    <section id="data" class="module">
+
+        <div class="card">
+
+            <h2>Data Backup and Restore</h2>
+
+            <p>
+                NASUR uses local browser storage through IndexedDB.
+            </p>
+
+            <button onclick="exportBackup()">
+                Export NASUR Backup
+            </button>
+
+            <label>Restore Backup</label>
+
+            <input
+                id="importFile"
+                type="file"
+                accept=".json"
+                onchange="importBackup(event)"
+            >
+
+            <div id="backupStatus" class="status">
+                No backup operation performed.
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PROFILE SETTINGS
+    ====================================================== -->
+
+    <section id="settings" class="module">
+
+        <div class="card">
+
+            <h2>NASUR Profile Settings</h2>
+
+            <label>Career Level</label>
+
+            <select id="careerLevel">
+                <option>HSE Assistant</option>
+                <option>HSE Supervisor</option>
+                <option>HSE Officer</option>
+                <option>HSE Engineer</option>
+                <option>HSE Specialist</option>
+                <option>HSE Manager</option>
+                <option>HSE Director</option>
+            </select>
+
+            <label>Industry</label>
+
+            <select id="industry">
+                <option>Construction</option>
+                <option>Manufacturing</option>
+                <option>Oil and Gas</option>
+                <option>Food Safety</option>
+                <option>Marine and Shipyard</option>
+            </select>
+
+            <label>Region</label>
+
+            <select id="region">
+                <option>Gulf</option>
+                <option>Canada</option>
+                <option>Custom</option>
+            </select>
+
+            <button onclick="saveProfile()">
+                Save NASUR Profile
+            </button>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   NASUR APPLICATION CONFIGURATION
+========================================================= */
+
+const NASUR_CONFIG = {
+    appName: "NASUR",
+    version: "1.0.0",
+    schemaVersion: 1,
+    apiBaseUrl: ""
+};
+
+let currentRisk = null;
+
+
+/* =========================================================
+   MODULE NAVIGATION
+========================================================= */
+
+function showModule(moduleId) {
+
+    document.querySelectorAll(".module").forEach(module => {
+        module.classList.remove("active");
+    });
+
+    const selectedModule = document.getElementById(moduleId);
+
+    if (selectedModule) {
+        selectedModule.classList.add("active");
+    }
+}
+
+
+/* =========================================================
+   INDEXEDDB DATABASE
+========================================================= */
+
+const DB_NAME = "NASUR_DB";
+const DB_VERSION = 1;
+
+let db;
+
+
+function openDatabase() {
+
+    return new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(
+            DB_NAME,
+            DB_VERSION
+        );
+
+        request.onupgradeneeded = function(event) {
+
+            const database = event.target.result;
+
+            if (!database.objectStoreNames.contains("observations")) {
+
+                const observationStore =
+                    database.createObjectStore(
+                        "observations",
+                        {
+                            keyPath: "id"
+                        }
+                    );
+
+                observationStore.createIndex(
+                    "status",
+                    "status",
+                    {
+                        unique: false
+                    }
+                );
+            }
+
+            if (!database.objectStoreNames.contains("settings")) {
+
+                database.createObjectStore(
+                    "settings",
+                    {
+                        keyPath: "key"
+                    }
+                );
+            }
+        };
+
+
+        request.onsuccess = function(event) {
+
+            db = event.target.result;
+
+            resolve(db);
+        };
+
+
+        request.onerror = function() {
+
+            reject(
+                request.error
+            );
+        };
+    });
+}
+
+
+/* =========================================================
+   PROFILE SETTINGS
+========================================================= */
+
+function saveProfile() {
+
+    const profile = {
+
+        careerLevel:
+            document.getElementById(
+                "careerLevel"
+            ).value,
+
+        industry:
+            document.getElementById(
+                "industry"
+            ).value,
+
+        region:
+            document.getElementById(
+                "region"
+            ).value
+    };
+
+
+    const transaction =
+        db.transaction(
+            "settings",
+            "readwrite"
+        );
+
+
+    const store =
+        transaction.objectStore(
+            "settings"
+        );
+
+
+    store.put({
+
+        key: "profile",
+
+        value: profile
+    });
+
+
+    transaction.oncomplete = function() {
+
+        updateProfileSummary();
+
+        alert(
+            "NASUR Profile Saved Successfully."
+        );
+    };
+}
+
+
+function loadProfile() {
+
+    return new Promise(resolve => {
+
+        const transaction =
+            db.transaction(
+                "settings",
+                "readonly"
+            );
+
+
+        const store =
+            transaction.objectStore(
+                "settings"
+            );
+
+
+        const request =
+            store.get(
+                "profile"
+            );
+
+
+        request.onsuccess = function() {
+
+            const result =
+                request.result;
+
+
+            if (result && result.value) {
+
+                document.getElementById(
+                    "careerLevel"
+                ).value =
+                    result.value.careerLevel;
+
+
+                document.getElementById(
+                    "industry"
+                ).value =
+                    result.value.industry;
+
+
+                document.getElementById(
+                    "region"
+                ).value =
+                    result.value.region;
+            }
+
+            updateProfileSummary();
+
+            resolve();
+        };
+    });
+}
+
+
+function updateProfileSummary() {
+
+    const careerLevel =
+        document.getElementById(
+            "careerLevel"
+        ).value;
+
+
+    const industry =
+        document.getElementById(
+            "industry"
+        ).value;
+
+
+    const region =
+        document.getElementById(
+            "region"
+        ).value;
+
+
+    document.getElementById(
+        "profileSummary"
+    ).textContent =
+        `Profile: ${careerLevel} | ${industry} | ${region}`;
+}
+
+
+/* =========================================================
+   RISK ENGINE
+========================================================= */
+
+function updateRiskOptions() {
+
+    const matrixSize =
+        Number(
+            document.getElementById(
+                "matrixType"
+            ).value
+        );
+
+
+    const likelihoodSelect =
+        document.getElementById(
+            "likelihood"
+        );
+
+
+    const severitySelect =
+        document.getElementById(
+            "severity"
+        );
+
+
+    likelihoodSelect.innerHTML =
+        '<option value="">Select</option>';
+
+
+    severitySelect.innerHTML =
+        '<option value="">Select</option>';
+
+
+    for (
+        let value = 1;
+        value <= matrixSize;
+        value++
+    ) {
+
+        const likelihoodOption =
+            document.createElement(
+                "option"
+            );
+
+
+        likelihoodOption.value =
+            value;
+
+
+        likelihoodOption.textContent =
+            getLikelihoodLabel(
+                value,
+                matrixSize
+            );
+
+
+        likelihoodSelect.appendChild(
+            likelihoodOption
+        );
+
+
+        const severityOption =
+            document.createElement(
+                "option"
+            );
+
+
+        severityOption.value =
+            value;
+
+
+        severityOption.textContent =
+            getSeverityLabel(
+                value,
+                matrixSize
+            );
+
+
+        severitySelect.appendChild(
+            severityOption
+        );
+    }
+
+    calculateRisk();
+}
+
+
+function getLikelihoodLabel(
+    value,
+    matrixSize
+) {
+
+    if (matrixSize === 3) {
+
+        const labels = {
+
+            1: "Low (1)",
+
+            2: "Medium (2)",
+
+            3: "High (3)"
+        };
+
+        return labels[value];
+    }
+
+
+    const labels = {
+
+        1: "Rare (1)",
+
+        2: "Unlikely (2)",
+
+        3: "Possible (3)",
+
+        4: "Likely (4)",
+
+        5: "Almost Certain (5)"
+    };
+
+
+    return labels[value];
+}
+
+
+function getSeverityLabel(
+    value,
+    matrixSize
+) {
+
+    if (matrixSize === 3) {
+
+        const labels = {
+
+            1: "Minor (1)",
+
+            2: "Moderate (2)",
+
+            3: "Major (3)"
+        };
+
+        return labels[value];
+    }
+
+
+    const labels = {
+
+        1: "Insignificant (1)",
+
+        2: "Minor (2)",
+
+        3: "Moderate (3)",
+
+        4: "Major (4)",
+
+        5: "Catastrophic (5)"
+    };
+
+
+    return labels[value];
+}
+
+
+function calculateRisk() {
+
+    const likelihood =
+        Number(
+            document.getElementById(
+                "likelihood"
+            ).value
+        );
+
+
+    const severity =
+        Number(
+            document.getElementById(
+                "severity"
+            ).value
+        );
+
+
+    const matrixSize =
+        Number(
+            document.getElementById(
+                "matrixType"
+            ).value
+        );
+
+
+    const resultElement =
+        document.getElementById(
+            "riskResult"
+        );
+
+
+    if (
+        !likelihood ||
+        !severity
+    ) {
+
+        currentRisk = null;
+
+        resultElement.textContent =
+            "Select Likelihood and Severity.";
+
+        resultElement.className =
+            "risk-result";
+
+        return;
+    }
+
+
+    const score =
+        likelihood * severity;
+
+
+    let level;
+    let guidance;
+    let riskClass;
+
+
+    if (matrixSize === 5) {
+
+        if (score <= 4) {
+
+            level = "Low";
+
+            guidance =
+                "Proceed with approved standard controls.";
+
+            riskClass =
+                "risk-low";
+
+        } else if (score <= 9) {
+
+            level = "Medium";
+
+            guidance =
+                "Review controls and provide appropriate supervision.";
+
+            riskClass =
+                "risk-medium";
+
+        } else if (score <= 16) {
+
+            level = "High";
+
+            guidance =
+                "Review work controls and follow required approval and site procedures before proceeding.";
+
+            riskClass =
+                "risk-high";
+
+        } else {
+
+            level = "Critical";
+
+            guidance =
+                "Immediate escalation is required. Follow the site's emergency and high-risk work controls.";
+
+            riskClass =
+                "risk-critical";
+        }
+
+    } else {
+
+        if (score <= 2) {
+
+            level = "Low";
+
+            guidance =
+                "Maintain approved controls.";
+
+            riskClass =
+                "risk-low";
+
+        } else if (score <= 4) {
+
+            level = "Medium";
+
+            guidance =
+                "Review and improve controls where needed.";
+
+            riskClass =
+                "risk-medium";
+
+        } else if (score <= 6) {
+
+            level = "High";
+
+            guidance =
+                "Escalate and follow site approval requirements.";
+
+            riskClass =
+                "risk-high";
+
+        } else {
+
+            level = "Critical";
+
+            guidance =
+                "Stop and follow site emergency or escalation procedures.";
+
+            riskClass =
+                "risk-critical";
+        }
+    }
+
+
+    currentRisk = {
+
+        matrixSize,
+
+        likelihood,
+
+        severity,
+
+        score,
+
+        level,
+
+        guidance
+    };
+
+
+    resultElement.className =
+        `risk-result ${riskClass}`;
+
+
+    resultElement.innerHTML =
+        `
+        Risk Score: ${score}<br>
+        Risk Level: ${level}<br>
+        Guidance: ${guidance}
+        `;
+}
+
+
+function sendRiskToObservation() {
+
+    if (!currentRisk) {
+
+        alert(
+            "Please calculate a risk score first."
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "riskRating"
+    ).value =
+        `${currentRisk.level} (${currentRisk.score})`;
+
+
+    showModule(
+        "observation"
+    );
+}
+
+
+/* =========================================================
+   OBSERVATION MANAGEMENT
+========================================================= */
+
+function getObservationFormData() {
+
+    return {
+
+        id:
+            crypto.randomUUID(),
+
+        schemaVersion:
+            NASUR_CONFIG.schemaVersion,
+
+        observationNumber:
+            document.getElementById(
+                "obsNumber"
+            ).value,
+
+        date:
+            document.getElementById(
+                "obsDate"
+            ).value,
+
+        time:
+            document.getElementById(
+                "obsTime"
+            ).value,
+
+        projectName:
+            document.getElementById(
+                "projectName"
+            ).value,
+
+        contractor:
+            document.getElementById(
+                "contractor"
+            ).value,
+
+        location:
+            document.getElementById(
+                "location"
+            ).value,
+
+        activity:
+            document.getElementById(
+                "activity"
+            ).value,
+
+        hazardCategory:
+            document.getElementById(
+                "hazardCategory"
+            ).value,
+
+        recordType:
+            document.getElementById(
+                "recordType"
+            ).value,
+
+        riskRating:
+            document.getElementById(
+                "riskRating"
+            ).value,
+
+        riskDetails:
+            currentRisk,
+
+        description:
+            document.getElementById(
+                "description"
+            ).value,
+
+        immediateAction:
+            document.getElementById(
+                "immediateAction"
+            ).value,
+
+        rootCause:
+            document.getElementById(
+                "rootCause"
+            ).value,
+
+        correctiveAction:
+            document.getElementById(
+                "correctiveAction"
+            ).value,
+
+        responsiblePerson:
+            document.getElementById(
+                "responsiblePerson"
+            ).value,
+
+        targetDate:
+            document.getElementById(
+                "targetDate"
+            ).value,
+
+        status:
+            document.getElementById(
+                "status"
+            ).value,
+
+        createdAt:
+            new Date().toISOString()
+    };
+}
+
+
+function saveObservation() {
+
+    const observation =
+        getObservationFormData();
+
+
+    if (
+        !observation.description.trim()
+    ) {
+
+        alert(
+            "Please enter the observation description."
+        );
+
+        return;
+    }
+
+
+    const transaction =
+        db.transaction(
+            "observations",
+            "readwrite"
+        );
+
+
+    const store =
+        transaction.objectStore(
+            "observations"
+        );
+
+
+    store.add(
+        observation
+    );
+
+
+    transaction.oncomplete =
+        function() {
+
+            alert(
+                "Observation saved successfully."
+            );
+
+            loadObservations();
+        };
+}
+
+
+function loadObservations() {
+
+    const transaction =
+        db.transaction(
+            "observations",
+            "readonly"
+        );
+
+
+    const store =
+        transaction.objectStore(
+            "observations"
+        );
+
+
+    const request =
+        store.getAll();
+
+
+    request.onsuccess =
+        function() {
+
+            const observations =
+                request.result || [];
+
+
+            const list =
+                document.getElementById(
+                    "observationList"
+                );
+
+
+            list.innerHTML =
+                "";
+
+
+            observations
+                .sort(
+                    (a, b) =>
+                        new Date(
+                            b.createdAt
+                        ) -
+                        new Date(
+                            a.createdAt
+                        )
+                )
+                .forEach(
+                    observation => {
+
+                        const item =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        item.className =
+                            "observation-item";
+
+
+                        item.innerHTML =
+                            `
+                            <strong>
+                                ${escapeHtml(
+                                    observation.observationNumber ||
+                                    "Observation"
+                                )}
+                            </strong>
+                            <br>
+
+                            ${escapeHtml(
+                                observation.description
+                            )}
+
+                            <br>
+
+                            <span class="small">
+                                Status:
+                                ${escapeHtml(
+                                    observation.status
+                                )}
+                                |
+                                Risk:
+                                ${escapeHtml(
+                                    observation.riskRating ||
+                                    "Not calculated"
+                                )}
+                            </span>
+                            `;
+
+
+                        list.appendChild(
+                            item
+                        );
+                    }
+                );
+
+
+            document.getElementById(
+                "openObservationCount"
+            ).textContent =
+                observations.filter(
+                    item =>
+                        item.status ===
+                        "Open"
+                ).length;
+        };
+}
+
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        value || "";
+
+
+    return div.innerHTML;
+}
+
+
+/* =========================================================
+   BACKUP AND RESTORE
+========================================================= */
+
+function exportBackup() {
+
+    const transaction =
+        db.transaction(
+            [
+                "observations",
+                "settings"
+            ],
+            "readonly"
+        );
+
+
+    const observationRequest =
+        transaction
+            .objectStore(
+                "observations"
+            )
+            .getAll();
+
+
+    const settingsRequest =
+        transaction
+            .objectStore(
+                "settings"
+            )
+            .getAll();
+
+
+    transaction.oncomplete =
+        function() {
+
+            const backup = {
+
+                app:
+                    NASUR_CONFIG.appName,
+
+                version:
+                    NASUR_CONFIG.version,
+
+                schemaVersion:
+                    NASUR_CONFIG.schemaVersion,
+
+                exportedAt:
+                    new Date()
+                        .toISOString(),
+
+                observations:
+                    observationRequest.result,
+
+                settings:
+                    settingsRequest.result
+            };
+
+
+            const blob =
+                new Blob(
+                    [
+                        JSON.stringify(
+                            backup,
+                            null,
+                            2
+                        )
+                    ],
+                    {
+                        type:
+                            "application/json"
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+
+            link.download =
+                `NASUR_Backup_${
+                    new Date()
+                        .toISOString()
+                        .slice(0, 10)
+                }.json`;
+
+
+            link.click();
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            document.getElementById(
+                "backupStatus"
+            ).textContent =
+                "Backup exported successfully.";
+        };
+}
+
+
+function importBackup(event) {
+
+    const file =
+        event.target.files[0];
+
+
+    if (!file) {
+        return;
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function(loadEvent) {
+
+            try {
+
+                const backup =
+                    JSON.parse(
+                        loadEvent.target.result
+                    );
+
+
+                if (
+                    backup.app !==
+                    NASUR_CONFIG.appName
+                ) {
+
+                    throw new Error(
+                        "This is not a NASUR backup file."
+                    );
+                }
+
+
+                const transaction =
+                    db.transaction(
+                        [
+                            "observations",
+                            "settings"
+                        ],
+                        "readwrite"
+                    );
+
+
+                const observationStore =
+                    transaction.objectStore(
+                        "observations"
+                    );
+
+
+                const settingsStore =
+                    transaction.objectStore(
+                        "settings"
+                    );
+
+
+                (backup.observations || [])
+                    .forEach(
+                        observation => {
+
+                            observationStore.put(
+                                observation
+                            );
+                        }
+                    );
+
+
+                (backup.settings || [])
+                    .forEach(
+                        setting => {
+
+                            settingsStore.put(
+                                setting
+                            );
+                        }
+                    );
+
+
+                transaction.oncomplete =
+                    async function() {
+
+                        document.getElementById(
+                            "backupStatus"
+                        ).textContent =
+                            "Backup restored successfully.";
+
+                        await loadProfile();
+
+                        loadObservations();
+                    };
+
+            } catch (error) {
+
+                document.getElementById(
+                    "backupStatus"
+                ).textContent =
+                    `Restore failed: ${error.message}`;
+            }
+        };
+
+
+    reader.readAsText(
+        file
+    );
+}
+
+
+/* =========================================================
+   NASUR AI CHAT
+========================================================= */
+
+function addChatMessage(
+    text,
+    type
+) {
+
+    const chatBox =
+        document.getElementById(
+            "chatBox"
+        );
+
+
+    const message =
+        document.createElement(
+            "div"
+        );
+
+
+    message.className =
+        `message ${type}-message`;
+
+
+    message.textContent =
+        text;
+
+
+    chatBox.appendChild(
+        message
+    );
+
+
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
+}
+
+
+async function sendChat() {
+
+    const input =
+        document.getElementById(
+            "chatInput"
+        );
+
+
+    const message =
+        input.value.trim();
+
+
+    if (!message) {
+        return;
+    }
+
+
+    addChatMessage(
+        message,
+        "user"
+    );
+
+
+    input.value =
+        "";
+
+
+    const profile = {
+
+        careerLevel:
+            document.getElementById(
+                "careerLevel"
+            ).value,
+
+        industry:
+            document.getElementById(
+                "industry"
+            ).value,
+
+        region:
+            document.getElementById(
+                "region"
+            ).value
+    };
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${NASUR_CONFIG.apiBaseUrl}/api/chat`,
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            {
+
+                                message,
+
+                                career_level:
+                                    profile.careerLevel,
+
+                                industry:
+                                    profile.industry,
+
+                                region:
+                                    profile.region
+                            }
+                        )
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.detail ||
+                "NASUR AI request failed."
+            );
+        }
+
+
+        addChatMessage(
+            data.response,
+            "ai"
+        );
+
+    } catch (error) {
+
+        addChatMessage(
+            `NASUR AI is currently unavailable: ${error.message}`,
+            "ai"
+        );
+    }
+}
+
+
+/* =========================================================
+   APPLICATION STARTUP
+========================================================= */
+
+async function initializeNASUR() {
+
+    try {
+
+        await openDatabase();
+
+        await loadProfile();
+
+        updateRiskOptions();
+
+        loadObservations();
+
+        document.getElementById(
+            "obsDate"
+        ).value =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
+
+    } catch (error) {
+
+        alert(
+            `NASUR startup error: ${error.message}`
+        );
+    }
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeNASUR
+);
+
+</script>
+
+</body>
 </html>
