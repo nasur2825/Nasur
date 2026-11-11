@@ -1,0 +1,1327 @@
+/* ==========================================================================
+   NASUR – Components
+   File: css/components.css
+   Purpose: Reusable UI building blocks used by every module.
+   Depends on: css/tokens.css, css/base.css (load order: tokens, base, this).
+   Rules for all JavaScript that builds markup:
+     - Use these classes only. Never write style="..." in markup (the CSP
+       blocks it). Setting element.style.x from JavaScript is allowed.
+     - Use data-* and aria-* attributes for state (listed per component).
+   Sections:
+     1 Layout helpers      2 Header controls     3 Buttons
+     4 Cards & hero        5 Page structure      6 Forms
+     7 Badges & chips      8 Alerts & empty      9 Lists, stats, tables
+    10 Segmented & progress 11 Spinner          12 Toasts
+    13 Modal              14 Quick actions      15 JARVIS (FAB, drawer, chat)
+    16 Reduced motion
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. LAYOUT HELPERS
+   -------------------------------------------------------------------------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stack--sm {
+  gap: var(--space-2);
+}
+
+.stack--lg {
+  gap: var(--space-6);
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cluster--between {
+  justify-content: space-between;
+}
+
+.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-faint {
+  color: var(--color-text-faint);
+}
+
+.text-sm {
+  font-size: var(--text-sm);
+}
+
+.text-center {
+  text-align: center;
+}
+
+@media (min-width: 48rem) {
+  .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   2. HEADER CONTROLS (used inside .app-header and anywhere else)
+   -------------------------------------------------------------------------- */
+.icon-btn {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.icon-btn:hover {
+  background: var(--color-surface-sunken);
+}
+
+.icon-btn__glyph {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.app-header .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Network status pill. data-state: online | offline | unknown */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  color: var(--header-fg);
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-full);
+}
+
+.status-pill::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #b8c4c0;
+  border-radius: var(--radius-full);
+}
+
+.status-pill[data-state="online"]::before {
+  background: #6ee7a0;
+}
+
+.status-pill[data-state="offline"]::before {
+  background: #ffb74d;
+}
+
+
+/* --------------------------------------------------------------------------
+   3. BUTTONS
+   Markup: <button class="btn btn--primary">Save</button>
+   Variants: btn--primary | btn--secondary | btn--danger | btn--ghost
+   Sizes:    btn--sm | btn--lg        Width: btn--block
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-sunken);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.btn--primary {
+  color: var(--color-brand-contrast);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+.btn--primary:hover {
+  color: var(--color-brand-contrast);
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+}
+
+.btn--primary:active {
+  background: var(--color-brand-active);
+  border-color: var(--color-brand-active);
+}
+
+.btn--secondary {
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+  border-color: transparent;
+}
+
+.btn--secondary:hover {
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+}
+
+.btn--danger {
+  color: var(--color-text-inverse);
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.btn--danger:hover {
+  color: var(--color-text-inverse);
+  background: var(--color-danger);
+  border-color: var(--color-text);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn--sm {
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.btn--lg {
+  min-height: 3.25rem;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-md);
+}
+
+.btn--block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. CARDS & HERO
+   Markup: <section class="card">
+             <div class="card__header"><h2 class="card__title">…</h2></div>
+             <div class="card__body">…</div>
+             <div class="card__footer">…</div>
+           </section>
+   A card used as a link: <a class="card card--interactive" href="…">
+   -------------------------------------------------------------------------- */
+.card {
+  display: block;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+a.card {
+  text-decoration: none;
+}
+
+.card--interactive {
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.card--interactive:hover {
+  color: var(--color-text);
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.card__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.card__body {
+  padding: var(--space-4);
+}
+
+.card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.hero {
+  padding: var(--space-5);
+  background: var(--color-brand-soft);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.hero__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+}
+
+.hero__text {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+
+/* --------------------------------------------------------------------------
+   5. PAGE STRUCTURE
+   -------------------------------------------------------------------------- */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.page-header__title {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.page-header__sub {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.section {
+  margin-top: var(--space-6);
+}
+
+.section__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+
+/* --------------------------------------------------------------------------
+   6. FORMS
+   Markup: <div class="field">
+             <label class="field__label" for="x">Location
+               <span class="field__required" aria-hidden="true">*</span></label>
+             <input class="input" id="x" aria-describedby="x-hint">
+             <p class="field__hint" id="x-hint">…</p>
+             <p class="field__error" id="x-error" role="alert">…</p>
+           </div>
+   Invalid state: set aria-invalid="true" on the control.
+   Checkbox/radio: <label class="check"><input class="check__input"
+     type="checkbox"><span class="check__label">Text</span></label>
+   -------------------------------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.field__required {
+  color: var(--color-danger);
+}
+
+.field__hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.field__error {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-danger);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 36rem) {
+  .field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.input,
+.select,
+.textarea {
+  display: block;
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.textarea {
+  min-height: 6rem;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-faint);
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover {
+  border-color: var(--color-text-muted);
+}
+
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  color: var(--color-text-faint);
+  background: var(--color-surface-sunken);
+}
+
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding-block: var(--space-2);
+  cursor: pointer;
+}
+
+.check__input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--color-brand);
+}
+
+.check__label {
+  line-height: var(--leading-snug);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+}
+
+
+/* --------------------------------------------------------------------------
+   7. BADGES & CHIPS
+   Badge: <span class="badge badge--success">Verified</span>
+          variants: badge--neutral (default) | success | warning | danger | info
+   Risk:  <span class="risk-badge" data-level="high">High</span>
+          data-level: low | medium | high | extreme
+   Chip:  <button class="chip" aria-pressed="true">Open</button>
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.badge--success {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+}
+
+.badge--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning-border);
+}
+
+.badge--danger {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
+}
+
+.badge--info {
+  color: var(--color-info);
+  background: var(--color-info-soft);
+  border-color: var(--color-info-border);
+}
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.risk-badge[data-level="low"] {
+  color: var(--risk-low-fg);
+  background: var(--risk-low-bg);
+}
+
+.risk-badge[data-level="medium"] {
+  color: var(--risk-medium-fg);
+  background: var(--risk-medium-bg);
+}
+
+.risk-badge[data-level="high"] {
+  color: var(--risk-high-fg);
+  background: var(--risk-high-bg);
+}
+
+.risk-badge[data-level="extreme"] {
+  color: var(--risk-extreme-fg);
+  background: var(--risk-extreme-bg);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.chip:hover {
+  background: var(--color-surface-sunken);
+}
+
+.chip[aria-pressed="true"] {
+  color: var(--color-brand-contrast);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+
+/* --------------------------------------------------------------------------
+   8. ALERTS & EMPTY STATES
+   Alert: <div class="alert alert--warning" role="note">
+            <p class="alert__title">Advisory only</p><p>…</p></div>
+          variants: alert--info (default) | success | warning | danger
+   Empty: <div class="empty-state"><div class="empty-state__icon"
+            aria-hidden="true">📋</div><h3 class="empty-state__title">…</h3>
+            <p class="empty-state__text">…</p>
+            <div class="empty-state__actions">…</div></div>
+   -------------------------------------------------------------------------- */
+.alert {
+  padding: var(--space-3) var(--space-4);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+  background: var(--color-info-soft);
+  border: var(--border-width) solid var(--color-info-border);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+}
+
+.alert__title {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--weight-semibold);
+}
+
+.alert--success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+}
+
+.alert--warning {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning-border);
+}
+
+.alert--danger {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  background: var(--color-surface);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.empty-state__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.empty-state__text {
+  max-width: 28rem;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+
+/* --------------------------------------------------------------------------
+   9. LISTS, STATS & TABLES
+   List:  <ul class="list"><li class="list__item">
+            <div class="list__main"><p class="list__title">…</p>
+            <p class="list__meta">…</p></div> <span class="badge">…</span>
+          </li></ul>
+   Stats: <div class="stat-grid"><div class="stat">
+            <p class="stat__value">0</p><p class="stat__label">Open actions</p>
+            <p class="stat__note">…</p></div></div>
+   Table: <div class="table-wrap"><table class="table">…</table></div>
+   -------------------------------------------------------------------------- */
+.list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--space-4);
+}
+
+.list__item + .list__item {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.list__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.list__title {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.list__meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+}
+
+.stat {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.stat__value {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+.stat__label {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+.stat__note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.table {
+  width: 100%;
+  font-size: var(--text-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.table th {
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  background: var(--color-surface-sunken);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+
+/* --------------------------------------------------------------------------
+   10. SEGMENTED CONTROL & PROGRESS
+   Segmented: <div class="segmented" role="group" aria-label="View">
+                <button class="segmented__btn" aria-pressed="true">Beginner
+                </button><button class="segmented__btn" aria-pressed="false">
+                Advanced</button></div>
+   Progress:  <progress class="progress" value="40" max="100"></progress>
+   -------------------------------------------------------------------------- */
+.segmented {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 2px;
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.segmented__btn {
+  flex: 1 1 auto;
+  min-height: 2.5rem;
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.segmented__btn[aria-pressed="true"] {
+  color: var(--color-brand-contrast);
+  background: var(--color-brand);
+}
+
+.progress {
+  display: block;
+  width: 100%;
+  height: 0.625rem;
+  overflow: hidden;
+  background: var(--color-surface-sunken);
+  border: 0;
+  border-radius: var(--radius-full);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.progress::-webkit-progress-bar {
+  background: var(--color-surface-sunken);
+}
+
+.progress::-webkit-progress-value {
+  background: var(--color-brand);
+  border-radius: var(--radius-full);
+}
+
+.progress::-moz-progress-bar {
+  background: var(--color-brand);
+  border-radius: var(--radius-full);
+}
+
+
+/* --------------------------------------------------------------------------
+   11. SPINNER
+   <span class="spinner" role="status" aria-label="Loading"></span>
+   -------------------------------------------------------------------------- */
+.spinner {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-brand);
+  border-radius: var(--radius-full);
+  animation: ui-spin 0.9s linear infinite;
+}
+
+.spinner--sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   12. TOASTS (mounted inside #toast-region)
+   <div class="toast toast--success" role="status">
+     <span class="toast__msg">Saved</span>
+     <button type="button" class="toast__close" aria-label="Dismiss">✕</button>
+   </div>
+   variants: toast--info (default) | success | warning | danger
+   -------------------------------------------------------------------------- */
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-info-border);
+  border-left: 4px solid var(--color-info);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: toast-in var(--duration-base) var(--ease-standard);
+}
+
+.toast--success {
+  border-color: var(--color-success-border);
+  border-left-color: var(--color-success);
+}
+
+.toast--warning {
+  border-color: var(--color-warning-border);
+  border-left-color: var(--color-warning);
+}
+
+.toast--danger {
+  border-color: var(--color-danger-border);
+  border-left-color: var(--color-danger);
+}
+
+.toast__msg {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast__close {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+}
+
+.toast__close:hover {
+  color: var(--color-text);
+  background: var(--color-surface-sunken);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   13. MODAL (mounted inside #modal-root)
+   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="t">
+     <div class="modal__dialog">
+       <div class="modal__header"><h2 class="modal__title" id="t">…</h2>
+         <button class="icon-btn" aria-label="Close">…</button></div>
+       <div class="modal__body">…</div>
+       <div class="modal__footer">…buttons…</div>
+     </div></div>
+   -------------------------------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--space-4);
+  padding-bottom: calc(var(--space-4) + var(--safe-bottom));
+  background: var(--color-overlay);
+}
+
+.modal__dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 34rem;
+  max-height: calc(100vh - 2 * var(--space-4));
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: hidden;
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.modal__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.modal__body {
+  flex: 1 1 auto;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+@media (min-width: 48rem) {
+  .modal {
+    align-items: center;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   14. QUICK ACTIONS (Home screen tiles)
+   <div class="quick-actions">
+     <button type="button" class="quick-action">
+       <span class="quick-action__icon" aria-hidden="true">📝</span>
+       <span class="quick-action__label">New Observation</span>
+     </button></div>
+   (an <a class="quick-action" href="…"> is styled the same way)
+   -------------------------------------------------------------------------- */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--space-3);
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 5.5rem;
+  padding: var(--space-3);
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.quick-action:hover {
+  color: var(--color-text);
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md);
+}
+
+.quick-action__icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.quick-action__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+
+/* --------------------------------------------------------------------------
+   15. JARVIS: FLOATING BUTTON, DRAWER AND CHAT
+   Mounted inside #jarvis-root:
+     <button class="jarvis-fab" aria-label="Ask JARVIS">…</button>
+     <div class="jarvis-scrim" data-open="false"></div>
+     <aside class="jarvis-drawer" data-open="false" aria-label="JARVIS">
+       <div class="jarvis-drawer__header">…</div>
+       <div class="jarvis-drawer__body">
+         <div class="jarvis-msg" data-role="assistant">
+           <p class="jarvis-msg__source">General HSE knowledge</p>
+           <div class="jarvis-msg__text">…</div></div></div>
+       <div class="jarvis-drawer__footer">
+         <div class="jarvis-input">
+           <textarea class="jarvis-input__field" rows="1"></textarea>
+           …buttons…</div></div></aside>
+   State: data-open="true" opens the drawer and the scrim.
+   data-role: user | assistant | system
+   Phones: bottom sheet.  Wide screens: right-hand panel, no scrim, so forms
+   stay usable while JARVIS is open.
+   -------------------------------------------------------------------------- */
+.jarvis-fab {
+  position: fixed;
+  right: calc(var(--page-gutter) + var(--safe-right));
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-4));
+  z-index: var(--z-fab);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 3.5rem;
+  height: 3.5rem;
+  padding: 0 var(--space-4);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--color-brand-contrast);
+  background: var(--color-brand);
+  border: 0;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.jarvis-fab:hover {
+  background: var(--color-brand-hover);
+}
+
+.jarvis-fab:active {
+  background: var(--color-brand-active);
+}
+
+.jarvis-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-drawer) - 1);
+  background: var(--color-overlay);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--duration-base) var(--ease-standard),
+    visibility 0s linear var(--duration-base);
+}
+
+.jarvis-scrim[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.jarvis-drawer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  height: 85vh;
+  height: 85dvh;
+  padding-bottom: var(--safe-bottom);
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-bottom: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-lg);
+  visibility: hidden;
+  transform: translateY(100%);
+  transition: transform var(--duration-base) var(--ease-standard),
+    visibility 0s linear var(--duration-base);
+}
+
+.jarvis-drawer[data-open="true"] {
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.jarvis-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.jarvis-drawer__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.jarvis-drawer__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.jarvis-drawer__footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.jarvis-msg {
+  max-width: 92%;
+  padding: var(--space-3) var(--space-4);
+  line-height: var(--leading-snug);
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.jarvis-msg[data-role="user"] {
+  align-self: flex-end;
+  color: var(--color-brand-contrast);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+.jarvis-msg[data-role="assistant"] {
+  align-self: flex-start;
+}
+
+.jarvis-msg[data-role="system"] {
+  align-self: center;
+  max-width: 100%;
+  font-size: var(--text-sm);
+  text-align: center;
+  color: var(--color-text-muted);
+  background: transparent;
+  border-style: dashed;
+}
+
+.jarvis-msg__source {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+
+.jarvis-msg__text {
+  white-space: pre-wrap;
+}
+
+.jarvis-input {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.jarvis-input__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap-min);
+  max-height: 8rem;
+  padding: var(--space-2) var(--space-3);
+  line-height: var(--leading-snug);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  resize: none;
+}
+
+.jarvis-input__field:focus-visible {
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+@media (min-width: 48rem) {
+  .jarvis-fab {
+    right: calc(var(--page-gutter) + var(--safe-right));
+    bottom: calc(var(--safe-bottom) + var(--space-6));
+  }
+
+  .jarvis-scrim {
+    display: none;
+  }
+
+  .jarvis-drawer {
+    top: calc(var(--header-height) + var(--safe-top));
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: var(--drawer-width);
+    height: auto;
+    padding-bottom: 0;
+    border-radius: 0;
+    border-width: 0 0 0 var(--border-width);
+    transform: translateX(100%);
+  }
+
+  .jarvis-drawer[data-open="true"] {
+    transform: none;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   16. REDUCED MOTION
+   Transitions already shrink through the duration tokens. Looping spinners
+   are slowed instead of removed so loading is still visible.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+
+  .toast {
+    animation: none;
+  }
+}
