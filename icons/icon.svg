@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="nasur-icon-title">
+  <title id="nasur-icon-title">NASUR</title>
+  <!-- Full-bleed brand background (matches --color-brand in css/tokens.css) -->
+  <rect x="0" y="0" width="512" height="512" fill="#0b6e5a"/>
+  <!-- Safety-amber tile (matches the logo in the app header) -->
+  <rect x="116" y="116" width="280" height="280" rx="60" ry="60" fill="#f2a900"/>
+  <!-- Letter N drawn as a shape, so it looks the same on every device -->
+  <polygon fill="#1a1400" points="181,342 181,170 225,170 293,272 293,170 331,170 331,342 287,342 219,240 219,342"/>
+</svg>
