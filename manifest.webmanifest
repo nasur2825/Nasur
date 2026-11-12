@@ -1,0 +1,30 @@
+{
+  "id": "nasur",
+  "name": "NASUR – HSE Operating System",
+  "short_name": "NASUR",
+  "description": "NASUR is an offline-first personal industrial HSE operating system with the JARVIS safety assistant.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0b6e5a",
+  "theme_color": "#0b6e5a",
+  "categories": ["productivity", "business", "education"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
