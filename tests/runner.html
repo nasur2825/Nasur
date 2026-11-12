@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <title>NASUR – Phase 1 Tests</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f7f6; --card: #ffffff; --fg: #14201c; --muted: #4a5b55; --line: #d2dcd8;
+      --pass: #1b7f3b; --fail: #c62828; --skip: #8a6d00; --brand: #0b6e5a; --brand-fg: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1513; --card: #151f1c; --fg: #e6eeeb; --muted: #a9bab4; --line: #2a3a35;
+        --pass: #5fd38a; --fail: #ff8a80; --skip: #f5b942; --brand: #34c3a2; --brand-fg: #04201a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 1rem; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; color: var(--fg); background: var(--bg); }
+    main { max-width: 52rem; margin: 0 auto; }
+    h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+    .lead { margin: 0 0 1rem; color: var(--muted); }
+    #summary { padding: 0.75rem 1rem; margin-bottom: 1rem; font-weight: 600; background: var(--card); border: 1px solid var(--line); border-left-width: 6px; border-radius: 0.5rem; }
+    #summary.ok { border-left-color: var(--pass); }
+    #summary.bad { border-left-color: var(--fail); }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-bottom: 1rem; }
+    button { min-height: 2.75rem; padding: 0.5rem 1rem; font: inherit; font-weight: 600; color: var(--brand-fg); background: var(--brand); border: 0; border-radius: 0.5rem; cursor: pointer; }
+    button.secondary { color: var(--fg); background: var(--card); border: 1px solid var(--line); }
+    .suite { margin-bottom: 1rem; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; }
+    .suite h2 { display: flex; justify-content: space-between; gap: 1rem; margin: 0; padding: 0.6rem 1rem; font-size: 1rem; border-bottom: 1px solid var(--line); }
+    .suite .count { font-weight: 400; color: var(--muted); white-space: nowrap; }
+    .suite ul { margin: 0; padding: 0; list-style: none; }
+    .suite li { display: flex; gap: 0.75rem; padding: 0.4rem 1rem; border-top: 1px solid var(--line); }
+    .suite li:first-child { border-top: 0; }
+    .mark { flex: none; width: 1.25rem; font-weight: 700; text-align: center; }
+    li.pass .mark { color: var(--pass); }
+    li.fail .mark { color: var(--fail); }
+    li.skip .mark { color: var(--skip); }
+    li.fail { background: rgba(198, 40, 40, 0.08); }
+    pre { margin: 0.25rem 0 0; white-space: pre-wrap; word-break: break-word; font: 0.85rem ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+    li.fail pre { color: var(--fail); }
+    .only-failed li.pass, .only-failed li.skip { display: none; }
+    #report-fallback { display: none; width: 100%; height: 10rem; margin-top: 0.5rem; font: 0.8rem ui-monospace, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>NASUR Phase 1 tests</h1>
+    <p class="lead">Checks the files, the database, the repository rules, settings, security helpers and the router. Tests use their own scratch database and never touch your saved data.</p>
+    <div id="summary" role="status" aria-live="polite">Starting…</div>
+    <div class="toolbar">
+      <button type="button" id="btn-copy">Copy report</button>
+      <button type="button" id="btn-rerun" class="secondary">Run again</button>
+      <label><input type="checkbox" id="chk-failures"> Show only problems</label>
+    </div>
+    <div id="results"></div>
+    <textarea id="report-fallback" readonly aria-label="Test report"></textarea>
+  </main>
+
+  <script type="module">
+    /* ======================================================================
+       1. SETTINGS, TINY TEST FRAMEWORK AND HELPERS
+       ====================================================================== */
+
+    const TEST_TIMEOUT_MS = 20000;
+    const TEST_DB = 'nasur-test-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    const ROOT = new URL('../', import.meta.url);
+
+    const LS_WATCH = ['nasur.language', 'nasur.theme', 'nasur.last_route'];
+    const lsBackup = {};
+    for (const key of LS_WATCH) {
+      try { lsBackup[key] = localStorage.getItem(key); } catch { lsBackup[key] = null; }
+    }
+
+    const els = {
+      summary: document.getElementById('summary'),
+      results: document.getElementById('results'),
+      copy: document.getElementById('btn-copy'),
+      rerun: document.getElementById('btn-rerun'),
+      onlyFailed: document.getElementById('chk-failures'),
+      fallback: document.getElementById('report-fallback')
+    };
+
+    class SkipSignal extends Error {}
+    function skip(reason) { throw new SkipSignal(reason); }
+
+    const suites = [];
+    function suite(name, build) {
+      const entry = { name, tests: [], before: null, after: null, ui: null };
+      suites.push(entry);
+      build({
+        test(title, fn) { entry.tests.push({ title, fn }); },
+        before(fn) { entry.before = fn; },
+        after(fn) { entry.after = fn; }
+      });
+    }
+
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+    function stable(value) {
+      if (Array.isArray(value)) { return value.map(stable); }
+      if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+        const output = {};
+        for (const key of Object.keys(value).sort()) { output[key] = stable(value[key]); }
+        return output;
+      }
+      return value;
+    }
+    function same(a, b) { return JSON.stringify(stable(a)) === JSON.stringify(stable(b)); }
+
+    function show(value) {
+      if (value === undefined) { return 'undefined'; }
+      let text;
+      try { text = JSON.stringify(value); } catch { text = String(value); }
+      if (text === undefined) { text = String(value); }
+      return text.length > 160 ? text.slice(0, 157) + '…' : text;
+    }
+
+    function assert(condition, message) {
+      if (!condition) { throw new Error(message || 'Assertion failed.'); }
+    }
+    function eq(actual, expected, label) {
+      if (!Object.is(actual, expected)) {
+        throw new Error((label ? label + ': ' : '') + 'expected ' + show(expected) + ' but got ' + show(actual));
+      }
+    }
+    function deepEq(actual, expected, label) {
+      if (!same(actual, expected)) {
+        throw new Error((label ? label + ': ' : '') + 'expected ' + show(expected) + ' but got ' + show(actual));
+      }
+    }
+
+    /** Runs fn (sync or async) and checks that it fails with an error code (text) or error class. */
+    async function expectError(fn, matcher, label) {
+      let caught = null;
+      let failed = false;
+      try { await fn(); } catch (error) { caught = error; failed = true; }
+      const prefix = label ? label + ': ' : '';
+      if (!failed) { throw new Error(prefix + 'expected an error but none was thrown'); }
+      if (typeof matcher === 'string') {
+        if (!caught || caught.code !== matcher) {
+          throw new Error(prefix + 'expected error code "' + matcher + '" but got "' + (caught && caught.code) + '" (' + (caught && caught.message) + ')');
+        }
+      } else if (typeof matcher === 'function' && !(caught instanceof matcher)) {
+        throw new Error(prefix + 'expected ' + matcher.name + ' but got ' + (caught && caught.name) + ': ' + (caught && caught.message));
+      }
+      return caught;
+    }
+
+    function captureConsole() {
+      const original = { error: console.error, warn: console.warn };
+      const captured = { errors: [], warnings: [] };
+      console.error = (...args) => { captured.errors.push(args); };
+      console.warn = (...args) => { captured.warnings.push(args); };
+      captured.restore = () => { console.error = original.error; console.warn = original.warn; };
+      return captured;
+    }
+
+    function withTimeout(promise, ms) {
+      let timer;
+      const timeout = new Promise((resolve, reject) => {
+        timer = setTimeout(() => reject(new Error('Timed out after ' + ms / 1000 + ' seconds.')), ms);
+      });
+      return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+    }
+
+    function describeError(error) {
+      const message = error && error.message ? error.message : String(error);
+      return error && error.code ? message + ' [' + error.code + ']' : message;
+    }
+
+
+    /* ======================================================================
+       2. LOAD THE APP MODULES (app.js is never imported: it would start the app)
+       ====================================================================== */
+
+    const MODULE_PATHS = {
+      config: 'js/core/config.js',
+      eventbus: 'js/core/eventbus.js',
+      router: 'js/core/router.js',
+      sanitize: 'js/services/sanitize.js',
+      db: 'js/services/db.js',
+      repo: 'js/services/repo.js',
+      ucfg: 'js/services/config.js'
+    };
+    const loaded = {};
+    const loadFailures = [];
+    for (const [name, path] of Object.entries(MODULE_PATHS)) {
+      try {
+        loaded[name] = await import(new URL(path, ROOT).href);
+      } catch (error) {
+        loadFailures.push({ name, path, message: (error && error.message) || String(error) });
+      }
+    }
+    const { config: cfg, eventbus: ev, router, sanitize: san, db, repo, ucfg } = loaded;
+
+
+    /* ======================================================================
+       3. PROJECT FILES AND STATIC CHECKS
+       ====================================================================== */
+
+    const PROJECT_FILES = [
+      'index.html', 'manifest.webmanifest', 'sw.js', 'icons/icon.svg',
+      'css/tokens.css', 'css/base.css', 'css/components.css',
+      'js/core/config.js', 'js/core/eventbus.js', 'js/core/router.js', 'js/core/app.js',
+      'js/services/sanitize.js', 'js/services/db.js', 'js/services/repo.js', 'js/services/config.js',
+      'data/modules.json', 'data/hooks/manufacturing-hooks.json'
+    ];
+    const CSS_FILES = ['css/tokens.css', 'css/base.css', 'css/components.css'];
+    const JS_FILES = PROJECT_FILES.filter((path) => path.endsWith('.js') && path !== 'sw.js');
+    const INDUSTRY_IDS = ['construction', 'manufacturing', 'industrial_maintenance', 'facilities_management', 'warehousing_logistics', 'food_manufacturing', 'consultancy'];
+    const INDEX_IDS = ['boot-screen', 'boot-stuck', 'app-header', 'app-subtitle', 'status-network', 'btn-theme', 'btn-theme-glyph', 'main-nav', 'main-nav-list', 'app-main', 'view-root', 'toast-region', 'modal-root', 'jarvis-root'];
+    const UNSTYLED_OK = new Set(['view', 'modal-root', 'jarvis-root']);
+
+    const textCache = new Map();
+    async function fetchText(path) {
+      if (textCache.has(path)) { return textCache.get(path); }
+      const response = await fetch(new URL(path, ROOT).href, { cache: 'no-store' });
+      if (!response.ok) { throw new Error(path + ' could not be loaded (HTTP ' + response.status + ').'); }
+      const text = await response.text();
+      textCache.set(path, text);
+      return text;
+    }
+    async function fetchJson(path) { return JSON.parse(await fetchText(path)); }
+    function parseHtml(text) { return new DOMParser().parseFromString(text, 'text/html'); }
+    function stripCssComments(text) { return text.replace(/\/\*[\s\S]*?\*\//g, ''); }
+
+    function classTokens(text) {
+      const tokens = new Set();
+      for (const match of text.matchAll(/class="([^"]+)"/g)) {
+        for (const token of match[1].split(/\s+/)) { tokens.add(token); }
+      }
+      for (const match of text.matchAll(/className\s*=\s*'([^']+)'/g)) {
+        for (const token of match[1].split(/\s+/)) { tokens.add(token); }
+      }
+      return Array.from(tokens).filter((token) => /^[a-z][a-z0-9_-]*$/.test(token));
+    }
+
+    function blockAfter(text, marker) {
+      const start = text.indexOf(marker);
+      if (start === -1) { throw new Error('Could not find "' + marker + '" in css/tokens.css.'); }
+      const open = text.indexOf('{', start);
+      const close = text.indexOf('}', open);
+      return text.slice(open + 1, close);
+    }
+    function declarations(block) {
+      const map = {};
+      for (const match of block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+        map[match[1]] = match[2].trim().replace(/\s+/g, ' ');
+      }
+      return map;
+    }
+
+    suite('Modules load without errors', ({ test }) => {
+      for (const [name, path] of Object.entries(MODULE_PATHS)) {
+        test(path + ' loads', () => {
+          const failure = loadFailures.find((item) => item.name === name);
+          if (failure) { throw new Error(failure.message); }
+          assert(loaded[name], 'The module did not load.');
+        });
+      }
+    });
+
+    suite('Project files and static checks', ({ test }) => {
+      test('every Phase 1 file can be loaded and is not empty', async () => {
+        const problems = [];
+        for (const path of PROJECT_FILES) {
+          try {
+            const text = await fetchText(path);
+            if (text.trim() === '') { problems.push(path + ' is empty'); }
+          } catch (error) { problems.push(error.message); }
+        }
+        assert(problems.length === 0, problems.join('\n'));
+      });
+
+      test('README.md is present (optional)', async () => {
+        try { await fetchText('README.md'); } catch { skip('README.md was not served. It is only a description, so this is fine.'); }
+      });
+
+      test('JSON files are valid', async () => {
+        for (const path of ['manifest.webmanifest', 'data/modules.json', 'data/hooks/manufacturing-hooks.json']) {
+          try { await fetchJson(path); } catch (error) { throw new Error(path + ': ' + error.message); }
+        }
+      });
+
+      test('CSS files are complete (balanced braces and comments)', async () => {
+        for (const path of CSS_FILES) {
+          const raw = await fetchText(path);
+          eq((raw.match(/\/\*/g) || []).length, (raw.match(/\*\//g) || []).length, path + ' comment markers');
+          const text = stripCssComments(raw);
+          eq((text.match(/\{/g) || []).length, (text.match(/\}/g) || []).length, path + ' braces');
+          assert(text.trim().endsWith('}'), path + ' does not end with a closing brace (upload may be cut off).');
+        }
+      });
+
+      test('index.html is complete', async () => {
+        const text = (await fetchText('index.html')).trim();
+        assert(/^<!DOCTYPE html>/i.test(text), 'Missing <!DOCTYPE html>.');
+        assert(text.endsWith('</html>'), 'index.html does not end with </html> (upload may be cut off).');
+      });
+
+      test('sw.js is valid JavaScript', async () => {
+        const source = await fetchText('sw.js');
+        try { new Function(source); } catch (error) { throw new Error('sw.js has a syntax error: ' + error.message); }
+      });
+
+      test('JavaScript files import only files that exist and names that are exported', async () => {
+        const namespaces = new Map();
+        for (const [name, path] of Object.entries(MODULE_PATHS)) {
+          if (loaded[name]) { namespaces.set(new URL(path, ROOT).href, loaded[name]); }
+        }
+        const problems = [];
+        for (const path of JS_FILES) {
+          const text = await fetchText(path);
+          const fileUrl = new URL(path, ROOT);
+          for (const match of text.matchAll(/^import\s+([^;]*?)\s+from\s*['"]([^'"]+)['"]/gm)) {
+            const clause = match[1];
+            const specifier = match[2];
+            if (!specifier.startsWith('.')) { problems.push(path + ' imports "' + specifier + '", which is not a relative path.'); continue; }
+            const resolved = new URL(specifier, fileUrl).href;
+            const relative = resolved.startsWith(ROOT.href) ? resolved.slice(ROOT.href.length) : null;
+            if (!relative || !PROJECT_FILES.includes(relative)) { problems.push(path + ' imports a file that is not in the project: ' + specifier); continue; }
+            const braces = clause.match(/\{([\s\S]*)\}/);
+            const namespace = namespaces.get(resolved);
+            if (braces && namespace) {
+              const names = braces[1].split(',').map((part) => part.trim()).filter(Boolean).map((part) => part.split(/\s+as\s+/)[0].trim());
+              for (const name of names) {
+                if (!(name in namespace)) { problems.push(path + ' imports "' + name + '" but ' + relative + ' does not export it.'); }
+              }
+            }
+          }
+        }
+        assert(problems.length === 0, problems.join('\n'));
+      });
+
+      test('index.html: Content-Security-Policy blocks inline code', async () => {
+        const doc = parseHtml(await fetchText('index.html'));
+        const meta = doc.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        assert(meta, 'The CSP meta tag is missing.');
+        const csp = meta.getAttribute('content');
+        const directives = {};
+        for (const part of csp.split(';').map((item) => item.trim()).filter(Boolean)) {
+          const [name, ...values] = part.split(/\s+/);
+          directives[name] = values;
+        }
+        deepEq(directives['script-src'], ["'self'"], 'script-src');
+        deepEq(directives['style-src'], ["'self'"], 'style-src');
+        assert(directives['default-src'] && directives['default-src'].includes("'self'"), 'default-src must allow only self.');
+        assert(directives['object-src'] && directives['object-src'].includes("'none'"), 'object-src must be none.');
+        assert(!csp.includes('unsafe-'), 'The policy must not contain unsafe-inline or unsafe-eval.');
+      });
+
+      test('index.html: exactly one module script and no inline code', async () => {
+        const doc = parseHtml(await fetchText('index.html'));
+        const scripts = Array.from(doc.querySelectorAll('script'));
+        eq(scripts.length, 1, 'script tags');
+        eq(scripts[0].getAttribute('type'), 'module');
+        eq(scripts[0].getAttribute('src'), 'js/core/app.js');
+        eq(scripts[0].textContent.trim(), '', 'inline script text');
+        eq(doc.querySelectorAll('style').length, 0, 'style tags');
+        eq(doc.querySelectorAll('[style]').length, 0, 'style attributes');
+        const bad = [];
+        for (const element of doc.querySelectorAll('*')) {
+          for (const attribute of Array.from(element.attributes)) {
+            if (/^on/i.test(attribute.name) || /^\s*javascript:/i.test(attribute.value)) { bad.push(element.tagName + '[' + attribute.name + ']'); }
+          }
+        }
+        assert(bad.length === 0, 'Inline handlers found: ' + bad.join(', '));
+      });
+
+      test('index.html: basics (language, theme, viewport, manifest, stylesheets)', async () => {
+        const doc = parseHtml(await fetchText('index.html'));
+        eq(doc.documentElement.getAttribute('lang'), 'en');
+        eq(doc.documentElement.getAttribute('data-theme'), 'auto');
+        assert((doc.querySelector('meta[name="viewport"]').getAttribute('content') || '').includes('viewport-fit=cover'), 'viewport-fit=cover is missing.');
+        eq(doc.querySelector('link[rel="manifest"]').getAttribute('href'), 'manifest.webmanifest');
+        deepEq(Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).map((link) => link.getAttribute('href')), CSS_FILES);
+      });
+
+      test('index.html contains every element the app looks up', async () => {
+        const doc = parseHtml(await fetchText('index.html'));
+        const appText = await fetchText('js/core/app.js');
+        const wanted = new Set(INDEX_IDS);
+        for (const match of appText.matchAll(/requireElement\('([^']+)'\)/g)) { wanted.add(match[1]); }
+        for (const match of appText.matchAll(/getElementById\('([^']+)'\)/g)) { wanted.add(match[1]); }
+        const missing = Array.from(wanted).filter((id) => !doc.getElementById(id));
+        assert(missing.length === 0, 'Missing from index.html: ' + missing.join(', '));
+      });
+
+      test('every CSS class used by index.html, app.js and router.js is styled', async () => {
+        const css = (await Promise.all(CSS_FILES.map(fetchText))).join('\n');
+        const used = new Set();
+        for (const path of ['index.html', 'js/core/app.js', 'js/core/router.js']) {
+          for (const token of classTokens(await fetchText(path))) { used.add(token); }
+        }
+        const unstyled = Array.from(used).filter((token) => {
+          if (UNSTYLED_OK.has(token)) { return false; }
+          return !new RegExp('\\.' + token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z0-9_-])').test(css);
+        });
+        assert(unstyled.length === 0, 'Classes without CSS: ' + unstyled.join(', '));
+      });
+
+      test('every CSS variable that is used is defined', async () => {
+        const texts = await Promise.all(CSS_FILES.map(fetchText));
+        const all = texts.join('\n');
+        const defined = new Set(Array.from(all.matchAll(/(--[a-z0-9-]+)(?=\s*:)/g)).map((match) => match[1]));
+        const used = new Set(Array.from(all.matchAll(/var\(\s*(--[a-z0-9-]+)/g)).map((match) => match[1]));
+        const missing = Array.from(used).filter((name) => !defined.has(name));
+        assert(missing.length === 0, 'Undefined CSS variables: ' + missing.join(', '));
+      });
+
+      test('both dark theme blocks in tokens.css are identical', async () => {
+        const tokens = await fetchText('css/tokens.css');
+        const auto = declarations(blockAfter(tokens, ':root:not([data-theme="light"])'));
+        const forced = declarations(blockAfter(tokens, ':root[data-theme="dark"]'));
+        assert(Object.keys(auto).length > 20, 'The automatic dark block looks empty.');
+        deepEq(auto, forced, 'dark blocks');
+        const badCount = Object.keys(auto).filter((name) => (tokens.match(new RegExp(name + '\\s*:', 'g')) || []).length !== 3);
+        assert(badCount.length === 0, 'Each dark variable must be declared once in light and twice in dark: ' + badCount.join(', '));
+      });
+
+      test('theme colours agree across tokens.css, index.html, app.js, manifest and icon', async () => {
+        const tokens = await fetchText('css/tokens.css');
+        const headerBgs = Array.from(tokens.matchAll(/--header-bg:\s*(#[0-9a-fA-F]{6})/g)).map((match) => match[1].toLowerCase());
+        const light = headerBgs[0];
+        const dark = headerBgs[1];
+        eq(light, '#0b6e5a', 'light header colour');
+        eq(dark, '#0e1513', 'dark header colour');
+        const doc = parseHtml(await fetchText('index.html'));
+        for (const meta of doc.querySelectorAll('meta[name="theme-color"]')) {
+          const isDark = (meta.getAttribute('media') || '').includes('dark');
+          eq(meta.getAttribute('content').toLowerCase(), isDark ? dark : light, 'theme-color meta');
+        }
+        const appText = (await fetchText('js/core/app.js')).toLowerCase();
+        assert(appText.includes(light) && appText.includes(dark), 'app.js THEME_COLORS do not match.');
+        const manifest = await fetchJson('manifest.webmanifest');
+        eq(manifest.theme_color.toLowerCase(), light, 'manifest theme_color');
+        eq(manifest.background_color.toLowerCase(), light, 'manifest background_color');
+        const icon = (await fetchText('icons/icon.svg')).toLowerCase();
+        assert(icon.includes(light) && icon.includes('#f2a900') && icon.includes('#1a1400'), 'icon.svg colours differ from the app.');
+      });
+
+      test('manifest is complete and its icons exist', async () => {
+        const manifest = await fetchJson('manifest.webmanifest');
+        eq(manifest.short_name, 'NASUR');
+        eq(manifest.display, 'standalone');
+        assert(manifest.start_url && manifest.scope && manifest.id, 'start_url, scope and id are required.');
+        assert(Array.isArray(manifest.icons) && manifest.icons.length >= 1, 'The manifest needs at least one icon.');
+        for (const icon of manifest.icons) { await fetchText(icon.src); }
+      });
+
+      test('the service worker pre-cache list covers every app file', async () => {
+        const text = await fetchText('sw.js');
+        const match = text.match(/const CORE_FILES = \[([\s\S]*?)\];/);
+        assert(match, 'CORE_FILES was not found in sw.js.');
+        const listed = Array.from(match[1].matchAll(/'([^']+)'/g)).map((item) => item[1]);
+        const expected = PROJECT_FILES.filter((path) => path !== 'sw.js' && path !== 'data/modules.json');
+        const missing = expected.filter((path) => !listed.includes(path));
+        assert(missing.length === 0, 'Not pre-cached by sw.js: ' + missing.join(', '));
+        const unknown = listed.filter((path) => !PROJECT_FILES.includes(path));
+        assert(unknown.length === 0, 'sw.js lists files that are not in the project: ' + unknown.join(', '));
+      });
+    });
+
+
+    /* ======================================================================
+       4. SUITES THAT NEED THE APP MODULES
+       ====================================================================== */
+
+    async function resetDb() {
+      await db.wipeDatabase();
+      repo.resetRepoState();
+      ucfg.resetConfigCache();
+    }
+
+    function recordEvents() {
+      const events = [];
+      const stop = ev.on('*', (payload, name) => { events.push({ name, payload }); });
+      return { events, stop };
+    }
+
+    function defineAppSuites() {
+      const S = cfg.STORES;
+      const P = cfg.DEFAULTS.PROJECT_ID;
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      const byTag = (tag) => (record) => record.tag === tag;
+
+      /* ---------------- config.js ---------------- */
+      suite('App constants (js/core/config.js)', ({ test }) => {
+        test('identity and database version', () => {
+          eq(cfg.APP.NAME, 'NASUR');
+          eq(cfg.APP.ASSISTANT_NAME, 'JARVIS');
+          eq(cfg.DB.NAME, 'nasur-db');
+          assert(Number.isInteger(cfg.DB.VERSION) && cfg.DB.VERSION >= 1, 'DB.VERSION must be a whole number.');
+          eq(cfg.BACKUP.SCHEMA_VERSION, cfg.DB.VERSION);
+        });
+        test('DB v1 has exactly 51 unique stores with valid names', () => {
+          if (cfg.DB.VERSION === 1) { eq(cfg.STORE_NAMES.length, 51, 'store count'); }
+          eq(new Set(cfg.STORE_NAMES).size, cfg.STORE_NAMES.length, 'unique names');
+          for (const name of cfg.STORE_NAMES) { assert(/^[a-z][a-z0-9_]*$/.test(name), 'Bad store name ' + name); }
+        });
+        test('store name constants match store names', () => {
+          eq(S.OBSERVATIONS, 'observations');
+          eq(S.AI_LOG, 'ai_log');
+          eq(S.AUDIT_TRAIL, 'audit_trail');
+          eq(Object.keys(S).length, cfg.STORE_NAMES.length);
+          for (const name of cfg.STORE_NAMES) { eq(S[name.toUpperCase()], name); }
+        });
+        test('every locked store from the blueprint and addendum exists', () => {
+          const required = ['settings', 'profiles', 'clients', 'projects', 'audit_trail', 'ai_log', 'observations', 'inspection_templates', 'inspections', 'inspection_findings', 'audits', 'audit_findings', 'incidents', 'investigations', 'risk_assessments', 'hazard_register', 'controls', 'ptw_drafts', 'daily_logs', 'reminders', 'actions', 'attachments', 'lessons', 'lesson_progress', 'quiz_attempts', 'flashcards', 'machines', 'phrasebook', 'tbt_sessions', 'tbt_attendance', 'knowledge_docs', 'knowledge_chunks', 'memory_notes', 'kpi_snapshots', 'ext_records', 'career_profile', 'skill_ratings', 'competency_evidence', 'learning_roadmaps', 'workspace_profiles', 'decision_sessions', 'portfolio_entries', 'documents', 'document_revisions', 'emergency_contacts', 'emergency_procedures', 'muster_points', 'emergency_equipment', 'equipment_checks', 'drills', 'drill_findings'];
+          const missing = required.filter((name) => !cfg.isStoreName(name));
+          assert(missing.length === 0, 'Missing stores: ' + missing.join(', '));
+        });
+        test('every store definition is complete', () => {
+          const owners = Object.values(cfg.OWNER_SCOPE);
+          const stages = Object.values(cfg.PDCA_STAGE);
+          for (const def of cfg.STORE_DEFS) {
+            eq(def.keyPath, 'id', def.name + ' keyPath');
+            assert(def.group !== '', def.name + ' has no group');
+            assert(owners.includes(def.owner), def.name + ' owner');
+            assert(def.pdca === null || stages.includes(def.pdca), def.name + ' pdca');
+            const names = def.indexes.map((index) => index.name);
+            assert(names.includes('updated_at'), def.name + ' needs an updated_at index');
+            if (def.scope === cfg.SCOPE.PROJECT) { assert(names.includes('project_id'), def.name + ' needs a project_id index'); }
+          }
+        });
+        test('project scoping helpers', () => {
+          eq(cfg.isProjectScoped('observations'), true);
+          eq(cfg.isProjectScoped('actions'), true);
+          eq(cfg.isProjectScoped('settings'), false);
+          eq(cfg.isProjectScoped('lessons'), false);
+          for (const name of ['actions', 'observations', 'attachments']) { assert(cfg.PROJECT_SCOPED_STORES.includes(name), name + ' must be project-scoped'); }
+          for (const name of ['lessons', 'settings', 'projects']) { assert(!cfg.PROJECT_SCOPED_STORES.includes(name), name + ' must not be project-scoped'); }
+        });
+        test('unknown stores are rejected', async () => {
+          eq(cfg.isStoreName('nope'), false);
+          await expectError(() => cfg.getStoreDef('nope'), Error);
+        });
+        test('constants are frozen', async () => {
+          await expectError(() => { cfg.APP.VERSION = '9'; }, TypeError);
+          await expectError(() => { cfg.STORE_NAMES.push('x'); }, TypeError);
+        });
+        test('events and storage keys are unique and namespaced', () => {
+          const events = Object.values(cfg.EVENTS);
+          eq(new Set(events).size, events.length, 'event names');
+          const keys = Object.values(cfg.LS_KEYS);
+          eq(new Set(keys).size, keys.length, 'localStorage keys');
+          for (const key of keys) { assert(key.startsWith('nasur.'), key + ' must start with nasur.'); }
+        });
+        test('common fields and PDCA values', () => {
+          deepEq(cfg.COMMON_FIELDS, ['id', 'project_id', 'created_at', 'updated_at', 'rev', 'deleted_at', 'device_id', 'owner_scope', 'pdca_stage']);
+          deepEq(Object.values(cfg.PDCA_STAGE).sort(), ['act', 'check', 'do', 'improve', 'plan']);
+        });
+      });
+
+      /* ---------------- eventbus.js ---------------- */
+      suite('Event bus (js/core/eventbus.js)', ({ test }) => {
+        const { createEventBus } = ev;
+        test('delivers events and stops after unsubscribe', () => {
+          const bus = createEventBus();
+          const seen = [];
+          const stop = bus.on('x', (payload, name) => { seen.push([payload, name]); });
+          eq(bus.emit('x', 1), 1);
+          stop();
+          eq(bus.emit('x', 2), 0);
+          deepEq(seen, [[1, 'x']]);
+        });
+        test('once delivers exactly one time', () => {
+          const bus = createEventBus();
+          let count = 0;
+          bus.once('y', () => { count += 1; });
+          eq(bus.emit('y'), 1);
+          eq(bus.emit('y'), 0);
+          eq(count, 1);
+        });
+        test('off removes a handler', () => {
+          const bus = createEventBus();
+          const handler = () => {};
+          bus.on('z', handler);
+          bus.off('z', handler);
+          eq(bus.emit('z'), 0);
+        });
+        test('wildcard receives every event with its name', () => {
+          const bus = createEventBus();
+          const names = [];
+          bus.on(ev.WILDCARD, (payload, name) => { names.push(name); });
+          bus.emit('a');
+          bus.emit('b');
+          deepEq(names, ['a', 'b']);
+          eq(ev.WILDCARD, '*');
+        });
+        test('direct handlers run before wildcard handlers', () => {
+          const bus = createEventBus();
+          const order = [];
+          bus.on('*', () => { order.push('wild'); });
+          bus.on('k', () => { order.push('direct'); });
+          bus.emit('k');
+          deepEq(order, ['direct', 'wild']);
+        });
+        test('a failing handler does not stop the others', () => {
+          const cap = captureConsole();
+          try {
+            const bus = createEventBus();
+            const seen = [];
+            bus.on('e', () => { throw new Error('boom'); });
+            bus.on('e', () => { seen.push('second'); });
+            eq(bus.emit('e'), 2);
+            deepEq(seen, ['second']);
+            eq(cap.errors.length, 1, 'reported errors');
+          } finally { cap.restore(); }
+        });
+        test('async handler failures are reported, not thrown', async () => {
+          const cap = captureConsole();
+          try {
+            const bus = createEventBus();
+            bus.on('a', () => Promise.reject(new Error('late')));
+            eq(bus.emit('a'), 1);
+            await sleep(20);
+            eq(cap.errors.length, 1, 'reported errors');
+          } finally { cap.restore(); }
+        });
+        test('handlers added during an emit wait for the next emit', () => {
+          const bus = createEventBus();
+          let late = 0;
+          bus.on('s', () => { bus.on('s', () => { late += 1; }); });
+          bus.emit('s');
+          eq(late, 0);
+          bus.emit('s');
+          eq(late, 1);
+        });
+        test('listenerCount and clear', () => {
+          const bus = createEventBus();
+          bus.on('m', () => {});
+          bus.on('m', () => {});
+          bus.on('n', () => {});
+          eq(bus.listenerCount('m'), 2);
+          bus.clear('m');
+          eq(bus.listenerCount('m'), 0);
+          eq(bus.listenerCount('n'), 1);
+          bus.clear();
+          eq(bus.listenerCount('n'), 0);
+        });
+        test('bad input is rejected', async () => {
+          const bus = createEventBus();
+          await expectError(() => bus.emit('*'), TypeError);
+          await expectError(() => bus.emit(''), TypeError);
+          await expectError(() => bus.emit(5), TypeError);
+          await expectError(() => bus.on('x', 5), TypeError);
+        });
+        test('the shared bus and shortcuts are exported', () => {
+          eq(typeof ev.bus.emit, 'function');
+          for (const name of ['on', 'once', 'off', 'emit', 'listenerCount', 'clear']) { eq(typeof ev[name], 'function', name); }
+        });
+      });
+
+      /* ---------------- sanitize.js ---------------- */
+      suite('Sanitizing and safe output (js/services/sanitize.js)', ({ test }) => {
+        test('cleanText: basics', () => {
+          eq(san.cleanText(null), '');
+          eq(san.cleanText({ a: 1 }), '');
+          eq(san.cleanText(123), '123');
+          eq(san.cleanText(true), 'true');
+          eq(san.cleanText(NaN), '');
+          eq(san.cleanText('  a \t b\n c  '), 'a b c');
+          eq(san.cleanText('  x  ', { trim: false }), ' x ');
+        });
+        test('cleanText: control and hidden characters', () => {
+          eq(san.cleanText('\u0000\u0007x\u007F'), 'x');
+          eq(san.cleanText('a\u200Bb\u202Ec'), 'abc');
+          eq(san.cleanText('a\u200Db'), 'a\u200Db', 'zero-width joiner must be kept');
+          eq(san.cleanText('e\u0301'), '\u00e9', 'NFC normalization');
+        });
+        test('cleanText: multiline keeps line breaks and tabs', () => {
+          eq(san.cleanText('Line1\r\nLine2\rLine3', { multiline: true }), 'Line1\nLine2\nLine3');
+          eq(san.cleanText('a\tb', { multiline: true }), 'a\tb');
+          eq(san.cleanText('a\u2028b', { multiline: true }), 'a\nb');
+        });
+        test('cleanText keeps Tamil, Hindi and Arabic text unchanged', () => {
+          for (const word of ['பாதுகாப்பு', 'सुरक्षा', 'سلامة']) { eq(san.cleanText(word), word); }
+        });
+        test('cleanText keeps symbols such as < and >', () => {
+          eq(san.cleanText('temp < 5 and pressure > 2'), 'temp < 5 and pressure > 2');
+        });
+        test('length helpers', async () => {
+          eq(san.isWithinLength('abc', 3), true);
+          eq(san.isWithinLength('abcd', 3), false);
+          eq(san.truncateText('abc', 10), 'abc');
+          eq(san.truncateText('ab\u{1F600}', 3), 'ab', 'must not cut an emoji in half');
+          await expectError(() => san.truncateText('abc', -1), RangeError);
+          eq(san.LIMITS.SHORT, 120);
+        });
+        test('toAsciiDigits converts local digits', () => {
+          eq(san.toAsciiDigits('\u0660\u0661\u0662'), '012');
+          eq(san.toAsciiDigits('\u06f0\u06f1'), '01');
+          eq(san.toAsciiDigits('\u0966\u0967'), '01');
+          eq(san.toAsciiDigits('\u0be7\u0be8\u0be9'), '123');
+          eq(san.toAsciiDigits('A1'), 'A1');
+        });
+        test('escapeHtml and friends', () => {
+          eq(san.escapeHtml('<img src=x onerror=alert(1)>'), '&lt;img src=x onerror=alert(1)&gt;');
+          eq(san.escapeHtml('"\'&`'), '&quot;&#39;&amp;&#96;');
+          eq(san.escapeHtml(null), '');
+          eq(san.escapeHtml(5), '5');
+          eq(san.escapeAttr('"x"'), '&quot;x&quot;');
+          eq(san.escapeRegExp('a.b*c'), 'a\\.b\\*c');
+        });
+        test('html template escapes values automatically', () => {
+          eq(san.html`<p>${'<b>'}</p>`.toString(), '<p>&lt;b&gt;</p>');
+          eq(san.html`<a title="${'" onclick="x'}">`.toString(), '<a title="&quot; onclick=&quot;x">');
+          eq(san.html`${0}`.toString(), '0');
+          eq(san.html`${null}${undefined}${false}${true}`.toString(), '');
+          eq(san.html`${{ a: 1 }}`.toString(), '', 'plain objects are not rendered');
+        });
+        test('html template: nesting, lists and raw()', () => {
+          const items = ['a', '<b>'].map((value) => san.html`<li>${value}</li>`);
+          eq(san.html`<ul>${items}</ul>`.toString(), '<ul><li>a</li><li>&lt;b&gt;</li></ul>');
+          eq(san.html`${san.raw('<br>')}`.toString(), '<br>');
+          eq(san.isSafeHtml(san.html`x`), true);
+          eq(san.isSafeHtml('x'), false);
+        });
+        test('raw() needs a string', async () => {
+          await expectError(() => san.raw(5), TypeError);
+        });
+        test('renderHtml writes safe markup and refuses plain strings', async () => {
+          const box = document.createElement('div');
+          san.renderHtml(box, san.html`<span>${'<i>'}</span>`);
+          eq(box.querySelector('i'), null);
+          eq(box.textContent, '<i>');
+          await expectError(() => san.renderHtml(box, '<b>x</b>'), TypeError);
+          await expectError(() => san.renderHtml(null, san.html`x`), TypeError);
+        });
+        test('safeUrl allows only safe links', () => {
+          eq(san.safeUrl('https://example.com/a?b=1'), 'https://example.com/a?b=1');
+          eq(san.safeUrl('mailto:a@b.com'), 'mailto:a@b.com');
+          eq(san.safeUrl('tel:+123'), 'tel:+123');
+          for (const bad of ['javascript:alert(1)', ' JaVaScRiPt:alert(1)', 'data:text/html,x', 'ftp://x.com', 'java\tscript:alert(1)', '', null]) {
+            eq(san.safeUrl(bad), '', 'rejects ' + show(bad));
+          }
+          eq(san.safeUrl('/x'), '', 'relative links need allowRelative');
+          eq(san.safeUrl('/x', { allowRelative: true }), '/x');
+          eq(san.safeUrl('./a', { allowRelative: true }), './a');
+          eq(san.safeUrl('//evil.com', { allowRelative: true }), '');
+          eq(san.safeUrl('http://x.com', { protocols: ['https:'] }), '');
+        });
+        test('telHref', () => {
+          eq(san.telHref('+971 50 123 4567'), 'tel:+971501234567');
+          eq(san.telHref('\u0660\u0664\u0664 2345 6789'), 'tel:04423456789');
+          eq(san.telHref('12'), '');
+          eq(san.telHref('abc'), '');
+          eq(san.telHref('1'.repeat(16)), '');
+        });
+        test('safeFilename', () => {
+          eq(san.safeFilename('Report: Q1/2026?.pdf'), 'Report_Q1_2026_.pdf');
+          eq(san.safeFilename(''), 'file');
+          eq(san.safeFilename('...'), 'file');
+          eq(san.safeFilename('...', 'export'), 'export');
+          eq(san.safeFilename('CON'), '_CON');
+          eq(san.safeFilename('con.txt'), '_con.txt');
+          assert(san.safeFilename('a'.repeat(300)).length <= 120, 'must be shortened');
+        });
+        test('isSafeId and maskSecret', () => {
+          eq(san.isSafeId('abc-123_X'), true);
+          eq(san.isSafeId('a'.repeat(64)), true);
+          for (const bad of ['a b', '', 'a'.repeat(65), 123, null, 'x/y']) { eq(san.isSafeId(bad), false, show(bad)); }
+          eq(san.maskSecret('sk-1234567890abcd'), '••••abcd');
+          eq(san.maskSecret('abc'), '••••');
+          eq(san.maskSecret('  '), '');
+        });
+        test('sanitizeDeep cleans text but keeps spacing and symbols', () => {
+          eq(san.sanitizeDeep('  a\n '), '  a\n ');
+          eq(san.sanitizeDeep('b\u0000c'), 'bc');
+          eq(san.sanitizeDeep('a\r\nb'), 'a\nb');
+          eq(san.sanitizeDeep('temp < 5'), 'temp < 5');
+        });
+        test('sanitizeDeep: numbers, undefined, functions and arrays', () => {
+          const result = san.sanitizeDeep({ a: NaN, b: () => 1, c: undefined, d: [1, undefined, NaN], e: Infinity });
+          deepEq(result, { a: null, d: [1, null, null], e: null });
+        });
+        test('sanitizeDeep blocks prototype pollution keys', () => {
+          const evil = JSON.parse('{"__proto__":{"polluted":true},"a":"x","n":{"constructor":{"y":1},"ok":1}}');
+          const clean = san.sanitizeDeep(evil);
+          eq(Object.prototype.hasOwnProperty.call(clean, '__proto__'), false);
+          eq(Object.prototype.hasOwnProperty.call(clean.n, 'constructor'), false);
+          eq(clean.n.ok, 1);
+          eq(({}).polluted, undefined);
+        });
+        test('sanitizeDeep passes Date and Blob through and rejects deep or circular data', async () => {
+          const date = new Date('2026-02-28T10:00:00Z');
+          eq(san.sanitizeDeep({ d: date }).d, date);
+          const blob = new Blob(['x']);
+          eq(san.sanitizeDeep({ b: blob }).b, blob);
+          let deep = {};
+          const top = deep;
+          for (let level = 0; level < 30; level += 1) { deep.n = {}; deep = deep.n; }
+          await expectError(() => san.sanitizeDeep(top), RangeError);
+          const loop = {};
+          loop.self = loop;
+          await expectError(() => san.sanitizeDeep(loop), RangeError);
+        });
+        test('neutralizeFormula', () => {
+          eq(san.neutralizeFormula('=SUM(A1)'), "'=SUM(A1)");
+          eq(san.neutralizeFormula('-5 notes'), "'-5 notes");
+          eq(san.neutralizeFormula('+1'), "'+1");
+          eq(san.neutralizeFormula('@x'), "'@x");
+          eq(san.neutralizeFormula('\tTAB'), "'\tTAB");
+          eq(san.neutralizeFormula('normal'), 'normal');
+          eq(san.neutralizeFormula(-5), -5);
+        });
+        test('toCsvCell', () => {
+          eq(san.toCsvCell('a,b'), '"a,b"');
+          eq(san.toCsvCell('say "hi"'), '"say ""hi"""');
+          eq(san.toCsvCell('a\nb'), '"a\nb"');
+          eq(san.toCsvCell(null), '');
+          eq(san.toCsvCell(undefined), '');
+          eq(san.toCsvCell(5), '5');
+          eq(san.toCsvCell(-5), '-5');
+          eq(san.toCsvCell(NaN), '');
+          eq(san.toCsvCell(true), 'true');
+          eq(san.toCsvCell(['a', 'b']), 'a; b');
+          eq(san.toCsvCell('=1+1'), "'=1+1");
+          eq(san.toCsvCell('=SUM(A1,B1)'), '"\'=SUM(A1,B1)"');
+          eq(san.toCsvCell(new Date('2026-02-28T10:00:00Z')), '2026-02-28T10:00:00.000Z');
+          eq(san.toCsvCell({ a: 1 }), '"{""a"":1}"');
+        });
+      });
+
+      /* ---------------- db.js ---------------- */
+      suite('Database layer (js/services/db.js)', ({ test, before }) => {
+        before(async () => {
+          db.setDatabaseName(TEST_DB);
+          await resetDb();
+        });
+        test('IndexedDB is available and the scratch database is in use', () => {
+          eq(db.isSupported(), true, 'IndexedDB support');
+          eq(db.getDatabaseName(), TEST_DB);
+          assert(TEST_DB !== cfg.DB.NAME, 'The tests must never use the real database.');
+        });
+        test('creates every store with the right version', async () => {
+          const info = await db.getDbInfo();
+          eq(info.name, TEST_DB);
+          eq(info.version, cfg.DB.VERSION);
+          deepEq(info.stores, cfg.STORE_NAMES.slice().sort());
+        });
+        test('every index matches config.js (name, key path, multiEntry, unique)', async () => {
+          await db.runTransaction(cfg.STORE_NAMES.slice(), 'readonly', async (tx) => {
+            for (const def of cfg.STORE_DEFS) {
+              const store = tx.objectStore(def.name);
+              eq(store.keyPath, 'id', def.name + ' keyPath');
+              deepEq(Array.from(store.indexNames).sort(), def.indexes.map((index) => index.name).sort(), def.name + ' index names');
+              for (const spec of def.indexes) {
+                const index = store.index(spec.name);
+                deepEq(index.keyPath, spec.keyPath, def.name + '.' + spec.name + ' keyPath');
+                eq(index.multiEntry, spec.multiEntry, def.name + '.' + spec.name + ' multiEntry');
+                eq(index.unique, spec.unique, def.name + '.' + spec.name + ' unique');
+              }
+            }
+          });
+        });
+        test('put and get a record; missing records are null', async () => {
+          eq(await db.put(S.SETTINGS, { id: 'k1', value: { a: 1 } }), 'k1');
+          deepEq(await db.get(S.SETTINGS, 'k1'), { id: 'k1', value: { a: 1 } });
+          eq(await db.get(S.SETTINGS, 'missing'), null);
+        });
+        test('put replaces and add refuses duplicates', async () => {
+          await db.put(S.SETTINGS, { id: 'k2', value: 1 });
+          await db.put(S.SETTINGS, { id: 'k2', value: 2 });
+          eq((await db.get(S.SETTINGS, 'k2')).value, 2);
+          await expectError(() => db.add(S.SETTINGS, { id: 'k2', value: 3 }), 'exists');
+          eq((await db.get(S.SETTINGS, 'k2')).value, 2, 'value must be unchanged');
+          await db.add(S.SETTINGS, { id: 'k3', value: 3 });
+          eq((await db.get(S.SETTINGS, 'k3')).value, 3);
+        });
+        test('bad input gives readable error codes', async () => {
+          await expectError(() => db.put(S.SETTINGS, { value: 1 }), 'invalid_record');
+          await expectError(() => db.put(S.SETTINGS, null), 'invalid_record');
+          await expectError(() => db.put('nope', { id: 'x' }), 'invalid_store');
+          await expectError(() => db.get(S.SETTINGS, ''), 'invalid_query');
+          await expectError(() => db.get(S.SETTINGS, 5), 'invalid_query');
+          await expectError(() => db.getAllByIndex(S.OBSERVATIONS, 'nope'), 'invalid_index');
+          await expectError(() => db.getAllByIndex(S.OBSERVATIONS, 'status', null, 0), 'invalid_query');
+          await expectError(() => db.query(S.OBSERVATIONS, { direction: 'sideways' }), 'invalid_query');
+          await expectError(() => db.query(S.OBSERVATIONS, { offset: -1 }), 'invalid_query');
+          await expectError(() => db.runTransaction([], 'readonly', () => {}), 'invalid_store');
+          await expectError(() => db.runTransaction([S.SETTINGS], 'sideways', () => {}), 'invalid_query');
+          await expectError(() => db.runTransaction([S.SETTINGS], 'readonly', 5), 'invalid_query');
+          await expectError(() => db.setDatabaseName('bad name!'), 'invalid_query');
+          await expectError(() => db.keyRange.bound(5, 1), 'invalid_range');
+        });
+        test('index queries, ranges, prefix search, order, limit and offset', async () => {
+          await db.putMany(S.OBSERVATIONS, [
+            { id: 'o1', project_id: 'p1', date: '2026-02-01', status: 'OPEN', obs_number: 'OBS-001' },
+            { id: 'o2', project_id: 'p1', date: '2026-02-15', status: 'OPEN', obs_number: 'OBS-002' },
+            { id: 'o3', project_id: 'p1', date: '2026-03-01', status: 'CLOSED', obs_number: 'XYZ-1' },
+            { id: 'o4', project_id: 'p2', date: '2026-02-10', status: 'OPEN' }
+          ]);
+          const ids = (rows) => rows.map((row) => row.id);
+          deepEq(ids(await db.getAllByIndex(S.OBSERVATIONS, 'project_date', db.keyRange.bound(['p1', '2026-02-01'], ['p1', '2026-02-28']))), ['o1', 'o2']);
+          deepEq(ids(await db.getAllByIndex(S.OBSERVATIONS, 'obs_number', db.keyRange.prefix('OBS-'))), ['o1', 'o2']);
+          eq((await db.getAllByIndex(S.OBSERVATIONS, 'status', db.keyRange.only('OPEN'))).length, 3);
+          deepEq(ids(await db.query(S.OBSERVATIONS, { index: 'date', direction: 'prev', limit: 2 })), ['o3', 'o2']);
+          deepEq(ids(await db.query(S.OBSERVATIONS, { index: 'date', direction: 'prev', limit: 2, offset: 1 })), ['o2', 'o4']);
+          deepEq(ids(await db.query(S.OBSERVATIONS, { index: 'date', range: db.keyRange.lowerBound('2026-02-10') })), ['o4', 'o2', 'o3']);
+          eq(await db.count(S.OBSERVATIONS), 4);
+          eq(await db.countByIndex(S.OBSERVATIONS, 'project_id', db.keyRange.only('p1')), 3);
+          eq((await db.getAll(S.OBSERVATIONS)).length, 4);
+        });
+        test('putMany, deleteRecord, deleteMany and clearStore', async () => {
+          eq(await db.putMany(S.SETTINGS, [{ id: 'm1' }, { id: 'm2' }, { id: 'm3' }]), 3);
+          eq(await db.putMany(S.SETTINGS, []), 0);
+          await db.deleteRecord(S.SETTINGS, 'm1');
+          eq(await db.get(S.SETTINGS, 'm1'), null);
+          eq(await db.deleteMany(S.SETTINGS, ['m2', 'm3']), 2);
+          eq(await db.get(S.SETTINGS, 'm2'), null);
+          await db.putMany(S.LESSONS, [{ id: 'l1' }, { id: 'l2' }]);
+          await db.clearStore(S.LESSONS);
+          eq(await db.count(S.LESSONS), 0);
+        });
+        test('a failed transaction rolls back every change', async () => {
+          const error = await expectError(() => db.runTransaction([S.SETTINGS], 'readwrite', async (tx) => {
+            await db.requestToPromise(tx.objectStore(S.SETTINGS).put({ id: 'rb1', value: 1 }));
+            throw new Error('boom');
+          }), Error);
+          eq(error.message, 'boom');
+          eq(await db.get(S.SETTINGS, 'rb1'), null, 'rolled back record');
+        });
+        test('putMany with one invalid record writes nothing', async () => {
+          await expectError(() => db.putMany(S.SETTINGS, [{ id: 'ok1' }, { value: 1 }]), 'invalid_record');
+          eq(await db.get(S.SETTINGS, 'ok1'), null);
+        });
+        test('data survives closing and reopening the database', async () => {
+          await db.put(S.SETTINGS, { id: 'persist', value: 'still here' });
+          db.closeDb();
+          eq((await db.get(S.SETTINGS, 'persist')).value, 'still here');
+        });
+        test('exportAll returns every store in one snapshot', async () => {
+          const snapshot = await db.exportAll();
+          deepEq(Object.keys(snapshot).sort(), cfg.STORE_NAMES.slice().sort());
+          assert(snapshot.settings.some((record) => record.id === 'persist'), 'The saved record is missing from the export.');
+        });
+        test('clearAll empties every store', async () => {
+          await db.clearAll();
+          const snapshot = await db.exportAll();
+          for (const name of cfg.STORE_NAMES) { eq(snapshot[name].length, 0, name + ' record count'); }
+        });
+        test('storage estimate has a valid shape', async () => {
+          const estimate = await db.getStorageEstimate();
+          eq(typeof estimate.supported, 'boolean');
+          if (estimate.supported) { assert(estimate.usage >= 0 && estimate.quota >= 0, 'usage and quota must be numbers.'); }
+        });
+        test('wipeDatabase erases everything and a fresh database is created next', async () => {
+          await db.put(S.SETTINGS, { id: 'gone', value: 1 });
+          await db.wipeDatabase();
+          eq((await db.getDbInfo()).stores.length, cfg.STORE_NAMES.length);
+          eq(await db.count(S.SETTINGS), 0);
+        });
+      });
+
+      /* ---------------- repo.js ---------------- */
+      suite('Repository: first launch and projects (js/services/repo.js)', ({ test, before }) => {
+        before(resetDb);
+        test('creates the default personal project on first launch', async () => {
+          const first = await repo.initRepo();
+          eq(first.projectId, P);
+          eq(first.createdDefault, true);
+          eq(repo.getActiveProjectId(), P);
+          const project = await repo.get(S.PROJECTS, P);
+          eq(project.name, cfg.DEFAULTS.PROJECT_NAME);
+          eq(project.owner_scope, 'personal');
+          eq(project.project_id, null);
+          eq(await repo.getSetting(cfg.SETTINGS_KEYS.ACTIVE_PROJECT), P);
+          const second = await repo.initRepo();
+          eq(second.createdDefault, false);
+          eq((await repo.list(S.PROJECTS)).length, 1, 'project count');
+        });
+        test('restores the previously active project', async () => {
+          const other = await repo.create(S.PROJECTS, { name: 'Site B', status: 'active' });
+          await repo.setActiveProject(other.id);
+          repo.resetRepoState();
+          const again = await repo.initRepo();
+          eq(again.projectId, other.id);
+          eq(again.createdDefault, false);
+          eq(repo.getActiveProjectId(), other.id);
+        });
+        test('falls back to another project when the saved one was deleted', async () => {
+          const temp = await repo.create(S.PROJECTS, { name: 'Temp', status: 'active' });
+          await repo.setActiveProject(temp.id);
+          await repo.remove(S.PROJECTS, temp.id);
+          repo.resetRepoState();
+          const result = await repo.initRepo();
+          assert(result.projectId !== temp.id, 'Must not pick the deleted project.');
+          const project = await repo.get(S.PROJECTS, result.projectId);
+          assert(project && !project.deleted_at, 'The chosen project must exist and not be deleted.');
+        });
+      });
+
+      suite('Repository: records, rules and events (js/services/repo.js)', ({ test, before }) => {
+        before(async () => {
+          await resetDb();
+          await repo.initRepo();
+        });
+        test('ids and device id', () => {
+          assert(UUID.test(repo.newId()), 'newId must be a version 4 UUID.');
+          assert(repo.newId() !== repo.newId(), 'ids must differ.');
+          eq(san.isSafeId(repo.newId()), true);
+          assert(/^dev_[0-9a-f]{12}$/.test(repo.getDeviceId()), 'Device id has the wrong format.');
+          eq(repo.getDeviceId(), repo.getDeviceId());
+        });
+        test('create fills in all common fields', async () => {
+          const record = await repo.create(S.OBSERVATIONS, { description: 'Test', date: '2026-02-28' });
+          assert(UUID.test(record.id), 'id');
+          eq(record.project_id, P);
+          eq(record.rev, 1);
+          eq(record.deleted_at, null);
+          assert(!Number.isNaN(Date.parse(record.created_at)), 'created_at must be an ISO date');
+          eq(record.created_at, record.updated_at);
+          eq(record.device_id, repo.getDeviceId());
+          eq(record.owner_scope, 'employer');
+          eq(record.pdca_stage, 'do');
+          deepEq(await repo.get(S.OBSERVATIONS, record.id), record);
+        });
+        test('callers cannot set managed fields', async () => {
+          const record = await repo.create(S.OBSERVATIONS, { rev: 99, created_at: '2000-01-01', updated_at: '2000-01-01', deleted_at: '2000-01-01', device_id: 'evil', description: 'x' });
+          eq(record.rev, 1);
+          assert(record.created_at !== '2000-01-01', 'created_at must be set by the repository');
+          eq(record.deleted_at, null);
+          eq(record.device_id, repo.getDeviceId());
+        });
+        test('explicit ids work once; duplicates and bad ids are refused', async () => {
+          const record = await repo.create(S.OBSERVATIONS, { id: 'obs_fixed_1', description: 'a' });
+          eq(record.id, 'obs_fixed_1');
+          await expectError(() => repo.create(S.OBSERVATIONS, { id: 'obs_fixed_1' }), 'exists');
+          await expectError(() => repo.create(S.OBSERVATIONS, { id: 'bad id!' }), 'invalid_data');
+        });
+        test('input must be a plain object', async () => {
+          await expectError(() => repo.create(S.OBSERVATIONS, 'text'), 'invalid_data');
+          await expectError(() => repo.create(S.OBSERVATIONS, []), 'invalid_data');
+          await expectError(() => repo.create(S.OBSERVATIONS, null), 'invalid_data');
+          await expectError(() => repo.create('nope', {}), 'invalid_store');
+        });
+        test('owner_scope and pdca_stage are validated', async () => {
+          await expectError(() => repo.create(S.OBSERVATIONS, { owner_scope: 'bogus' }), 'invalid_data');
+          await expectError(() => repo.create(S.OBSERVATIONS, { pdca_stage: 'x' }), 'invalid_data');
+          eq((await repo.create(S.OBSERVATIONS, { pdca_stage: null })).pdca_stage, null);
+          eq((await repo.create(S.OBSERVATIONS, { owner_scope: 'personal' })).owner_scope, 'personal');
+        });
+        test('records are cleaned when saved', async () => {
+          const evil = JSON.parse('{"__proto__":{"polluted":true},"description":"a\\u0000b","nested":{"constructor":{"x":1},"ok":1}}');
+          const record = await repo.create(S.OBSERVATIONS, evil);
+          eq(record.description, 'ab');
+          eq(Object.prototype.hasOwnProperty.call(record, '__proto__'), false);
+          eq(Object.prototype.hasOwnProperty.call(record.nested, 'constructor'), false);
+          eq(record.nested.ok, 1);
+          eq(({}).polluted, undefined);
+        });
+        test('update merges changes and raises the revision', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { description: 'keep me', status: 'OPEN' });
+          const updated = await repo.update(S.OBSERVATIONS, created.id, { status: 'IN PROGRESS' });
+          eq(updated.rev, 2);
+          eq(updated.status, 'IN PROGRESS');
+          eq(updated.description, 'keep me');
+          eq(updated.created_at, created.created_at);
+          assert(updated.updated_at >= created.created_at, 'updated_at must not be earlier than created_at');
+          const cleared = await repo.update(S.OBSERVATIONS, created.id, { description: null, location: 'Gate 1', status: undefined });
+          eq(cleared.description, null);
+          eq(cleared.location, 'Gate 1');
+          eq(cleared.status, 'IN PROGRESS', 'undefined values are ignored');
+          eq(cleared.rev, 3);
+        });
+        test('expectedRev detects edits made after loading', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { status: 'OPEN' });
+          await repo.update(S.OBSERVATIONS, created.id, { status: 'IN PROGRESS' });
+          await expectError(() => repo.update(S.OBSERVATIONS, created.id, { status: 'CLOSED' }, { expectedRev: 1 }), 'conflict');
+          await expectError(() => repo.save(S.OBSERVATIONS, { id: created.id, status: 'CLOSED' }, { expectedRev: 1 }), 'conflict');
+          eq((await repo.update(S.OBSERVATIONS, created.id, { status: 'CLOSED' }, { expectedRev: 2 })).rev, 3);
+        });
+        test('two simultaneous updates are both applied', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { status: 'OPEN' });
+          await Promise.all([
+            repo.update(S.OBSERVATIONS, created.id, { fieldA: 1 }),
+            repo.update(S.OBSERVATIONS, created.id, { fieldB: 2 })
+          ]);
+          const final = await repo.get(S.OBSERVATIONS, created.id);
+          eq(final.fieldA, 1);
+          eq(final.fieldB, 2);
+          eq(final.rev, 3);
+        });
+        test('save replaces a record, or creates it when the id is new', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { description: 'old', status: 'OPEN', date: '2026-01-01' });
+          const replaced = await repo.save(S.OBSERVATIONS, { id: created.id, status: 'CLOSED' });
+          eq(replaced.status, 'CLOSED');
+          eq('description' in replaced, false, 'fields left out are removed');
+          eq(replaced.rev, 2);
+          eq(replaced.created_at, created.created_at);
+          eq(replaced.project_id, created.project_id);
+          const fresh = await repo.save(S.OBSERVATIONS, { id: 'obs_save_new', status: 'OPEN' });
+          eq(fresh.id, 'obs_save_new');
+          eq(fresh.rev, 1);
+          eq((await repo.save(S.OBSERVATIONS, { status: 'OPEN' })).rev, 1);
+        });
+        test('soft delete hides a record and restore brings it back', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { tag: 'soft', description: 'x' });
+          const removed = await repo.remove(S.OBSERVATIONS, created.id);
+          assert(removed.deleted_at, 'deleted_at must be set');
+          eq(removed.rev, 2);
+          eq(await repo.get(S.OBSERVATIONS, created.id), null);
+          eq((await repo.get(S.OBSERVATIONS, created.id, { includeDeleted: true })).id, created.id);
+          eq((await repo.list(S.OBSERVATIONS, { filter: byTag('soft') })).length, 0);
+          eq((await repo.list(S.OBSERVATIONS, { filter: byTag('soft'), includeDeleted: true })).length, 1);
+          eq((await repo.remove(S.OBSERVATIONS, created.id)).rev, 2, 'deleting twice changes nothing');
+          await expectError(() => repo.update(S.OBSERVATIONS, created.id, { x: 1 }), 'not_found');
+          await expectError(() => repo.save(S.OBSERVATIONS, { id: created.id, x: 1 }), 'not_found');
+          const restored = await repo.restore(S.OBSERVATIONS, created.id);
+          eq(restored.deleted_at, null);
+          eq(restored.rev, 3);
+          eq((await repo.get(S.OBSERVATIONS, created.id)).id, created.id);
+          eq((await repo.restore(S.OBSERVATIONS, created.id)).rev, 3, 'restoring twice changes nothing');
+        });
+        test('purge erases a record for good', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { description: 'to purge' });
+          eq(await repo.purge(S.OBSERVATIONS, created.id), true);
+          eq(await repo.get(S.OBSERVATIONS, created.id, { includeDeleted: true }), null);
+          await expectError(() => repo.purge(S.OBSERVATIONS, created.id), 'not_found');
+        });
+        test('records stay inside their own project', async () => {
+          const other = await repo.create(S.PROJECTS, { name: 'Iso B', status: 'active' });
+          const mine = await repo.create(S.OBSERVATIONS, { tag: 'iso', description: 'default project' });
+          const theirs = await repo.create(S.OBSERVATIONS, { tag: 'iso', description: 'project B' }, { projectId: other.id });
+          eq(theirs.project_id, other.id);
+          eq(await repo.get(S.OBSERVATIONS, theirs.id), null);
+          await expectError(() => repo.update(S.OBSERVATIONS, theirs.id, { description: 'hack' }), 'not_found');
+          await expectError(() => repo.remove(S.OBSERVATIONS, theirs.id), 'not_found');
+          await expectError(() => repo.purge(S.OBSERVATIONS, theirs.id), 'not_found');
+          deepEq((await repo.list(S.OBSERVATIONS, { filter: byTag('iso') })).map((r) => r.id), [mine.id]);
+          deepEq((await repo.list(S.OBSERVATIONS, { filter: byTag('iso'), projectId: other.id })).map((r) => r.id), [theirs.id]);
+          eq((await repo.list(S.OBSERVATIONS, { filter: byTag('iso'), allProjects: true })).length, 2);
+          eq((await repo.get(S.OBSERVATIONS, theirs.id, { allProjects: true })).id, theirs.id);
+        });
+        test('switching the active project changes what is shown', async () => {
+          const other = await repo.create(S.PROJECTS, { name: 'Switch B', status: 'active' });
+          const inOther = await repo.create(S.OBSERVATIONS, { tag: 'sw' }, { projectId: other.id });
+          const watcher = recordEvents();
+          try {
+            await repo.setActiveProject(other.id);
+            const change = watcher.events.find((item) => item.name === cfg.EVENTS.PROJECT_CHANGED);
+            assert(change, 'PROJECT_CHANGED was not emitted.');
+            eq(change.payload.project_id, other.id);
+            eq(change.payload.previous_project_id, P);
+            eq(repo.getActiveProjectId(), other.id);
+            eq(await repo.getSetting(cfg.SETTINGS_KEYS.ACTIVE_PROJECT), other.id);
+            eq((await repo.get(S.OBSERVATIONS, inOther.id)).id, inOther.id);
+          } finally {
+            watcher.stop();
+            await repo.setActiveProject(P);
+          }
+          eq(await repo.get(S.OBSERVATIONS, inOther.id), null);
+        });
+        test('project errors: none selected, unknown, deleted, wrong store, moving', async () => {
+          repo.resetRepoState();
+          try {
+            await expectError(() => repo.create(S.OBSERVATIONS, {}), 'no_project');
+            await expectError(() => repo.list(S.OBSERVATIONS), 'no_project');
+          } finally { await repo.setActiveProject(P); }
+          await expectError(() => repo.create(S.OBSERVATIONS, { project_id: 'ghost_project' }), 'invalid_project');
+          await expectError(() => repo.create(S.OBSERVATIONS, {}, { projectId: 'ghost_project' }), 'invalid_project');
+          await expectError(() => repo.setActiveProject('ghost_project'), 'invalid_project');
+          await expectError(() => repo.setActiveProject('bad id'), 'invalid_data');
+          const gone = await repo.create(S.PROJECTS, { name: 'Gone', status: 'active' });
+          await repo.remove(S.PROJECTS, gone.id);
+          await expectError(() => repo.create(S.OBSERVATIONS, {}, { projectId: gone.id }), 'invalid_project');
+          await expectError(() => repo.create(S.LESSONS, { project_id: P, title: 'x' }), 'invalid_data');
+          const record = await repo.create(S.OBSERVATIONS, {});
+          await expectError(() => repo.update(S.OBSERVATIONS, record.id, { project_id: 'another_project' }), 'invalid_data');
+        });
+        test('list: ordering, missing values last, limit and offset', async () => {
+          for (const date of ['2026-03-01', '2026-01-15', '2026-02-10', null]) {
+            await repo.create(S.OBSERVATIONS, date === null ? { tag: 'ord' } : { tag: 'ord', date });
+          }
+          const dates = (rows) => rows.map((row) => row.date ?? null);
+          deepEq(dates(await repo.list(S.OBSERVATIONS, { orderBy: 'date', filter: byTag('ord') })), ['2026-01-15', '2026-02-10', '2026-03-01', null]);
+          deepEq(dates(await repo.list(S.OBSERVATIONS, { orderBy: 'date', direction: 'desc', filter: byTag('ord') })), ['2026-03-01', '2026-02-10', '2026-01-15', null]);
+          deepEq(dates(await repo.list(S.OBSERVATIONS, { orderBy: 'date', filter: byTag('ord'), limit: 2, offset: 1 })), ['2026-02-10', '2026-03-01']);
+          eq(await repo.count(S.OBSERVATIONS, { filter: byTag('ord') }), 4);
+        });
+        test('list: index and range for a month of records', async () => {
+          const rows = await repo.list(S.OBSERVATIONS, {
+            index: 'project_date',
+            range: db.keyRange.bound([P, '2026-02-01'], [P, '2026-02-28']),
+            filter: byTag('ord')
+          });
+          deepEq(rows.map((row) => row.date), ['2026-02-10']);
+        });
+        test('list: bad options are rejected', async () => {
+          await expectError(() => repo.list(S.OBSERVATIONS, { direction: 'up' }), 'invalid_query');
+          await expectError(() => repo.list(S.OBSERVATIONS, { limit: 0 }), 'invalid_query');
+          await expectError(() => repo.list(S.OBSERVATIONS, { offset: -1 }), 'invalid_query');
+          await expectError(() => repo.list(S.OBSERVATIONS, { filter: 'x' }), 'invalid_query');
+          await expectError(() => repo.list(S.OBSERVATIONS, { range: db.keyRange.only('x') }), 'invalid_query');
+          await expectError(() => repo.list(S.OBSERVATIONS, { orderBy: '' }), 'invalid_query');
+        });
+        test('audit trail logs every change without record content', async () => {
+          const created = await repo.create(S.OBSERVATIONS, { description: 'SECRET-TEXT-123' });
+          await repo.update(S.OBSERVATIONS, created.id, { status: 'IN PROGRESS' });
+          await repo.remove(S.OBSERVATIONS, created.id);
+          await repo.restore(S.OBSERVATIONS, created.id);
+          await repo.purge(S.OBSERVATIONS, created.id);
+          const entries = await db.getAllByIndex(S.AUDIT_TRAIL, 'store_record', db.keyRange.only([S.OBSERVATIONS, created.id]));
+          deepEq(entries.map((entry) => entry.action).sort(), ['create', 'delete', 'purge', 'restore', 'update']);
+          for (const entry of entries) {
+            eq(entry.store, S.OBSERVATIONS);
+            eq(entry.record_id, created.id);
+            eq(entry.record_project_id, P);
+            eq(typeof entry.record_rev, 'number');
+          }
+          assert(!JSON.stringify(entries).includes('SECRET-TEXT-123'), 'The audit trail must not contain record content.');
+          const all = await db.getAll(S.AUDIT_TRAIL);
+          eq(all.filter((entry) => entry.store === S.SETTINGS || entry.store === S.AUDIT_TRAIL).length, 0, 'settings and audit entries must not be audited');
+        });
+        test('events are emitted after changes, and not for no-ops', async () => {
+          const watcher = recordEvents();
+          let created;
+          try {
+            created = await repo.create(S.OBSERVATIONS, { description: 'events' });
+            await repo.update(S.OBSERVATIONS, created.id, { status: 'IN PROGRESS' });
+            await repo.remove(S.OBSERVATIONS, created.id);
+            await repo.remove(S.OBSERVATIONS, created.id);
+            await repo.restore(S.OBSERVATIONS, created.id);
+            await repo.purge(S.OBSERVATIONS, created.id);
+          } finally { watcher.stop(); }
+          const mine = watcher.events.filter((item) => item.payload && item.payload.id === created.id && item.payload.store === S.OBSERVATIONS);
+          deepEq(
+            mine.map((item) => item.name + ':' + (item.payload.action || (item.payload.hard ? 'purge' : 'delete'))),
+            ['record:saved:create', 'record:saved:update', 'record:deleted:delete', 'record:saved:restore', 'record:deleted:purge']
+          );
+          eq(mine[0].payload.project_id, P);
+        });
+        test('settings: read, write, fallback and validation', async () => {
+          eq(await repo.getSetting('nope_key', 'fallback'), 'fallback');
+          eq(await repo.getSetting('nope_key'), null);
+          deepEq(await repo.setSetting('k_one', { a: 1 }), { a: 1 });
+          deepEq(await repo.getSetting('k_one'), { a: 1 });
+          eq(await repo.setSetting('k_one', null), null);
+          eq(await repo.getSetting('k_one', 'fallback'), null, 'a stored null is a real value');
+          await expectError(() => repo.setSetting('k_one', undefined), 'invalid_data');
+          await expectError(() => repo.setSetting('bad key', 1), 'invalid_query');
+        });
+      });
+
+      /* ---------------- services/config.js ---------------- */
+      suite('User configuration (js/services/config.js)', ({ test, before }) => {
+        before(async () => {
+          await resetDb();
+          await repo.initRepo();
+        });
+        const defaults = () => ucfg.USER_CONFIG_DEFAULTS;
+        test('a new install gets the defaults', async () => {
+          const config = await ucfg.getUserConfig();
+          deepEq(config, {
+            language: 'en', timezone: 'auto', country: null, industry: null, role: 'beginner_learner',
+            units: 'metric', date_format: 'DD/MM/YYYY', week_start: 'monday',
+            privacy: { ai_enabled: false, context_level: 'page', redact_names: true }
+          });
+          deepEq(config, defaults());
+        });
+        test('getUserConfig returns copies', async () => {
+          const first = await ucfg.getUserConfig();
+          first.language = 'zz';
+          first.privacy.ai_enabled = true;
+          const second = await ucfg.getUserConfig();
+          eq(second.language, 'en');
+          eq(second.privacy.ai_enabled, false);
+        });
+        test('updates are saved, survive a reload and mirror the language', async () => {
+          await ucfg.updateUserConfig({ language: 'ta' });
+          ucfg.resetConfigCache();
+          const reloaded = await ucfg.loadUserConfig();
+          eq(reloaded.language, 'ta');
+          eq(localStorage.getItem(cfg.LS_KEYS.LANGUAGE), 'ta');
+          eq(ucfg.getCachedLanguage(), 'ta');
+          const stored = await repo.getSetting(cfg.SETTINGS_KEYS.USER_CONFIG);
+          eq(stored.config_version, 1);
+          eq(stored.language, 'ta');
+        });
+        test('CONFIG_CHANGED is emitted with the changed fields, and not for no-ops', async () => {
+          const events = [];
+          const stop = ev.on(cfg.EVENTS.CONFIG_CHANGED, (payload) => { events.push(payload); });
+          try {
+            await ucfg.updateUserConfig({ language: 'hi' });
+            await ucfg.updateUserConfig({ language: 'hi' });
+          } finally { stop(); }
+          eq(events.length, 1, 'events');
+          deepEq(events[0].changed, ['language']);
+          eq(events[0].previous.language, 'ta');
+          eq(events[0].config.language, 'hi');
+        });
+        test('privacy can be changed partially', async () => {
+          const config = await ucfg.updateUserConfig({ privacy: { ai_enabled: true } });
+          eq(config.privacy.ai_enabled, true);
+          eq(config.privacy.context_level, 'page');
+          eq(config.privacy.redact_names, true);
+        });
+        test('invalid changes are rejected and nothing is saved', async () => {
+          const before = await ucfg.getUserConfig();
+          const error = await expectError(() => ucfg.updateUserConfig({ language: 'en', units: 'furlongs' }), 'invalid_data');
+          eq(error.fields.units, 'Choose metric or imperial.');
+          eq((await ucfg.getUserConfig()).language, before.language, 'language must be unchanged');
+          const unknown = await expectError(() => ucfg.updateUserConfig({ foo: 1 }), 'invalid_data');
+          assert(unknown.fields.foo, 'unknown setting must be reported');
+          const privacy = await expectError(() => ucfg.updateUserConfig({ privacy: { context_level: 'all' } }), 'invalid_data');
+          assert(privacy.fields['privacy.context_level'], 'privacy field must be reported');
+          const badPrivacy = await expectError(() => ucfg.updateUserConfig({ privacy: 'x' }), 'invalid_data');
+          assert(badPrivacy.fields.privacy, 'non-object privacy must be reported');
+          await expectError(() => ucfg.updateUserConfig('x'), 'invalid_data');
+        });
+        test('time zone: valid, auto and invalid values', async () => {
+          let config = await ucfg.updateUserConfig({ timezone: 'Asia/Kolkata' });
+          assert(typeof config.timezone === 'string' && config.timezone !== 'auto', 'A fixed zone must be stored.');
+          new Intl.DateTimeFormat('en', { timeZone: config.timezone });
+          eq(ucfg.getEffectiveTimezone(config), config.timezone);
+          config = await ucfg.updateUserConfig({ timezone: 'auto' });
+          eq(config.timezone, 'auto');
+          eq(ucfg.getEffectiveTimezone(config), ucfg.getDeviceTimezone());
+          assert(ucfg.getDeviceTimezone() !== '', 'The device time zone must not be empty.');
+          await expectError(() => ucfg.updateUserConfig({ timezone: 'Mars/Phobos' }), 'invalid_data');
+          await expectError(() => ucfg.updateUserConfig({ timezone: '+05:30' }), 'invalid_data');
+        });
+        test('values are normalized (country, role, industry, date format, week start)', async () => {
+          let config = await ucfg.updateUserConfig({ country: 'in', role: 'Safety_Officer', date_format: 'dd/mm/yyyy', week_start: 'SUNDAY', industry: 'Manufacturing', units: 'IMPERIAL' });
+          eq(config.country, 'IN');
+          eq(config.role, 'safety_officer');
+          eq(config.date_format, 'DD/MM/YYYY');
+          eq(config.week_start, 'sunday');
+          eq(config.industry, 'manufacturing');
+          eq(config.units, 'imperial');
+          await expectError(() => ucfg.updateUserConfig({ country: 'India' }), 'invalid_data');
+          await expectError(() => ucfg.updateUserConfig({ role: 'Safety Officer' }), 'invalid_data');
+          await expectError(() => ucfg.updateUserConfig({ role: 'x' }), 'invalid_data');
+          config = await ucfg.updateUserConfig({ country: '', industry: null });
+          eq(config.country, null);
+          eq(config.industry, null);
+        });
+        test('validateConfigChanges directly', () => {
+          const good = ucfg.validateConfigChanges({ units: 'METRIC', language: 'EN', units2: undefined, week_start: undefined });
+          eq(good.value.units, 'metric');
+          eq(good.value.language, 'en');
+          assert(Object.keys(good.errors).length === 1 && good.errors.units2, 'Only the unknown key must be reported.');
+          deepEq(ucfg.validateConfigChanges({ units: undefined }), { value: {}, errors: {} });
+        });
+        test('normalizeUserConfig repairs bad stored data', () => {
+          deepEq(ucfg.normalizeUserConfig(null), defaults());
+          deepEq(ucfg.normalizeUserConfig(42), defaults());
+          deepEq(ucfg.normalizeUserConfig([]), defaults());
+          const repaired = ucfg.normalizeUserConfig({ language: 'xx', units: 'imperial', privacy: { ai_enabled: 'yes', redact_names: false } });
+          eq(repaired.language, 'en');
+          eq(repaired.units, 'imperial');
+          eq(repaired.privacy.ai_enabled, false);
+          eq(repaired.privacy.redact_names, false);
+          eq(repaired.privacy.context_level, 'page');
+        });
+        test('resetUserConfig restores the defaults and announces the change', async () => {
+          await ucfg.updateUserConfig({ units: 'imperial', language: 'ar' });
+          const events = [];
+          const stop = ev.on(cfg.EVENTS.CONFIG_CHANGED, (payload) => { events.push(payload); });
+          let result;
+          try { result = await ucfg.resetUserConfig(); } finally { stop(); }
+          deepEq(result, defaults());
+          eq(events.length, 1, 'events');
+          assert(events[0].changed.includes('units') && events[0].changed.includes('language'), 'changed fields must be listed');
+          eq(localStorage.getItem(cfg.LS_KEYS.LANGUAGE), 'en');
+        });
+        test('quick successive updates are all kept', async () => {
+          await ucfg.resetUserConfig();
+          await Promise.all([
+            ucfg.updateUserConfig({ language: 'hi' }),
+            ucfg.updateUserConfig({ units: 'imperial' }),
+            ucfg.updateUserConfig({ privacy: { redact_names: false } })
+          ]);
+          ucfg.resetConfigCache();
+          const config = await ucfg.loadUserConfig();
+          eq(config.language, 'hi');
+          eq(config.units, 'imperial');
+          eq(config.privacy.redact_names, false);
+        });
+        test('corrupt stored values fall back to defaults without crashing', async () => {
+          await repo.setSetting(cfg.SETTINGS_KEYS.USER_CONFIG, { language: 'zz', units: 'imperial', privacy: 'oops', timezone: 42 });
+          ucfg.resetConfigCache();
+          const config = await ucfg.loadUserConfig();
+          eq(config.language, 'en');
+          eq(config.units, 'imperial');
+          eq(config.timezone, 'auto');
+          deepEq(config.privacy, defaults().privacy);
+        });
+        test('language helpers', () => {
+          deepEq(ucfg.SUPPORTED_LANGUAGES.map((entry) => entry.code), ['en', 'ta', 'hi', 'ar']);
+          eq(ucfg.getLanguageInfo('AR').dir, 'rtl');
+          eq(ucfg.getLanguageInfo('ta').speechLocale, 'ta-IN');
+          eq(ucfg.getLanguageInfo('zz').code, 'en');
+          eq(ucfg.getLanguageInfo(null).code, 'en');
+          localStorage.setItem(cfg.LS_KEYS.LANGUAGE, 'zz');
+          eq(ucfg.getCachedLanguage(), 'en');
+          localStorage.setItem(cfg.LS_KEYS.LANGUAGE, 'hi');
+          eq(ucfg.getCachedLanguage(), 'hi');
+        });
+        test('option lists', () => {
+          deepEq(ucfg.UNITS, ['metric', 'imperial']);
+          deepEq(ucfg.DATE_FORMATS, ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']);
+          deepEq(ucfg.WEEK_STARTS, ['monday', 'sunday', 'saturday']);
+          deepEq(ucfg.CONTEXT_LEVELS, ['off', 'page', 'field', 'selection']);
+        });
+      });
+
+      suite('Theme (js/services/config.js)', ({ test }) => {
+        test('an invalid saved theme falls back to automatic', () => {
+          localStorage.setItem(cfg.LS_KEYS.THEME, 'purple');
+          eq(ucfg.getTheme(), 'auto');
+        });
+        test('nextTheme cycles automatic, light, dark', () => {
+          eq(ucfg.nextTheme('auto'), 'light');
+          eq(ucfg.nextTheme('light'), 'dark');
+          eq(ucfg.nextTheme('dark'), 'auto');
+          eq(ucfg.nextTheme('zzz'), 'auto');
+        });
+        test('setTheme saves, announces and ignores repeats', async () => {
+          const events = [];
+          const stop = ev.on(cfg.EVENTS.THEME_CHANGED, (payload) => { events.push(payload); });
+          try {
+            eq(ucfg.setTheme('dark'), 'dark');
+            ucfg.setTheme('dark');
+          } finally { stop(); }
+          eq(events.length, 1, 'events');
+          deepEq(events[0], { theme: 'dark', previous: 'auto' });
+          eq(localStorage.getItem(cfg.LS_KEYS.THEME), 'dark');
+          eq(ucfg.getTheme(), 'dark');
+          await expectError(() => ucfg.setTheme('banana'), 'invalid_data');
+        });
+      });
+
+      /* ---------------- router.js: static parts ---------------- */
+      suite('Module list and links (js/core/router.js)', ({ test }) => {
+        let real;
+        const copyOf = () => JSON.parse(JSON.stringify(real));
+        const invalid = async (change, fragment) => {
+          const data = copyOf();
+          change(data);
+          const error = await expectError(() => router.validateRegistry(data), Error);
+          assert(error.message.startsWith('NASUR modules.json:'), 'Unexpected message: ' + error.message);
+          assert(error.message.includes(fragment), 'Message "' + error.message + '" should mention "' + fragment + '".');
+        };
+        test('data/modules.json is valid', async () => {
+          real = await fetchJson('data/modules.json');
+          eq(router.validateRegistry(real), true);
+          assert(real.modules.length >= 38, 'Expected at least 38 modules.');
+          deepEq(real.pdca_stages.map((stage) => stage.id).sort(), Object.values(cfg.PDCA_STAGE).sort(), 'PDCA stage ids');
+          const routes = real.modules.map((mod) => mod.route);
+          eq(new Set(routes).size, routes.length, 'unique routes');
+          for (const id of ['home', 'more']) {
+            const mod = real.modules.find((item) => item.id === id);
+            assert(mod && mod.status === 'active' && mod.builtin === true, id + ' must be an active built-in module.');
+          }
+        });
+        test('registry validation rejects mistakes', async () => {
+          real = real || await fetchJson('data/modules.json');
+          await invalid((data) => { data.modules[1].id = data.modules[0].id; }, 'duplicate');
+          await invalid((data) => { data.modules[0].route = '/wrong'; }, 'route');
+          await invalid((data) => { data.modules[0].group = 'nope'; }, 'group');
+          await invalid((data) => { data.modules[0].pdca = 'zzz'; }, 'PDCA');
+          await invalid((data) => { data.modules[0].status = 'maybe'; }, 'status');
+          await invalid((data) => { data.modules[0].phase = 0; }, 'phase');
+          await invalid((data) => { data.modules.find((mod) => mod.file).file = 'js/other/x.js'; }, 'file path');
+          await invalid((data) => { const mod = data.modules.find((item) => item.id === 'observations'); mod.status = 'active'; mod.file = null; }, 'no file');
+          await invalid((data) => { data.modules[0].nav = { order: 'x', label: '' }; }, 'nav');
+          await invalid((data) => { delete data.groups; }, 'groups');
+          await expectError(() => router.validateRegistry(null), Error);
+        });
+        test('registry queries (modules, navigation, groups, PDCA)', () => {
+          const registry = router.setModuleRegistry(real);
+          assert(Object.isFrozen(registry), 'The registry must be frozen.');
+          eq(router.getModule('home').route, '/home');
+          eq(router.getModuleByRoute('/report-check').id, 'report_check');
+          eq(router.getModule('nope'), null);
+          eq(router.getModuleByRoute('/nope'), null);
+          eq(router.isModuleOpenable(router.getModule('home')), true);
+          eq(router.isModuleOpenable(router.getModule('policy')), false);
+          eq(router.isModuleOpenable(null), false);
+          const nav = router.getNavItems();
+          assert(nav.length >= 2, 'At least Home and More must be in the navigation.');
+          assert(nav.every((item) => item.status === 'active' && item.nav !== null), 'Navigation lists only active modules with a nav entry.');
+          deepEq(nav.map((item) => item.nav.order), nav.map((item) => item.nav.order).slice().sort((a, b) => a - b), 'navigation order');
+          assert(nav.some((item) => item.id === 'home') && nav.some((item) => item.id === 'more'), 'Home and More must be in the navigation.');
+          const groups = router.getModulesByGroup();
+          deepEq(groups.map((entry) => entry.group.id), ['core', 'operations', 'learning', 'knowledge', 'insight', 'extensions']);
+          eq(groups.reduce((sum, entry) => sum + entry.modules.length, 0), real.modules.length, 'modules in groups');
+          const stages = router.getModulesByPdca();
+          deepEq(stages.map((entry) => entry.stage.id), ['plan', 'do', 'check', 'act', 'improve']);
+          for (const entry of stages) {
+            assert(entry.modules.every((mod) => mod.pdca === entry.stage.id), 'PDCA grouping is wrong for ' + entry.stage.id);
+          }
+        });
+        test('the loaded registry cannot be changed', async () => {
+          router.setModuleRegistry(real);
+          await expectError(() => { router.getRegistry().modules.push({}); }, TypeError);
+        });
+        test('parseHash', () => {
+          const a = router.parseHash('#/observations/ab%20c?x=1');
+          eq(a.valid, true);
+          eq(a.path, '/observations/ab%20c');
+          deepEq(a.segments, ['observations', 'ab c']);
+          eq(a.query.get('x'), '1');
+          const empty = router.parseHash('');
+          eq(empty.valid, true);
+          eq(empty.path, '/');
+          deepEq(empty.segments, []);
+          deepEq(router.parseHash(undefined).segments, []);
+          deepEq(router.parseHash('#//a///b/').segments, ['a', 'b']);
+          eq(router.parseHash('#//a///b/').path, '/a/b');
+          eq(router.parseHash('#/a?x=1&y=2').query.get('y'), '2');
+          eq(router.parseHash('#/%E0%A4%A').valid, false, 'bad encoding');
+          eq(router.parseHash('#/' + 'a'.repeat(2001)).valid, false, 'too long');
+        });
+        test('routePath and hrefFor encode safely', async () => {
+          eq(router.routePath('home'), '/home');
+          eq(router.routePath('report_check', ['a b'], { q: '1 2' }), '/report-check/a%20b?q=1+2');
+          eq(router.routePath('observations', ['a/b?c#d']), '/observations/a%2Fb%3Fc%23d');
+          eq(router.routePath('actions', [], { status: 'open', page: 2, x: null, y: undefined }), '/actions?status=open&page=2');
+          eq(router.hrefFor('observations', ['id1'], { a: 'b' }), '#/observations/id1?a=b');
+          eq(router.DEFAULT_ROUTE, '/home');
+          await expectError(() => router.routePath('Bad-Id'), TypeError);
+          await expectError(() => router.routePath(5), TypeError);
+          await expectError(() => router.routePath('home', 'x'), TypeError);
+          await expectError(() => router.routePath('home', ['']), TypeError);
+        });
+        test('navigate rejects bad paths', async () => {
+          await expectError(() => router.navigate('no-slash'), TypeError);
+          await expectError(() => router.navigate('/has space'), TypeError);
+          await expectError(() => router.navigate('/a#b'), TypeError);
+          await expectError(() => router.navigate(5), TypeError);
+        });
+      });
+
+      /* ---------------- hooks data ---------------- */
+      suite('Manufacturing hook registry (data/hooks/manufacturing-hooks.json)', ({ test }) => {
+        let hooks;
+        let moduleIds;
+        const ensure = async () => {
+          if (!hooks) { hooks = await fetchJson('data/hooks/manufacturing-hooks.json'); }
+          if (!moduleIds) { moduleIds = new Set((await fetchJson('data/modules.json')).modules.map((mod) => mod.id)); }
+        };
+        test('contains the eleven agreed hooks', async () => {
+          await ensure();
+          eq(hooks.schema_version, 1);
+          const ids = hooks.hooks.map((hook) => hook.id);
+          eq(new Set(ids).size, ids.length, 'unique ids');
+          for (const id of ['machine_guarding', 'loto', 'production_line', 'maintenance_safety', 'chemical_sds', 'ergonomics', 'forklift_mhe', 'noise_exposure', 'contractor_maintenance', 'moc', 'process_safety_awareness']) {
+            assert(ids.includes(id), 'Missing hook ' + id);
+          }
+        });
+        test('every hook has complete, valid fields', async () => {
+          await ensure();
+          const stages = Object.values(cfg.PDCA_STAGE);
+          const extTypes = new Set();
+          for (const hook of hooks.hooks) {
+            for (const field of ['id', 'title', 'summary', 'pdca', 'industries', 'related_modules', 'reuses_stores', 'ext_type', 'promote_to_store', 'first_phase', 'first_scope', 'register_phase', 'awareness_topics', 'planned_fields', 'status']) {
+              assert(field in hook, hook.id + ' is missing "' + field + '"');
+            }
+            assert(/^[a-z][a-z0-9_]*$/.test(hook.id), hook.id + ' has an invalid id');
+            assert(stages.includes(hook.pdca), hook.id + ' has an invalid pdca stage');
+            assert(hooks.status_values.includes(hook.status), hook.id + ' has an invalid status');
+            assert(Array.isArray(hook.awareness_topics) && hook.awareness_topics.length > 0, hook.id + ' needs awareness topics');
+            assert(Array.isArray(hook.planned_fields) && hook.planned_fields.length > 0, hook.id + ' needs planned fields');
+            for (const phaseField of ['first_phase', 'register_phase']) {
+              const value = hook[phaseField];
+              assert(value === null || (Number.isInteger(value) && value >= 1), hook.id + '.' + phaseField + ' must be null or a phase number');
+            }
+            assert(!extTypes.has(hook.ext_type), 'Duplicate ext_type ' + hook.ext_type);
+            extTypes.add(hook.ext_type);
+          }
+        });
+        test('industries, modules and stores referenced by hooks all exist', async () => {
+          await ensure();
+          const problems = [];
+          for (const hook of hooks.hooks) {
+            for (const industry of hook.industries) { if (!INDUSTRY_IDS.includes(industry)) { problems.push(hook.id + ': unknown industry ' + industry); } }
+            for (const id of hook.related_modules) { if (!moduleIds.has(id)) { problems.push(hook.id + ': unknown module ' + id); } }
+            for (const store of hook.reuses_stores) { if (!cfg.isStoreName(store)) { problems.push(hook.id + ': unknown store ' + store); } }
+            if (hook.promote_to_store !== null && hook.status !== 'promoted' && cfg.isStoreName(hook.promote_to_store)) {
+              problems.push(hook.id + ': ' + hook.promote_to_store + ' already exists but the hook is not marked promoted');
+            }
+          }
+          assert(problems.length === 0, problems.join('\n'));
+        });
+      });
+
+      /* ---------------- router.js: live view switching ---------------- */
+      suite('Router (live view switching)', ({ test, before, after }) => {
+        const original = { href: location.href, title: document.title, lastRoute: localStorage.getItem(cfg.LS_KEYS.LAST_ROUTE) };
+        const log = [];
+        let container;
+        let focusTarget;
+        let alphaSignal = null;
+
+        const makeModule = (id, extra) => Object.assign({
+          id, route: '/' + id.replace(/_/g, '-'), title: id.toUpperCase(), icon: '•', description: 'Test module ' + id,
+          group: 'core', pdca: null, phase: 1, status: 'active', builtin: true, file: null, nav: null
+        }, extra || {});
+        const testRegistry = {
+          schema_version: 1,
+          pdca_stages: [{ id: 'plan', title: 'Plan', order: 1 }],
+          groups: [{ id: 'core', title: 'Core', order: 1 }],
+          modules: [
+            makeModule('home'),
+            makeModule('alpha', { nav: { order: 1, label: 'Alpha' } }),
+            makeModule('beta_two'),
+            makeModule('gamma', { status: 'planned', phase: 5, builtin: false }),
+            makeModule('delta'),
+            makeModule('epsilon', { builtin: false, file: 'js/modules/does-not-exist.js' })
+          ]
+        };
+
+        function waitForRoute(predicate) {
+          return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => { stop(); reject(new Error('The router did not show the expected page within 3 seconds.')); }, 3000);
+            const stop = ev.on(cfg.EVENTS.ROUTE_CHANGED, (info) => {
+              if (predicate(info)) { clearTimeout(timer); stop(); resolve(info); }
+            });
+          });
+        }
+        async function go(path, predicate) {
+          const waiting = waitForRoute(predicate);
+          router.navigate(path);
+          return waiting;
+        }
+
+        before(() => {
+          router.setModuleRegistry(testRegistry);
+          container = document.createElement('div');
+          container.hidden = true;
+          focusTarget = document.createElement('div');
+          focusTarget.tabIndex = -1;
+          document.body.append(container, focusTarget);
+          router.registerBuiltin('home', async (ctx) => { ctx.root.textContent = 'HOME VIEW'; });
+          router.registerBuiltin('alpha', async (ctx) => {
+            alphaSignal = ctx.signal;
+            ctx.root.textContent = 'ALPHA ' + ctx.segments.join('|') + ' ' + (ctx.query.get('x') || '-');
+            ctx.setTitle('Alpha title');
+            return () => { log.push('alpha-cleanup'); };
+          });
+          router.registerBuiltin('beta_two', async (ctx) => {
+            await sleep(80);
+            if (ctx.signal.aborted) { return; }
+            ctx.root.textContent = 'BETA VIEW';
+          });
+          router.registerBuiltin('delta', async () => { throw new Error('delta failed on purpose'); });
+        });
+
+        after(() => {
+          if (router.isRouterRunning()) { router.stopRouter(); }
+          router.clearModuleRegistry();
+          if (container) { container.remove(); }
+          if (focusTarget) { focusTarget.remove(); }
+          history.replaceState(null, '', original.href);
+          document.title = original.title;
+          try {
+            if (original.lastRoute === null) { localStorage.removeItem(cfg.LS_KEYS.LAST_ROUTE); } else { localStorage.setItem(cfg.LS_KEYS.LAST_ROUTE, original.lastRoute); }
+          } catch { /* storage blocked */ }
+        });
+
+        test('starts and shows the view for the current address', async () => {
+          history.replaceState(null, '', location.pathname + location.search + '#/alpha');
+          await router.startRouter({ root: container, focusTarget });
+          eq(router.isRouterRunning(), true);
+          assert(container.textContent.includes('ALPHA'), 'The alpha view was not shown.');
+          const info = router.getCurrentRoute();
+          eq(info.module_id, 'alpha');
+          eq(info.state, 'ok');
+          deepEq(info.segments, []);
+          assert(document.title.includes('Alpha title'), 'The view title was not applied.');
+          eq(router.getCurrentView(), container.firstElementChild);
+          await expectError(() => router.startRouter({ root: container }), Error);
+        });
+        test('passes segments and query to the view, aborts and cleans up the old view', async () => {
+          const firstSignal = alphaSignal;
+          log.length = 0;
+          const info = await go('/alpha/seg1/seg%202?x=5', (item) => item.path.startsWith('/alpha/seg1'));
+          eq(info.state, 'ok');
+          deepEq(info.segments, ['seg1', 'seg 2']);
+          eq(info.previous_path, '/alpha');
+          eq(container.textContent, 'ALPHA seg1|seg 2 5');
+          assert(log.includes('alpha-cleanup'), 'The previous view was not cleaned up.');
+          eq(firstSignal.aborted, true, 'previous view signal');
+          eq(alphaSignal.aborted, false, 'current view signal');
+        });
+        test('unknown pages show "Page not found"', async () => {
+          const info = await go('/zzz', (item) => item.state === 'not_found');
+          assert(container.textContent.includes('Page not found'), 'The not-found page was not shown.');
+          assert(document.title.includes('Page not found'), 'The title was not updated.');
+          eq(info.module_id, null);
+        });
+        test('planned modules show a friendly page', async () => {
+          const info = await go('/gamma', (item) => item.module_id === 'gamma');
+          eq(info.state, 'planned');
+          assert(container.textContent.includes('build phase 5'), 'The planned page must mention the build phase.');
+        });
+        test('a view that throws shows an error page', async () => {
+          const cap = captureConsole();
+          try {
+            const info = await go('/delta', (item) => item.module_id === 'delta');
+            eq(info.state, 'error');
+            assert(container.textContent.includes('could not be shown'), 'The error page was not shown.');
+          } finally { cap.restore(); }
+        });
+        test('a module file that cannot be loaded shows an error page with a working retry button', async () => {
+          const cap = captureConsole();
+          try {
+            const info = await go('/epsilon', (item) => item.module_id === 'epsilon');
+            eq(info.state, 'error');
+            assert(container.textContent.includes('could not be loaded'), 'The load-error page was not shown.');
+            const button = container.querySelector('[data-router-action="retry"]');
+            assert(button, 'The retry button is missing.');
+            const waiting = waitForRoute((item) => item.module_id === 'epsilon');
+            button.click();
+            eq((await waiting).state, 'error');
+          } finally { cap.restore(); }
+        });
+        test('the navigation guard can block leaving a page', async () => {
+          await go('/alpha', (item) => item.module_id === 'alpha' && item.path === '/alpha');
+          const here = location.hash;
+          let seen = null;
+          const remove = router.setNavigationGuard((change) => { seen = change; return false; });
+          router.navigate('/beta-two');
+          await sleep(200);
+          eq(location.hash, here, 'address after a blocked navigation');
+          eq(router.getCurrentRoute().module_id, 'alpha');
+          assert(seen && seen.to === '#/beta-two' && seen.from === here, 'The guard must receive from and to.');
+          remove();
+          const info = await go('/beta-two', (item) => item.module_id === 'beta_two');
+          eq(info.state, 'ok');
+          eq(container.textContent, 'BETA VIEW');
+        });
+        test('fast navigation never shows a stale view', async () => {
+          await go('/alpha', (item) => item.module_id === 'alpha' && item.path === '/alpha');
+          router.navigate('/beta-two');
+          await sleep(20);
+          const waiting = waitForRoute((item) => item.module_id === 'alpha');
+          router.navigate('/alpha/race');
+          await waiting;
+          await sleep(150);
+          eq(container.textContent, 'ALPHA race -');
+        });
+        test('the last visited page is remembered (only for working pages)', async () => {
+          await go('/alpha/last', (item) => item.path === '/alpha/last');
+          eq(localStorage.getItem(cfg.LS_KEYS.LAST_ROUTE), '/alpha/last');
+          eq(router.getLastRoute(), '/alpha/last');
+          await go('/gamma', (item) => item.module_id === 'gamma');
+          eq(localStorage.getItem(cfg.LS_KEYS.LAST_ROUTE), '/alpha/last', 'planned pages are not remembered');
+        });
+        test('stopping the router cleans up the current view', async () => {
+          await go('/alpha/stop', (item) => item.path === '/alpha/stop');
+          log.length = 0;
+          router.stopRouter();
+          eq(router.isRouterRunning(), false);
+          assert(log.includes('alpha-cleanup'), 'The view cleanup did not run.');
+          eq(container.childElementCount, 0, 'view container');
+        });
+        test('an empty address opens Home', async () => {
+          history.replaceState(null, '', location.pathname + location.search);
+          await router.startRouter({ root: container, focusTarget });
+          eq(location.hash, '#/home');
+          eq(container.textContent, 'HOME VIEW');
+          router.stopRouter();
+        });
+      });
+
+      /* ---------------- offline support ---------------- */
+      suite('Offline support (skipped until the app has run once on this address)', ({ test }) => {
+        test('the service worker is registered and active', async () => {
+          if (!('serviceWorker' in navigator)) { skip('This browser has no service worker support.'); }
+          const registration = await navigator.serviceWorker.getRegistration(ROOT.href);
+          if (!registration) { skip('Not registered yet. Open the app once on this address, wait for it to load, then run the tests again.'); }
+          assert(registration.active, 'The service worker is registered but not active yet.');
+          eq(new URL(registration.scope).pathname, ROOT.pathname, 'service worker scope');
+        });
+        test('the offline cache holds the essential files', async () => {
+          if (typeof caches === 'undefined') { skip('Cache storage is not available in this browser.'); }
+          const names = (await caches.keys()).filter((name) => name.startsWith('nasur-')).sort();
+          if (names.length === 0) { skip('No NASUR cache yet. Open the app once on this address first.'); }
+          const cache = await caches.open(names[names.length - 1]);
+          const missing = [];
+          for (const path of ['index.html', 'js/core/app.js', 'data/modules.json']) {
+            if (!(await cache.match(new URL(path, ROOT).href))) { missing.push(path); }
+          }
+          assert(missing.length === 0, 'Not in the offline cache: ' + missing.join(', '));
+        });
+      });
+    }
+
+    if (loadFailures.length === 0) { defineAppSuites(); }
+
+
+    /* ======================================================================
+       5. RUNNER AND PAGE
+       ====================================================================== */
+
+    const counts = { pass: 0, fail: 0, skip: 0, total: 0, done: 0 };
+    const report = [];
+
+    function buildSuiteUi(entry) {
+      const section = document.createElement('section');
+      section.className = 'suite';
+      const heading = document.createElement('h2');
+      const title = document.createElement('span');
+      title.textContent = entry.name;
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.textContent = '0 / ' + entry.tests.length;
+      heading.append(title, count);
+      const list = document.createElement('ul');
+      section.append(heading, list);
+      els.results.append(section);
+      entry.ui = { count, list, done: 0 };
+    }
+
+    function addRow(entry, test, result) {
+      const item = document.createElement('li');
+      item.className = result.status;
+      const mark = document.createElement('span');
+      mark.className = 'mark';
+      mark.textContent = result.status === 'pass' ? '✓' : result.status === 'fail' ? '✗' : '–';
+      const body = document.createElement('div');
+      const name = document.createElement('div');
+      name.textContent = test.title;
+      body.append(name);
+      if (result.message) {
+        const detail = document.createElement('pre');
+        detail.textContent = result.message;
+        body.append(detail);
+      }
+      item.append(mark, body);
+      entry.ui.list.append(item);
+      entry.ui.done += 1;
+      entry.ui.count.textContent = entry.ui.done + ' / ' + entry.tests.length;
+      counts[result.status] += 1;
+      counts.done += 1;
+      report.push(result.status.toUpperCase() + ' · ' + entry.name + ' › ' + test.title + (result.message ? ' — ' + result.message.replace(/\s+/g, ' ') : ''));
+      els.summary.textContent = 'Running… ' + counts.done + ' of ' + counts.total;
+    }
+
+    async function runTest(test) {
+      try {
+        await withTimeout(test.fn(), TEST_TIMEOUT_MS);
+        return { status: 'pass', message: '' };
+      } catch (error) {
+        if (error instanceof SkipSignal) { return { status: 'skip', message: error.message }; }
+        return { status: 'fail', message: describeError(error) };
+      }
+    }
+
+    async function removeStaleDatabases() {
+      try {
+        if (typeof indexedDB.databases !== 'function') { return; }
+        for (const info of await indexedDB.databases()) {
+          if (info.name && info.name.startsWith('nasur-test-') && info.name !== TEST_DB) { indexedDB.deleteDatabase(info.name); }
+        }
+      } catch { /* listing databases is not supported everywhere */ }
+    }
+
+    async function cleanup() {
+      try {
+        if (db) { await db.wipeDatabase(); db.closeDb(); }
+      } catch { /* the scratch database will be removed by the next run */ }
+      for (const key of LS_WATCH) {
+        try {
+          if (lsBackup[key] === null) { localStorage.removeItem(key); } else { localStorage.setItem(key, lsBackup[key]); }
+        } catch { /* storage blocked */ }
+      }
+    }
+
+    function finish(started) {
+      const seconds = ((performance.now() - started) / 1000).toFixed(1);
+      const bad = counts.fail > 0;
+      els.summary.className = bad ? 'bad' : 'ok';
+      els.summary.textContent = bad
+        ? counts.fail + ' of ' + counts.total + ' checks FAILED (' + counts.pass + ' passed, ' + counts.skip + ' skipped) in ' + seconds + ' s'
+        : 'All ' + (counts.total - counts.skip) + ' checks passed' + (counts.skip > 0 ? ' (' + counts.skip + ' skipped)' : '') + ' in ' + seconds + ' s';
+      document.title = (bad ? '✗ ' : '✓ ') + 'NASUR Phase 1 tests';
+    }
+
+    function reportText() {
+      return [
+        'NASUR Phase 1 test report',
+        els.summary.textContent,
+        'Page: ' + location.origin + location.pathname,
+        'Browser: ' + navigator.userAgent,
+        'Scratch database: ' + TEST_DB,
+        ''
+      ].concat(loadFailures.map((failure) => 'LOAD FAILURE · ' + failure.path + ' — ' + failure.message), report).join('\n');
+    }
+
+    async function copyReport() {
+      const text = reportText();
+      try {
+        await navigator.clipboard.writeText(text);
+        els.copy.textContent = 'Copied ✓';
+      } catch {
+        els.fallback.style.display = 'block';
+        els.fallback.value = text;
+        els.fallback.focus();
+        els.fallback.select();
+        let copied = false;
+        try { copied = document.execCommand('copy'); } catch { copied = false; }
+        els.copy.textContent = copied ? 'Copied ✓' : 'Select the text below and copy it';
+      }
+      setTimeout(() => { els.copy.textContent = 'Copy report'; }, 2500);
+    }
+
+    async function main() {
+      const started = performance.now();
+      counts.total = suites.reduce((sum, entry) => sum + entry.tests.length, 0);
+      if (loadFailures.length > 0) {
+        els.summary.className = 'bad';
+        els.summary.textContent = loadFailures.length + ' app file(s) failed to load, so most checks were not run. See "Modules load without errors" below.';
+      }
+      await removeStaleDatabases();
+      if (db) { db.setDatabaseName(TEST_DB); }
+
+      for (const entry of suites) {
+        buildSuiteUi(entry);
+        let setupError = null;
+        if (entry.before) {
+          try { await withTimeout(entry.before(), TEST_TIMEOUT_MS); } catch (error) { setupError = error; }
+        }
+        for (const test of entry.tests) {
+          const result = setupError ? { status: 'fail', message: 'Setup failed: ' + describeError(setupError) } : await runTest(test);
+          addRow(entry, test, result);
+        }
+        if (entry.after) {
+          try { await withTimeout(entry.after(), TEST_TIMEOUT_MS); } catch (error) { console.warn('Suite cleanup failed:', error); }
+        }
+      }
+      await cleanup();
+      if (loadFailures.length === 0) { finish(started); }
+    }
+
+    els.copy.addEventListener('click', () => { void copyReport(); });
+    els.rerun.addEventListener('click', () => { history.replaceState(null, '', location.pathname + location.search); location.reload(); });
+    els.onlyFailed.addEventListener('change', () => { els.results.classList.toggle('only-failed', els.onlyFailed.checked); });
+
+    main().catch(async (error) => {
+      console.error('The test runner itself failed.', error);
+      els.summary.className = 'bad';
+      els.summary.textContent = 'The test runner stopped unexpectedly: ' + describeError(error);
+      await cleanup();
+    });
+  </script>
+</body>
+</html>
