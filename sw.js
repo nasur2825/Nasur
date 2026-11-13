@@ -22,9 +22,10 @@
  *
  * UPDATING
  *   Re-uploading files is enough: they are fetched fresh whenever you are
- *   online. Change CACHE_VERSION only to force old saved files to be deleted
+ *   online. Change CACHE_VERSION to force old saved files to be deleted
  *   (this also makes the browser reinstall the worker and download any newly
- *   activated modules ahead of time).
+ *   added files ahead of time). Whenever a file is added to the app, add it
+ *   to CORE_FILES below and raise CACHE_VERSION.
  *
  * LIMIT
  *   A module you have never opened is only available offline if it was
@@ -32,7 +33,7 @@
  */
 
 const CACHE_PREFIX = 'nasur-';
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 /** How long to wait for the network before using a saved copy. */
@@ -49,6 +50,7 @@ const CORE_FILES = [
   'css/tokens.css',
   'css/base.css',
   'css/components.css',
+  'css/home.css',
   'js/core/config.js',
   'js/core/eventbus.js',
   'js/core/router.js',
@@ -57,11 +59,20 @@ const CORE_FILES = [
   'js/services/db.js',
   'js/services/repo.js',
   'js/services/config.js',
-  'data/hooks/manufacturing-hooks.json'
+  'js/services/calendar.js',
+  'js/services/heat.js',
+  'js/services/weather.js',
+  'js/services/workspace.js',
+  'js/jarvis/context.js',
+  'js/jarvis/voice.js',
+  'js/jarvis/drawer.js',
+  'js/modules/home.js',
+  'data/hooks/manufacturing-hooks.json',
+  'data/workspaces/base.json'
 ];
 
 /** If any of these cannot be downloaded, the install fails (offline would not work). */
-const CRITICAL_FILES = ['index.html', 'js/core/app.js', MODULES_FILE];
+const CRITICAL_FILES = ['index.html', 'js/core/app.js', 'js/modules/home.js', MODULES_FILE];
 
 const SCOPE_PATH = new URL(self.registration.scope).pathname;
 const SHELL_URL = toUrl('index.html');
