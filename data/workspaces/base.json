@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "title": "Adaptive Workspace: Home Dashboard",
+  "description": "Defines the Home widgets and how the default dashboard adapts to ROLE, INDUSTRY and EXPERIENCE. Personal customization is applied last and always wins.",
+  "resolution_order": ["base", "role", "industry", "experience", "user"],
+  "overlay_operations": {
+    "show": "Add widgets to the end of the visible list, in the order given (widgets already visible stay where they are).",
+    "hide": "Remove widgets from the visible list.",
+    "order": "Move the listed widgets to the front, in the order given. Hidden widgets in the list are ignored. All other widgets keep their order after them.",
+    "sizes": "Set a widget's size ({ widget_id: size }). The size must be one of the widget's sizes.",
+    "quick_actions": "Replace the whole list of quick actions (in the order given).",
+    "quick_actions_add": "Append quick actions that are not in the list yet, until the maximum is reached.",
+    "options": "Change widget options ({ widget_id: { option: value } }). Values are merged one option at a time."
+  },
+  "user_overlay": "A person's own customization uses the same operations as every other layer. Phase 3 (Workspace Layout) saves it in the workspace_profiles store.",
+  "limits": {
+    "quick_actions_min": 1,
+    "quick_actions_max": 6
+  },
+  "experience_unknown": "none",
+  "experience_bands": [
+    { "id": "new", "title": "New to HSE", "min_years": 0 },
+    { "id": "developing", "title": "Developing", "min_years": 1 },
+    { "id": "experienced", "title": "Experienced", "min_years": 3 },
+    { "id": "senior", "title": "Senior", "min_years": 8 }
+  ],
+  "widgets": [
+    {
+      "id": "jarvis",
+      "title": "JARVIS",
+      "description": "Greeting for the time of day and a bar for asking JARVIS.",
+      "icon": "✦",
+      "module": null,
+      "sizes": ["full"],
+      "default_size": "full",
+      "options": {},
+      "data": {}
+    },
+    {
+      "id": "quick_actions",
+      "title": "Quick actions",
+      "description": "One-tap shortcuts to the work you do most.",
+      "icon": "⚡",
+      "module": null,
+      "sizes": ["full"],
+      "default_size": "full",
+      "options": {},
+      "data": {}
+    },
+    {
+      "id": "date_time",
+      "title": "Date and time",
+      "description": "Today's date and the local time in your time zone.",
+      "icon": "🕒",
+      "module": null,
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {
+        "hour_format": {
+          "type": "choice",
+          "default": "auto",
+          "values": ["auto", "12", "24"],
+          "labels": ["Automatic", "12-hour", "24-hour"],
+          "label": "Clock style"
+        }
+      },
+      "data": {}
+    },
+    {
+      "id": "weather",
+      "title": "Weather and heat",
+      "description": "Current weather and general heat guidance for your chosen place. Advisory only, not a site risk assessment.",
+      "icon": "🌤️",
+      "module": null,
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {
+        "details": {
+          "type": "boolean",
+          "default": false,
+          "label": "Show humidity, wind, UV and today's high and low"
+        }
+      },
+      "data": {}
+    },
+    {
+      "id": "today_summary",
+      "title": "Today's work",
+      "description": "How many records you saved today, counted from your real data.",
+      "icon": "📅",
+      "module": null,
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {},
+      "data": {
+        "items": [
+          { "id": "observations", "label": "Observations", "store": "observations", "date_field": "date", "module": "observations" },
+          { "id": "inspections", "label": "Inspections", "store": "inspections", "date_field": "date", "module": "inspections" },
+          { "id": "tbt", "label": "Toolbox Talks", "store": "tbt_sessions", "date_field": "date", "module": "tbt" },
+          { "id": "daily", "label": "Work log entries", "store": "daily_logs", "date_field": "date", "module": "daily" }
+        ]
+      }
+    },
+    {
+      "id": "open_actions",
+      "title": "Open actions",
+      "description": "Actions that are not closed yet, and which are overdue or due soon.",
+      "icon": "✅",
+      "module": "actions",
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {
+        "due_soon_days": {
+          "type": "integer",
+          "default": 7,
+          "min": 1,
+          "max": 30,
+          "label": "Count actions as due soon when due within (days)"
+        }
+      },
+      "data": {
+        "store": "actions",
+        "target_date_field": "target_date",
+        "closed_statuses": ["CLOSED", "VERIFIED"]
+      }
+    },
+    {
+      "id": "reminders",
+      "title": "Reminders",
+      "description": "Your next reminders and any that are overdue.",
+      "icon": "🔔",
+      "module": null,
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {
+        "window_days": {
+          "type": "integer",
+          "default": 7,
+          "min": 1,
+          "max": 30,
+          "label": "Show reminders due within (days)"
+        },
+        "max_items": {
+          "type": "integer",
+          "default": 5,
+          "min": 1,
+          "max": 10,
+          "label": "Most reminders to list"
+        }
+      },
+      "data": {
+        "store": "reminders",
+        "due_field": "due_at",
+        "pending_statuses": ["pending"]
+      }
+    },
+    {
+      "id": "learning",
+      "title": "Learning progress",
+      "description": "Lessons you have completed or started.",
+      "icon": "🎓",
+      "module": "learn",
+      "sizes": ["full", "half"],
+      "default_size": "half",
+      "options": {},
+      "data": {
+        "store": "lesson_progress",
+        "completed_statuses": ["completed"],
+        "in_progress_statuses": ["in_progress"]
+      }
+    }
+  ],
+  "quick_action_catalog": [
+    { "id": "start_day", "label": "Start Work Day", "icon": "🌅", "kind": "module", "module": "daily", "segments": [] },
+    { "id": "new_observation", "label": "New Observation", "icon": "👁️", "kind": "module", "module": "observations", "segments": ["new"] },
+    { "id": "inspection", "label": "Inspection", "icon": "📋", "kind": "module", "module": "inspections", "segments": ["new"] },
+    { "id": "learn", "label": "Learn", "icon": "🎓", "kind": "module", "module": "learn", "segments": [] },
+    { "id": "ask_jarvis", "label": "Ask JARVIS", "icon": "✦", "kind": "jarvis", "module": null, "segments": [] },
+    { "id": "toolbox_talk", "label": "Toolbox Talk", "icon": "🗣️", "kind": "module", "module": "tbt", "segments": ["new"] },
+    { "id": "new_action", "label": "New Action", "icon": "✅", "kind": "module", "module": "actions", "segments": ["new"] },
+    { "id": "incident", "label": "Report Incident", "icon": "🚨", "kind": "module", "module": "incidents", "segments": ["new"] },
+    { "id": "risk", "label": "Risk Assessment", "icon": "⚠️", "kind": "module", "module": "risk", "segments": [] },
+    { "id": "audit", "label": "Audit", "icon": "🧾", "kind": "module", "module": "audits", "segments": [] },
+    { "id": "ptw", "label": "Permit Draft", "icon": "🔐", "kind": "module", "module": "ptw", "segments": [] },
+    { "id": "machines", "label": "Machines", "icon": "🏭", "kind": "module", "module": "machines", "segments": [] },
+    { "id": "phrasebook", "label": "Safety Phrases", "icon": "💬", "kind": "module", "module": "phrasebook", "segments": [] },
+    { "id": "emergency", "label": "Emergency Info", "icon": "🆘", "kind": "module", "module": "emergency", "segments": [] },
+    { "id": "analytics", "label": "Analytics", "icon": "📊", "kind": "module", "module": "analytics", "segments": [] },
+    { "id": "projects", "label": "Projects", "icon": "🗂️", "kind": "module", "module": "projects", "segments": [] }
+  ],
+  "base": {
+    "show": ["jarvis", "quick_actions", "date_time", "weather", "today_summary", "open_actions", "reminders"],
+    "sizes": {
+      "jarvis": "full",
+      "quick_actions": "full",
+      "date_time": "half",
+      "weather": "half",
+      "today_summary": "half",
+      "open_actions": "half",
+      "reminders": "half"
+    },
+    "quick_actions": ["start_day", "new_observation", "inspection", "learn", "ask_jarvis"],
+    "options": {
+      "date_time": { "hour_format": "auto" },
+      "weather": { "details": false },
+      "open_actions": { "due_soon_days": 7 },
+      "reminders": { "window_days": 7, "max_items": 5 }
+    }
+  },
+  "roles": {
+    "beginner_learner": {
+      "title": "Beginner / Safety Learner",
+      "show": ["learning"],
+      "hide": ["today_summary", "open_actions"],
+      "order": ["jarvis", "quick_actions", "learning", "date_time", "weather"],
+      "sizes": { "learning": "full" },
+      "quick_actions": ["learn", "ask_jarvis", "phrasebook", "machines", "new_observation"]
+    },
+    "hse_assistant": {
+      "title": "HSE Assistant",
+      "show": ["learning"],
+      "order": ["jarvis", "quick_actions", "today_summary", "learning"],
+      "quick_actions": ["start_day", "new_observation", "toolbox_talk", "learn", "ask_jarvis"]
+    },
+    "safety_officer": {
+      "title": "Safety Officer",
+      "order": ["jarvis", "quick_actions", "today_summary", "open_actions"],
+      "quick_actions": ["start_day", "new_observation", "inspection", "toolbox_talk", "ask_jarvis"]
+    },
+    "hse_engineer": {
+      "title": "HSE Engineer",
+      "order": ["jarvis", "quick_actions", "open_actions", "today_summary"],
+      "quick_actions": ["start_day", "inspection", "risk", "new_observation", "ask_jarvis"]
+    },
+    "senior_hse_engineer": {
+      "title": "Senior HSE Engineer",
+      "order": ["jarvis", "quick_actions", "open_actions", "today_summary"],
+      "quick_actions": ["inspection", "risk", "audit", "new_action", "ask_jarvis"]
+    },
+    "hse_supervisor": {
+      "title": "HSE Supervisor",
+      "order": ["jarvis", "quick_actions", "open_actions", "today_summary"],
+      "sizes": { "open_actions": "full" },
+      "quick_actions": ["start_day", "new_action", "inspection", "incident", "ask_jarvis"]
+    },
+    "hse_manager": {
+      "title": "HSE Manager",
+      "order": ["jarvis", "quick_actions", "open_actions", "today_summary"],
+      "quick_actions": ["new_action", "audit", "incident", "analytics", "ask_jarvis"]
+    },
+    "hse_consultant": {
+      "title": "HSE Consultant / Leadership",
+      "order": ["jarvis", "quick_actions", "open_actions", "today_summary"],
+      "quick_actions": ["inspection", "audit", "risk", "analytics", "ask_jarvis"]
+    }
+  },
+  "industries": {
+    "construction": {
+      "title": "Construction",
+      "order": ["jarvis", "quick_actions", "weather"],
+      "options": { "weather": { "details": true } },
+      "quick_actions_add": ["ptw"]
+    },
+    "manufacturing": {
+      "title": "Manufacturing",
+      "options": { "weather": { "details": false } },
+      "quick_actions_add": ["machines"]
+    },
+    "industrial_maintenance": {
+      "title": "Industrial Maintenance",
+      "quick_actions_add": ["ptw"]
+    },
+    "facilities_management": {
+      "title": "Facilities / Property Management",
+      "quick_actions_add": ["emergency"]
+    },
+    "warehousing_logistics": {
+      "title": "Warehousing & Logistics",
+      "quick_actions_add": ["machines"]
+    },
+    "food_manufacturing": {
+      "title": "Food Manufacturing",
+      "options": { "weather": { "details": false } },
+      "quick_actions_add": ["machines"]
+    },
+    "consultancy": {
+      "title": "Consultancy / Multi-Client HSE Work",
+      "quick_actions_add": ["projects"]
+    }
+  },
+  "experience": {
+    "new": {
+      "title": "New to HSE",
+      "show": ["learning"],
+      "order": ["jarvis", "quick_actions", "learning"]
+    },
+    "developing": {
+      "title": "Developing",
+      "show": ["learning"]
+    },
+    "experienced": {
+      "title": "Experienced",
+      "hide": ["learning"]
+    },
+    "senior": {
+      "title": "Senior",
+      "hide": ["learning"]
+    }
+  }
+}
