@@ -1,0 +1,500 @@
+/* ==========================================================================
+   NASUR – Home Dashboard Styles
+   File: css/home.css
+   Purpose: Styles for the Home command center (js/modules/home.js): the
+            widget grid, the JARVIS greeting and ask bar, clock, weather and
+            heat guidance, counts, lists, loading placeholders and the
+            "coming soon" state of quick actions.
+   Depends on: css/tokens.css, css/base.css, css/components.css (load order:
+            tokens, base, components, home).
+   Rules (same as components.css): no style="..." in markup, state through
+   data-* and aria-* attributes, colours only through tokens.
+   Sections:
+     1 Page and grid      2 Widget frame       3 JARVIS greeting and ask bar
+     4 Quick actions      5 Clock              6 Weather and heat
+     7 Counts, lists, key-value rows           8 Loading placeholders
+     9 Reduced motion and print
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. PAGE AND GRID
+   Markup: <div class="home"><div class="home-grid">
+             <section class="widget" data-widget="weather" data-size="half">
+   Phones: one column. 36rem and up: two columns; data-size="full" spans both.
+   The bottom space keeps the last widget clear of the floating JARVIS button.
+   -------------------------------------------------------------------------- */
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-bottom: calc(3.5rem + var(--space-6));
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 36rem) {
+  .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .widget[data-size="full"] {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   2. WIDGET FRAME
+   <section class="widget" data-widget="open_actions" data-size="half">
+     <header class="widget__header">
+       <h3 class="widget__title"><span class="widget__icon" aria-hidden="true">✅</span> Open actions</h3>
+       <a class="widget__link" href="…">See all</a></header>
+     <div class="widget__body">…</div>
+     <footer class="widget__footer">…buttons…</footer>
+     <p class="widget__status">Updated 5 minutes ago</p></section>
+   -------------------------------------------------------------------------- */
+.widget {
+  min-width: 0;
+  padding: var(--space-4);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.widget--hero {
+  background: var(--color-brand-soft);
+}
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.widget__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.widget__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.widget__link {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.widget__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.widget__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.widget__status {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.widget__note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* The empty-state block inside a widget uses the widget's own frame */
+.widget .empty-state {
+  padding: var(--space-4) 0;
+  background: transparent;
+  border: 0;
+}
+
+
+/* --------------------------------------------------------------------------
+   3. JARVIS GREETING AND ASK BAR
+   <section class="widget widget--hero" data-widget="jarvis" data-size="full">
+     <h2 class="jarvis-hero__greeting">Good morning</h2>
+     <p class="jarvis-hero__sub">…</p>
+     <div class="ask-bar">
+       <input class="ask-bar__input" aria-label="Ask JARVIS" …>
+       <button class="icon-btn" aria-label="Speak">🎤</button>
+       <button class="btn btn--primary">Ask</button></div></section>
+   -------------------------------------------------------------------------- */
+.jarvis-hero__greeting {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.jarvis-hero__sub {
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.ask-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ask-bar__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap-min);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+.ask-bar__input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.ask-bar__input:focus-visible {
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 0;
+}
+
+.ask-bar .icon-btn {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. QUICK ACTIONS (extends .quick-actions in components.css)
+   A module that is not available yet shows as "coming soon":
+   <button class="quick-action" aria-disabled="true">
+     <span class="quick-action__icon" aria-hidden="true">📋</span>
+     <span class="quick-action__label">Inspection</span>
+     <span class="quick-action__note">Coming soon</span></button>
+   -------------------------------------------------------------------------- */
+.quick-action__note {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.quick-action[aria-disabled="true"] {
+  color: var(--color-text-muted);
+  cursor: default;
+  background: var(--color-surface-sunken);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.quick-action[aria-disabled="true"]:hover {
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+
+/* --------------------------------------------------------------------------
+   5. CLOCK
+   <p class="clock__time">14:05</p><p class="clock__date">Thursday, …</p>
+   <p class="clock__zone">Asia/Kolkata</p>
+   -------------------------------------------------------------------------- */
+.clock__time {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.clock__date {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+}
+
+.clock__zone {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+
+/* --------------------------------------------------------------------------
+   6. WEATHER AND HEAT GUIDANCE
+   <div class="weather__main"><span class="weather__icon" aria-hidden="true">⛅</span>
+     <div><p class="weather__temp">34°C</p><p class="weather__condition">Partly cloudy</p></div></div>
+   <p class="weather__place">Chennai, Tamil Nadu, India</p>
+   <div class="heat" data-level="high">
+     <div class="heat__header"><h4 class="heat__title">Heat guidance</h4>
+       <span class="risk-badge" data-level="high">High</span></div>
+     <p class="heat__summary">…</p>
+     <details class="heat__more"><summary>What to consider</summary>
+       <ul class="heat__actions"><li>…</li></ul></details>
+     <p class="heat__disclaimer">Advisory only…</p></div>
+   data-level on .heat: low | caution | high | danger | extreme | unknown
+   -------------------------------------------------------------------------- */
+.weather__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.weather__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.weather__temp {
+  margin: 0;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.weather__condition {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.weather__place {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.heat {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-sunken);
+  border: var(--border-width) solid var(--color-border);
+  border-left: 6px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+.heat[data-level="low"] {
+  border-left-color: var(--risk-low-bg);
+}
+
+.heat[data-level="caution"] {
+  border-left-color: var(--risk-medium-bg);
+}
+
+.heat[data-level="high"] {
+  border-left-color: var(--risk-high-bg);
+}
+
+.heat[data-level="danger"],
+.heat[data-level="extreme"] {
+  border-left-color: var(--risk-extreme-bg);
+}
+
+.heat__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.heat__title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+
+.heat__summary {
+  margin: var(--space-2) 0 0;
+}
+
+.heat__more summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.heat__actions {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.heat__actions li + li {
+  margin-top: var(--space-1);
+}
+
+.heat__disclaimer {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+
+/* --------------------------------------------------------------------------
+   7. COUNTS, LISTS AND KEY-VALUE ROWS
+   Linked count:  <a class="stat" href="…"> (same parts as .stat)
+   Tone:          <div class="stat" data-tone="danger|warning|success">
+   Key-value:     <dl class="kv"><div class="kv__row"><dt class="kv__label">
+                  Humidity</dt><dd class="kv__value">62%</dd></div></dl>
+   Button list:   <ul class="list list--actions"><li class="list__item">
+                  <button class="list-button">…</button></li></ul>
+   -------------------------------------------------------------------------- */
+a.stat {
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+a.stat:hover {
+  color: inherit;
+  border-color: var(--color-brand);
+}
+
+.stat[data-tone="danger"] .stat__value {
+  color: var(--color-danger);
+}
+
+.stat[data-tone="warning"] .stat__value {
+  color: var(--color-warning);
+}
+
+.stat[data-tone="success"] .stat__value {
+  color: var(--color-success);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.kv__row {
+  min-width: 0;
+}
+
+.kv__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.kv__value {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.list--actions > .list__item {
+  padding: 0;
+}
+
+.list-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.list-button:hover {
+  background: var(--color-surface-sunken);
+}
+
+
+/* --------------------------------------------------------------------------
+   8. LOADING PLACEHOLDERS
+   <span class="skeleton skeleton--title skeleton--w60"></span>
+   <span class="skeleton skeleton--line skeleton--w80"></span>
+   <span class="skeleton skeleton--block"></span>
+   Widths come from classes because the CSP blocks style="…".
+   Hide them from screen readers with aria-hidden="true".
+   -------------------------------------------------------------------------- */
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--color-surface-sunken) 25%, var(--color-border) 50%, var(--color-surface-sunken) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton--title {
+  height: 1.5rem;
+}
+
+.skeleton--line {
+  height: 1rem;
+  margin-block: var(--space-2);
+}
+
+.skeleton--block {
+  height: 4rem;
+}
+
+.skeleton--w40 {
+  width: 40%;
+}
+
+.skeleton--w60 {
+  width: 60%;
+}
+
+.skeleton--w80 {
+  width: 80%;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+
+/* --------------------------------------------------------------------------
+   9. REDUCED MOTION AND PRINT
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+@media print {
+  .ask-bar,
+  .quick-actions {
+    display: none !important;
+  }
+
+  .widget {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}
