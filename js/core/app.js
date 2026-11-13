@@ -6,12 +6,14 @@
  *   1. applies the saved theme and language to the page
  *   2. wires the header: theme button, network status pill, skip link
  *   3. opens the database, prepares the default project, loads user settings
- *   4. loads the module list, builds the navigation, registers the two
- *      built-in views (Home and All Modules) and starts the router
+ *   4. loads the module list, builds the navigation, registers the built-in
+ *      "All Modules" view, mounts the JARVIS button and drawer, and starts
+ *      the router (Home is a normal module file: js/modules/home.js)
  *   5. removes the boot screen, registers the service worker (offline
  *      caching) and asks the browser to protect NASUR's stored data
  * If anything fails before the first screen, the boot screen shows a clear
- * message with a Reload button instead of staying on the spinner.
+ * message with a Reload button instead of staying on the spinner. A failure
+ * of the JARVIS assistant alone never stops the rest of the app.
  *
  * Messages for other files: modules never import this file. To show a toast
  * they emit an event:
@@ -24,7 +26,7 @@
  * anchor would be treated as a page address. Use hrefFor() from router.js.
  */
 
-import { APP, EVENTS, LS_KEYS, STORES, THEMES } from './config.js';
+import { APP, EVENTS, LS_KEYS, THEMES } from './config.js';
 import { emit, on } from './eventbus.js';
 import {
   getModules,
@@ -36,19 +38,18 @@ import {
   registerBuiltin,
   startRouter
 } from './router.js';
-import { getStorageEstimate, openDb, requestPersistentStorage } from '../services/db.js';
+import { openDb, requestPersistentStorage } from '../services/db.js';
 import * as repo from '../services/repo.js';
 import {
   getCachedLanguage,
-  getEffectiveTimezone,
   getLanguageInfo,
   getTheme,
-  getUserConfig,
   loadUserConfig,
   nextTheme,
   setTheme
 } from '../services/config.js';
 import { cleanText, html, renderHtml } from '../services/sanitize.js';
+import { mountJarvis } from '../jarvis/drawer.js';
 
 
 /* ==========================================================================
@@ -270,161 +271,7 @@ function updateNavCurrent(info) {
 
 
 /* ==========================================================================
-   5. HELPERS FOR THE BUILT-IN VIEWS
-   ========================================================================== */
-
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes < 0) {
-    return '–';
-  }
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  const shown = unit === 0 ? String(Math.round(value)) : value.toFixed(value >= 10 ? 0 : 1);
-  return shown + ' ' + units[unit];
-}
-
-function formatToday(config) {
-  const locale = getLanguageInfo(config.language).speechLocale;
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: getEffectiveTimezone(config)
-    }).format(new Date());
-  } catch {
-    return new Date().toDateString();
-  }
-}
-
-async function readPersisted() {
-  try {
-    return Boolean(navigator.storage
-      && typeof navigator.storage.persisted === 'function'
-      && await navigator.storage.persisted());
-  } catch {
-    return false;
-  }
-}
-
-
-/* ==========================================================================
-   6. BUILT-IN VIEW: HOME
-   Phase 1 shows only real information. The JARVIS command center, live clock
-   and quick actions arrive in Phase 2.
-   ========================================================================== */
-
-async function homeView(ctx) {
-  const config = await getUserConfig();
-  const projectId = repo.getActiveProjectId();
-
-  const [project, observationCount, actionCount, persisted, estimate] = await Promise.all([
-    projectId ? repo.get(STORES.PROJECTS, projectId) : Promise.resolve(null),
-    repo.count(STORES.OBSERVATIONS),
-    repo.count(STORES.ACTIONS),
-    readPersisted(),
-    getStorageEstimate()
-  ]);
-  if (ctx.signal.aborted) {
-    return;
-  }
-
-  const online = navigator.onLine !== false;
-  const projectName = project && project.name ? project.name : 'None selected';
-
-  const workBlock = observationCount + actionCount === 0
-    ? html`<div class="empty-state">
-        <div class="empty-state__icon" aria-hidden="true">📋</div>
-        <h3 class="empty-state__title">Nothing recorded yet</h3>
-        <p class="empty-state__text">Observations, inspections and actions you save will appear here. NASUR never shows made-up numbers.</p>
-        <div class="empty-state__actions">
-          <a class="btn btn--primary" href="${hrefFor('more')}">See all modules</a>
-        </div>
-      </div>`
-    : html`<div class="stat-grid">
-        <div class="stat">
-          <p class="stat__value">${observationCount}</p>
-          <p class="stat__label">Observations</p>
-        </div>
-        <div class="stat">
-          <p class="stat__value">${actionCount}</p>
-          <p class="stat__label">Actions</p>
-        </div>
-      </div>`;
-
-  const protectionBadge = persisted
-    ? html`<span class="badge badge--success">Protected</span>`
-    : html`<span class="badge badge--warning">Not guaranteed</span>`;
-  const protectionNote = persisted
-    ? 'The browser will keep NASUR data even when the device runs low on space.'
-    : 'The browser may clear NASUR data if the device runs very low on space. Data backup will be available in a later update.';
-
-  const usageItem = estimate.supported
-    ? html`<li class="list__item">
-        <div class="list__main">
-          <p class="list__title">Storage used</p>
-          <p class="list__meta">${formatBytes(estimate.usage)} of about ${formatBytes(estimate.quota)} available</p>
-        </div>
-      </li>`
-    : '';
-
-  renderHtml(ctx.root, html`
-    <section class="hero">
-      <h2 class="hero__title">Welcome to NASUR</h2>
-      <p class="hero__text">${formatToday(config)}</p>
-      <p class="hero__text">Your personal industrial HSE workspace. Everything you save stays on this device and works offline.</p>
-    </section>
-
-    <section class="section">
-      <h3 class="section__title">Your work</h3>
-      ${workBlock}
-    </section>
-
-    <section class="section">
-      <h3 class="section__title">This device</h3>
-      <ul class="list">
-        <li class="list__item">
-          <div class="list__main">
-            <p class="list__title">Active project</p>
-            <p class="list__meta">${projectName}</p>
-          </div>
-        </li>
-        <li class="list__item">
-          <div class="list__main">
-            <p class="list__title">Network</p>
-            <p class="list__meta">${online ? 'Connected. NASUR also works without a connection.' : 'Not connected. NASUR is working offline.'}</p>
-          </div>
-          <span class="badge ${online ? 'badge--success' : 'badge--warning'}">${online ? 'Online' : 'Offline'}</span>
-        </li>
-        <li class="list__item">
-          <div class="list__main">
-            <p class="list__title">Data protection</p>
-            <p class="list__meta">${protectionNote}</p>
-          </div>
-          ${protectionBadge}
-        </li>
-        ${usageItem}
-      </ul>
-    </section>
-
-    <section class="section">
-      <div class="alert" role="note">
-        <p class="alert__title">Support tool only</p>
-        <p>NASUR helps you learn and keep records. It does not replace your site procedures, permits or the decisions of competent people.</p>
-      </div>
-    </section>
-  `);
-}
-
-
-/* ==========================================================================
-   7. BUILT-IN VIEW: ALL MODULES
+   5. BUILT-IN VIEW: ALL MODULES
    ========================================================================== */
 
 function moduleCard(mod) {
@@ -498,7 +345,7 @@ function moreView(ctx) {
 
 
 /* ==========================================================================
-   8. START-UP, FAILURE SCREEN AND BACKGROUND TASKS
+   6. START-UP, FAILURE SCREEN AND BACKGROUND TASKS
    ========================================================================== */
 
 function describeFailure(error) {
@@ -581,6 +428,16 @@ function registerServiceWorker() {
   }
 }
 
+async function readPersisted() {
+  try {
+    return Boolean(navigator.storage
+      && typeof navigator.storage.persisted === 'function'
+      && await navigator.storage.persisted());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Asks the browser to keep NASUR's data. If it was already asked in the last
  * 7 days and the answer was no, it does not ask again (some browsers show a
@@ -608,6 +465,16 @@ async function ensurePersistence() {
   }
 }
 
+/** Mounts the JARVIS button and drawer. A failure here never stops the app. */
+function mountAssistant() {
+  try {
+    mountJarvis();
+  } catch (error) {
+    console.error('NASUR: the JARVIS assistant could not start.', error);
+    showToast({ message: 'The JARVIS assistant could not start. The rest of NASUR works normally.', type: 'warning' });
+  }
+}
+
 async function startApp() {
   cacheElements();
   applyTheme(getTheme());
@@ -622,8 +489,8 @@ async function startApp() {
   await loadModuleRegistry();
   buildNav();
   on(EVENTS.ROUTE_CHANGED, updateNavCurrent);
-  registerBuiltin('home', homeView);
   registerBuiltin('more', moreView);
+  mountAssistant();
   await startRouter({ root: els.viewRoot, focusTarget: els.main });
 
   if (els.boot) {
