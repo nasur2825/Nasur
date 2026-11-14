@@ -15,7 +15,7 @@
     { "id": "jarvis", "title": "JARVIS AI", "order": 6 }
   ],
   "modules": [
-    { "id": "home", "route": "/", "title": "Home", "icon": "🏠", "description": "Daily command center with date, weather, actions and JARVIS.", "group": "core", "pdca": null, "phase": 2, "status": "active", "builtin": false, "file": "js/modules/home.js", "nav": { "order": 1, "label": "Home" } },
+    { "id": "home", "route": "/home", "title": "Home", "icon": "🏠", "description": "Daily command center with date, weather, actions and JARVIS.", "group": "core", "pdca": null, "phase": 2, "status": "active", "builtin": false, "file": "js/modules/home.js", "nav": { "order": 1, "label": "Home" } },
     { "id": "more", "route": "/more", "title": "All Modules", "icon": "🧩", "description": "Browse every NASUR module by group and PDCA stage.", "group": "core", "pdca": null, "phase": 1, "status": "active", "builtin": true, "file": null, "nav": { "order": 5, "label": "More" } },
     { "id": "settings", "route": "/settings", "title": "Settings", "icon": "⚙️", "description": "Country switch, language, units, PIN lock and AI provider keys.", "group": "core", "pdca": null, "phase": 3, "status": "active", "builtin": false, "file": "js/modules/settings.js", "nav": { "order": 4, "label": "Settings" } },
     { "id": "projects", "route": "/projects", "title": "Clients & Projects", "icon": "🏗️", "description": "Separate clients and projects with their own country, industry and audit standard.", "group": "core", "pdca": "plan", "phase": 3, "status": "active", "builtin": false, "file": "js/modules/clients.js", "nav": { "order": 2, "label": "Projects" } },
