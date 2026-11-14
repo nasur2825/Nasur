@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "scale": ["0 None", "1 Aware", "2 Basic (with supervision)", "3 Competent (independent)", "4 Advanced (coaches others)", "5 Expert (sets strategy)"],
+  "verifyNote": "Framework is a career guide, not an accredited syllabus. Verify NEBOSH unit names, entry rules and regional equivalents with the awarding body.",
+  "levels": [
+    {
+      "id": "assistant",
+      "title": "HSE Assistant",
+      "years": "0-1",
+      "scope": "Supports site walks, records, toolbox talks and permit checks under supervision.",
+      "promotion": ["Completes daily checks and observation entries without reminders", "Delivers a clear toolbox talk in the local language", "Recognises top 10 site hazards and reports them correctly", "Holds first aid and a recognised safety certificate or is enrolled"],
+      "nextStep": "Complete NEBOSH IGC (or equivalent) and lead one weekly inspection."
+    },
+    {
+      "id": "officer",
+      "title": "Safety Officer",
+      "years": "1-2",
+      "scope": "Runs inspections, permits, training and incident reporting for a work area.",
+      "promotion": ["Leads inspections and closes actions on time", "Investigates minor incidents and near misses with a root cause", "Verifies permits and risk assessments independently", "Passed NEBOSH IGC or equivalent"],
+      "nextStep": "Lead an incident investigation, support an audit, begin ISO 45001 and Level 6 study."
+    },
+    {
+      "id": "engineer",
+      "title": "HSE Engineer",
+      "years": "3-5",
+      "scope": "Designs controls, risk assessments, audits and KPI reporting across a project or plant.",
+      "promotion": ["Owns risk assessments and control design for high-risk activities", "Runs internal audits and tracks KPIs (TRIR, LTIFR, closure rate)", "Coaches officers and handles contractors", "Studying or holding NEBOSH International Diploma"],
+      "nextStep": "Own the management system, present to senior leadership and manage budget."
+    },
+    {
+      "id": "manager",
+      "title": "HSE Manager",
+      "years": "6+",
+      "scope": "Owns the HSE management system, culture, budget and legal compliance for the site or organisation.",
+      "promotion": ["Sets HSE strategy, targets and budget", "Handles regulators, clients and senior management", "Drives culture change and holds managers accountable", "NEBOSH Level 6 International Diploma or equivalent"],
+      "nextStep": "Regional or group HSE leadership."
+    }
+  ],
+  "competencies": [
+    { "id": "hazard-id", "name": "Hazard identification & site walks", "req": [2, 3, 4, 4], "actions": ["Do one documented site walk daily and log 5 hazards with photos", "Practise spotting hazards from photos in the weekend exam"] },
+    { "id": "risk-assessment", "name": "Risk assessment (JSA / JHA / HIRA)", "req": [1, 3, 4, 5], "actions": ["Write 3 JSAs for real tasks and review them with a senior", "Practise the 5x5 matrix and hierarchy of controls on each hazard"] },
+    { "id": "ptw", "name": "Permit to work control", "req": [2, 3, 4, 5], "actions": ["Audit 10 live permits box by box and note gaps", "Learn isolation, gas testing and handback steps for each permit type"] },
+    { "id": "tbt", "name": "Toolbox talks & worker communication", "req": [2, 3, 4, 4], "actions": ["Deliver a 5-minute talk daily with one question to workers", "Prepare each talk in the workers' language and use one real photo"] },
+    { "id": "inspection", "name": "Inspections & audits", "req": [1, 3, 4, 5], "actions": ["Create a checklist per area and track closure dates", "Shadow an internal audit and write the findings report"] },
+    { "id": "incident", "name": "Incident investigation & Just-Culture RCA", "req": [1, 3, 4, 5], "actions": ["Run 5-Whys on near misses and write corrective actions", "Interview workers calmly and focus on system causes, not blame"] },
+    { "id": "legislation", "name": "Legal & standards knowledge", "req": [1, 2, 4, 5], "actions": ["Summarise the key duties of the local OSH law on one page", "Link each observation to a legal or standard clause"] },
+    { "id": "emergency", "name": "Emergency response & drills", "req": [1, 3, 4, 5], "actions": ["Run a fire drill and record evacuation time", "Prepare plans for flood, heat, gas release and injury"] },
+    { "id": "fire", "name": "Fire safety & extinguisher control", "req": [2, 3, 4, 4], "actions": ["Inspect all extinguishers monthly with tags and records", "Teach fire classes and PASS technique in toolbox talks"] },
+    { "id": "ppe", "name": "PPE selection & enforcement", "req": [2, 3, 4, 4], "actions": ["Match PPE to the task hazard (respirator, eye, hand, fall arrest)", "Run a PPE condition and fit check weekly"] },
+    { "id": "health", "name": "Occupational health & hygiene (heat, noise, dust, chemicals)", "req": [1, 2, 4, 4], "actions": ["Measure noise, heat or dust with a simple monitoring plan", "Set rest, water and surveillance rules for hot or cold work"] },
+    { "id": "contractor", "name": "Contractor & client management", "req": [1, 2, 4, 5], "actions": ["Create a contractor induction and prequalification checklist", "Hold weekly HSE meetings with contractor supervisors"] },
+    { "id": "reporting", "name": "Reporting, KPIs & data analysis (TRIR / LTIFR)", "req": [1, 3, 4, 5], "actions": ["Produce the monthly report with charts and closure rates", "Calculate TRIR and LTIFR and explain trends to management"] },
+    { "id": "behaviour", "name": "Behavioural safety & safety culture", "req": [1, 2, 3, 5], "actions": ["Run a positive-recognition programme alongside corrections", "Coach one supervisor on safe leadership each month"] },
+    { "id": "msystems", "name": "Management systems (ISO 45001 / COR / PDCA)", "req": [1, 2, 4, 5], "actions": ["Map your site processes to ISO 45001 clauses", "Run a PDCA review every night and every month"] },
+    { "id": "training", "name": "Training delivery & competence assurance", "req": [1, 2, 3, 4], "actions": ["Maintain a training matrix and refresher dates", "Test worker understanding after each session"] },
+    { "id": "leadership", "name": "Leadership, negotiation & manager pushback handling", "req": [1, 2, 3, 5], "actions": ["Prepare a cost-of-accident vs cost-of-control case for each request", "Document refusals in writing and escalate through the chain"] },
+    { "id": "budget", "name": "Cost-benefit & safety budgeting", "req": [0, 1, 3, 5], "actions": ["Cost five recent incidents including lost time and rework", "Build an annual HSE budget with justification"] }
+  ],
+  "sectors": [
+    {
+      "id": "manufacturing",
+      "label": "Manufacturing",
+      "skills": [
+        { "id": "mfg-guarding", "name": "Machine guarding & interlocks", "req": [2, 3, 4, 4], "actions": ["Inspect every machine guard and emergency stop, record defects"] },
+        { "id": "mfg-loto", "name": "Lockout / tagout & energy isolation", "req": [2, 3, 4, 4], "actions": ["Write machine-specific LOTO steps and audit execution"] },
+        { "id": "mfg-mhe", "name": "Forklift & material handling safety", "req": [1, 3, 4, 4], "actions": ["Plan pedestrian segregation and operator licence checks"] },
+        { "id": "mfg-chem", "name": "Chemical handling, SDS & GHS", "req": [1, 3, 4, 4], "actions": ["Keep an SDS register and verify labelling and storage"] },
+        { "id": "mfg-noise", "name": "Noise, dust & ventilation control", "req": [1, 2, 4, 4], "actions": ["Survey high-noise and dust areas and set control measures"] }
+      ]
+    },
+    {
+      "id": "construction",
+      "label": "Construction",
+      "skills": [
+        { "id": "con-scaffold", "name": "Scaffolding inspection & tagging", "req": [2, 3, 4, 4], "actions": ["Inspect scaffolds before use and apply tag system"] },
+        { "id": "con-wah", "name": "Work at height & fall protection", "req": [2, 3, 4, 5], "actions": ["Plan rescue and anchor points for every height task"] },
+        { "id": "con-excavation", "name": "Excavation, shoring & utilities", "req": [1, 3, 4, 4], "actions": ["Check soil, shoring, access and utility scans before dig"] },
+        { "id": "con-lifting", "name": "Lifting operations & crane safety", "req": [1, 3, 4, 5], "actions": ["Review lift plans, load charts, slings and signaller competence"] },
+        { "id": "con-elec", "name": "Temporary electrical & site power", "req": [1, 3, 4, 4], "actions": ["Test RCDs, cables and distribution boards weekly"] }
+      ]
+    },
+    {
+      "id": "oilgas",
+      "label": "Oil & Gas",
+      "skills": [
+        { "id": "og-release", "name": "Hydrocarbon release & hazardous area control", "req": [1, 2, 4, 5], "actions": ["Learn hazardous area classification and ignition source control"] },
+        { "id": "og-h2s", "name": "H2S awareness & gas detection", "req": [2, 3, 4, 4], "actions": ["Practise detector bump tests, alarms and escape routes"] },
+        { "id": "og-psm", "name": "Process safety (HAZOP, MOC, barriers)", "req": [0, 1, 3, 5], "actions": ["Study a HAZOP report and a Management of Change record"] },
+        { "id": "og-simops", "name": "SIMOPS & isolation planning", "req": [1, 2, 4, 5], "actions": ["Review the SIMOPS matrix before each shutdown job"] },
+        { "id": "og-hotwork", "name": "Hot work & gas testing", "req": [2, 3, 4, 4], "actions": ["Witness gas tests and review hot work permit conditions"] }
+      ]
+    },
+    {
+      "id": "marine",
+      "label": "Shipping / Marine",
+      "skills": [
+        { "id": "mar-ism", "name": "ISM Code & safety management system", "req": [1, 2, 4, 5], "actions": ["Read the vessel SMS and map drills and audits to ISM clauses"] },
+        { "id": "mar-enclosed", "name": "Enclosed space entry & rescue", "req": [2, 3, 4, 5], "actions": ["Practise atmosphere testing, entry permit and rescue plan"] },
+        { "id": "mar-mooring", "name": "Mooring & deck operations", "req": [1, 3, 4, 4], "actions": ["Inspect ropes and winches and mark snap-back zones"] },
+        { "id": "mar-h2s", "name": "Cargo H2S & gas detection", "req": [2, 3, 4, 4], "actions": ["Check personal detectors and cargo vapour controls"] },
+        { "id": "mar-solas", "name": "SOLAS, lifesaving & fire appliances", "req": [1, 2, 3, 4], "actions": ["Inspect lifeboats, extinguishers and fire pumps on schedule"] }
+      ]
+    }
+  ],
+  "certs": [
+    { "id": "first-aid", "name": "First Aid / CPR", "regions": null, "sectors": null, "note": "Renew as per provider validity." },
+    { "id": "nebosh-igc", "name": "NEBOSH International General Certificate (Level 3)", "regions": null, "sectors": null, "note": "Core entry qualification for Safety Officers." },
+    { "id": "iosh-ms", "name": "IOSH Managing Safely", "regions": null, "sectors": null, "note": "Useful for supervisors and managers." },
+    { "id": "iso45001-la", "name": "ISO 45001 Lead Auditor", "regions": null, "sectors": null, "note": "Needed for system audits." },
+    { "id": "nebosh-idip", "name": "NEBOSH International Diploma in OSH (Level 6)", "regions": null, "sectors": null, "note": "Three units plus a practical application; check the current syllabus." },
+    { "id": "nebosh-ctc", "name": "NEBOSH International Technical Certificate in Construction Health & Safety", "regions": null, "sectors": ["construction"], "note": "Recommended for construction roles." },
+    { "id": "nebosh-psm", "name": "NEBOSH Process Safety Management", "regions": null, "sectors": ["oilgas", "manufacturing"], "note": "Recommended for process industries." },
+    { "id": "bosiet", "name": "BOSIET / offshore survival training", "regions": null, "sectors": ["oilgas"], "note": "Needed for offshore access." },
+    { "id": "stcw", "name": "STCW Basic Safety Training", "regions": null, "sectors": ["marine"], "note": "Needed for seafarers and many marine roles." },
+    { "id": "osha30", "name": "OSHA 30-Hour (General Industry / Construction)", "regions": ["usa"], "sectors": null, "note": "Common client requirement in the USA." },
+    { "id": "whmis", "name": "WHMIS 2015 training", "regions": ["canada"], "sectors": null, "note": "Required for workers handling hazardous products in Canada." },
+    { "id": "cor-auditor", "name": "COR Internal Auditor", "regions": ["canada"], "sectors": null, "note": "Needed to audit under COR." }
+  ],
+  "certsByLevel": {
+    "assistant": { "required": ["first-aid"], "recommended": ["nebosh-igc"] },
+    "officer": { "required": ["first-aid", "nebosh-igc"], "recommended": ["iosh-ms"] },
+    "engineer": { "required": ["first-aid", "nebosh-igc", "iso45001-la"], "recommended": ["nebosh-idip"] },
+    "manager": { "required": ["first-aid", "nebosh-igc", "iso45001-la", "nebosh-idip"], "recommended": [] }
+  },
+  "idipUnits": [
+    { "id": "idip1", "name": "Unit 1: Management of health and safety" },
+    { "id": "idip2", "name": "Unit 2: Hazardous agents in the workplace" },
+    { "id": "idip3", "name": "Unit 3: Workplace and work equipment safety" },
+    { "id": "idip-app", "name": "Practical application (risk assessment and report)" }
+  ]
+}
