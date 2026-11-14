@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "name": "NASUR Personal HSE Operating System",
+  "tagline": "Lifelong JARVIS bloodline: one core, many industries, memory only with approval",
+  "storage_rule": "All records use the existing IndexedDB stores. Memory scopes live in memory_notes with a kind field. No new database redesign is needed for Phases 4 to 12.",
+  "memory_scopes": [
+    {
+      "id": "temporary_session",
+      "title": "Temporary Session",
+      "store": "session (RAM + sessionStorage)",
+      "summary": "Current chat or screen context. Cleared on reset or when the browser tab closes.",
+      "persists": false
+    },
+    {
+      "id": "approved_personal_memory",
+      "title": "Approved Personal Memory",
+      "store": "memory_notes kind=personal_memory",
+      "summary": "Saved only after the user explicitly approves. The user can view, edit, delete each item, switch memory off, and roll back any AI generated change.",
+      "persists": true,
+      "categories": ["name", "communication_style", "education", "career_timeline", "industries_worked", "difficult_topics", "completed_lessons", "repeated_questions", "lessons_learned", "preferred_languages_formats"],
+      "rules": ["Save only on explicit approval", "Never claim to remember anything that is not stored", "Memory can be switched off at any time"]
+    },
+    {
+      "id": "employer_confidential_data",
+      "title": "Employer Confidential Data",
+      "store": "memory_notes kind=employer_data",
+      "summary": "Isolated per clientId and projectId. Never copied into personal memory automatically.",
+      "persists": true,
+      "rules": ["Always tagged with clientId or projectId", "Moving an achievement to the Career Portfolio shows a confidentiality removal reminder first", "Never sent to AI providers without approval"]
+    }
+  ],
+  "pillars": [
+    { "n": 1, "id": "privacy_memory_foundation", "title": "3-Scope Privacy-Controlled Personal Memory", "status": "active", "service": "js/services/jarvis_core.js" },
+    { "n": 2, "id": "user_understanding_profile", "title": "Structured User Understanding Profile", "status": "active", "service": "js/services/jarvis_core.js", "chain": ["Who am I", "Current role", "Industry", "Experience level", "What I am learning", "Learning style", "Next career goal"], "adapts_by": ["role", "industry", "experience", "country", "language", "preferences"], "rule": "Manual user settings always override automatic assumptions" },
+    { "n": 3, "id": "career_elevator_engine", "title": "Career Evolution and Elevator Engine", "status": "partial", "module": "career", "ladder": ["beginner", "assistant", "officer", "engineer", "manager"], "features": ["Lifelong learning history kept across promotions", "Skills matrix", "Practical evidence", "Learning roadmap", "Interview Simulator Mode"], "rule": "Guidance and self-tracking only. Never certifies legal competence." },
+    { "n": 4, "id": "modular_industry_core", "title": "Modular Industry-Adaptive Core", "status": "active", "summary": "One NASUR CORE plus pluggable industry hooks with no code duplication.", "core": ["Personal Memory", "JARVIS", "Records", "Learning", "Actions", "Analytics"] },
+    { "n": 5, "id": "decision_support_challenge", "title": "Safety Decision Support and Constructive Challenge", "status": "active", "service": "js/services/jarvis_core.js" },
+    { "n": 6, "id": "work_linked_learning", "title": "Work-Linked Learning Brain, Voice Diary and Photo Check", "status": "hook", "phase": 8, "hooks": ["learn", "practice", "revision", "vocabulary", "site_examples", "voice_diary", "photo_hazard_check"] },
+    { "n": 7, "id": "live_interpreter", "title": "Multilingual Live Communication and Interpreter", "status": "hook", "phase": 10, "languages": ["tamil", "tanglish", "simple_english", "safety_english", "hindi", "arabic", "french"] },
+    { "n": 8, "id": "central_config_deep_context", "title": "Centralised Configuration and Deep Context Consent", "status": "active", "service": "js/services/jarvis_core.js" },
+    { "n": 9, "id": "future_hooks", "title": "Extensible Future Hooks", "status": "hook", "summary": "Metadata-driven hooks activated in later phases." }
+  ],
+  "decision_flow": {
+    "steps": ["situation", "what_i_see", "what_to_check", "possible_hazards", "controls", "who_to_inform", "record_follow_up"],
+    "guidance_types": [
+      { "id": "general_guidance", "label": "General Guidance", "note": "Good practice. Not a site instruction." },
+      { "id": "site_procedure", "label": "Site Procedure", "note": "The approved site procedure always takes priority." },
+      { "id": "competent_person_decision", "label": "Competent Person Decision", "note": "Needs a trained and authorised person to decide." },
+      { "id": "emergency_action", "label": "Emergency Action", "note": "Follow the official site emergency plan first." }
+    ],
+    "challenge_style": "Respectful and honest. If the user proposes an unsafe shortcut, JARVIS explains the risk and offers a safer option, while respecting user preferences."
+  },
+  "deep_context_levels": [
+    { "id": "off", "label": "Off", "sends": "Nothing about the screen" },
+    { "id": "page_context_only", "label": "Page context only", "sends": "Name of the module or page" },
+    { "id": "field_metadata", "label": "Field metadata", "sends": "Field names and whether they are filled. Never the typed values." },
+    { "id": "user_selected_text", "label": "User-selected text", "sends": "Only text the user selects and approves, with personal identifiers redacted" }
+  ],
+  "ai_vault": {
+    "providers": ["claude_via_openrouter", "gemini", "groq", "nvidia_nim", "openrouter"],
+    "modes": ["single_key", "multi_key_fallback", "free_offline"],
+    "rule": "Keys stay on the device. Offline mode is always available."
+  },
+  "interpreter_flow": ["other_person_speaks", "live_streaming_summary_in_tamil", "suggested_simple_reply", "slow_clear_pronunciation_audio_in_their_language", "full_qa_recap"],
+  "industry_hooks": {
+    "manufacturing": {
+      "label": "Manufacturing",
+      "status": "active",
+      "hazards": ["Machine guarding", "Lockout tagout", "Conveyors and presses", "Forklift and material handling", "Chemicals and SDS", "Noise and dust", "Ergonomics"],
+      "tbt_topics": ["Guards must stay on", "Lockout before cleaning", "Forklift pedestrian rules", "Safe lifting", "Hearing protection"],
+      "checklists": ["Machine pre-start", "LOTO audit", "Forklift daily check", "Chemical store inspection"],
+      "legal_focus": ["Machinery and Guarding", "Chemical and Hazardous Substances", "Noise and Dust"],
+      "kpis": ["TRIR", "LTIFR", "Near miss ratio", "Action closure rate", "Machine guarding audit score"],
+      "process_safety_hooks": ["Machine Guarding", "LOTO", "Production Line", "Maintenance", "Chemical and SDS", "Ergonomics", "Forklift and MHE", "Noise and Exposure", "Contractor Maintenance", "Management of Change", "Process Safety"]
+    },
+    "construction": {
+      "label": "Construction",
+      "status": "active",
+      "hazards": ["Work at height", "Scaffolding", "Excavation", "Lifting operations", "Temporary electrical", "Mobile plant and traffic"],
+      "tbt_topics": ["Harness and anchor points", "Scaffold tags", "Trench edge protection", "Signaller and lift zone", "Cable and DB checks"],
+      "checklists": ["Scaffold inspection", "Excavation daily", "Crane and lifting gear", "Temporary power board"],
+      "legal_focus": ["Fall from Height", "Scaffolding", "Excavation", "Lifting and Cranes"],
+      "kpis": ["TRIR", "LTIFR", "Permit compliance", "Scaffold tag compliance", "Action closure rate"]
+    },
+    "oilgas": {
+      "label": "Oil and Gas",
+      "status": "active",
+      "hazards": ["Hydrocarbon release", "H2S", "Hot work and gas testing", "Simultaneous operations", "Confined space", "Process isolations"],
+      "tbt_topics": ["Gas detector bump test", "H2S escape routes", "Permit to work discipline", "Line breaking and isolation", "Muster points"],
+      "checklists": ["Hot work permit", "Confined space entry", "Isolation verification", "Gas detector check"],
+      "legal_focus": ["Fire and Explosion", "Confined Space", "Hot Work", "Chemical and Hazardous Substances"],
+      "kpis": ["TRIR", "Process safety events", "Permit audit score", "Overdue safety critical actions"]
+    },
+    "marine": {
+      "label": "Shipping and Marine",
+      "status": "active",
+      "hazards": ["Enclosed space entry", "Mooring snap-back", "Cargo H2S", "Working aloft", "Slips and heavy weather", "Fire and lifesaving equipment"],
+      "tbt_topics": ["Enclosed space atmosphere test", "Snap-back zones", "Personal gas detector", "Lifeboat drills", "Heavy weather deck safety"],
+      "checklists": ["Enclosed space entry", "Mooring equipment", "Fire appliances", "Lifesaving appliances"],
+      "legal_focus": ["Confined Space", "Fire and Explosion", "Lifting and Cranes"],
+      "kpis": ["LTIFR", "Drill completion", "ISM audit findings closed"]
+    },
+    "food_safety": {
+      "label": "Food Safety",
+      "status": "planned",
+      "hazards": ["Allergen control", "Cold chain", "Sanitation chemicals", "Slips in wet areas", "Cutting and slicing machines"],
+      "tbt_topics": ["Hand hygiene", "Allergen cross contact", "Safe use of cleaning chemicals", "Knife and slicer safety"],
+      "checklists": ["Daily hygiene audit", "Cold room check", "Sanitation chemical store"],
+      "legal_focus": ["Chemical and Hazardous Substances", "Housekeeping and Slips"],
+      "kpis": ["Audit score", "Non-conformances closed", "Near miss ratio"]
+    },
+    "warehouse_logistics": {
+      "label": "Warehouse and Logistics",
+      "status": "planned",
+      "hazards": ["Forklift and pedestrian interaction", "Racking damage", "Manual handling", "Loading dock falls", "Heat in storage"],
+      "tbt_topics": ["Pedestrian walkways", "Racking inspection", "Safe stacking", "Dock edge safety"],
+      "checklists": ["Forklift daily check", "Racking inspection", "Loading dock check"],
+      "legal_focus": ["Vehicles and Traffic", "Housekeeping and Slips", "Ergonomics"],
+      "kpis": ["TRIR", "Forklift incidents", "Racking inspection completion"]
+    },
+    "facilities_maintenance": {
+      "label": "Facilities and Maintenance",
+      "status": "planned",
+      "hazards": ["Electrical isolation", "Roof and height access", "Legionella and water systems", "Contractor control", "Fire systems impairment"],
+      "tbt_topics": ["Isolate before you work", "Roof access rules", "Contractor induction", "Fire system impairment notice"],
+      "checklists": ["Planned maintenance permit", "Roof access", "Fire system test record"],
+      "legal_focus": ["Electrical", "Fall from Height", "Fire and Explosion"],
+      "kpis": ["Planned maintenance completion", "Permit compliance", "Overdue actions"]
+    }
+  },
+  "career": {
+    "ladder": [
+      { "id": "beginner", "label": "Beginner", "years": "0" },
+      { "id": "assistant", "label": "HSE Assistant", "years": "0-1" },
+      { "id": "officer", "label": "Safety Officer", "years": "1-2" },
+      { "id": "engineer", "label": "HSE Engineer", "years": "3-5" },
+      { "id": "manager", "label": "HSE Manager", "years": "6+" }
+    ],
+    "interview_simulator": {
+      "interviewer_styles": [
+        { "region": "gulf", "focus": ["Permit to work and contractor control", "Heat stress and midday work rules", "Camp and accommodation safety", "Client audit readiness"] },
+        { "region": "canada", "focus": ["Due diligence and worker rights", "COR audit and JHSC", "Cold stress and winter operations", "WHMIS and hazard communication"] },
+        { "region": "india", "focus": ["Factories Act and state rules", "Incident investigation and reporting", "Contractor labour safety", "Monsoon and electrical hazards"] }
+      ],
+      "question_types": ["Technical", "Situational", "Behavioural", "Legal knowledge", "Leadership and pushback handling"]
+    },
+    "disclaimer": "This is guidance and self-tracking only. It does not certify legal or professional competence."
+  },
+  "future_hooks": {
+    "document_control": { "status": "hook", "fields": ["doc_id", "title", "category", "rev_no", "rev_date", "owner", "review_date", "status", "rev_history", "superseded_state"] },
+    "emergency_preparedness": { "status": "hook", "fields": ["contacts", "procedures", "muster_points", "equipment_checklists", "drill_records", "drill_findings", "review_dates"], "rule": "The official site emergency plan always takes priority." },
+    "pdca_mapping": ["plan", "do", "check", "act", "continual_improvement"],
+    "external_rule_radar": { "status": "hook", "gate": ["external_info_found", "source_date_country_check", "show_user", "user_reviews", "user_approves_permanent_or_temporary_save"] },
+    "permission_assistant": { "status": "hook", "flow": ["user_request", "jarvis_proposes_action_or_mini_app", "user_approves", "connected_tool_or_sandbox_executes"], "principle": "Least privilege" },
+    "cross_device_sync": { "status": "hook", "method": "Encrypted backup file between phone and future laptop", "exports": ["excel", "power_bi", "canva"] }
+  },
+  "languages": [
+    { "id": "ta", "label": "Tamil" },
+    { "id": "tanglish", "label": "Tanglish" },
+    { "id": "en", "label": "English" },
+    { "id": "hi", "label": "Hindi" },
+    { "id": "ar", "label": "Arabic" },
+    { "id": "fr", "label": "French" }
+  ]
+}
