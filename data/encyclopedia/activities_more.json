@@ -1,0 +1,1128 @@
+{
+ "version": 1,
+ "verifyNote": "Reference guidance. Verify laws, clauses and standards for your site and country before audit use. The official site procedure always takes priority.",
+ "activities": [
+  {
+   "id": "sandblasting_painting",
+   "title": "Sandblasting and Painting",
+   "icon": "🎨",
+   "industries": [
+    "oilgas",
+    "marine",
+    "construction",
+    "manufacturing"
+   ],
+   "category": "Surface preparation",
+   "summary": "Abrasive blasting and spray painting or coating of steel and structures.",
+   "walkthrough": {
+    "where_first": [
+     "Check containment, ventilation and exhaust",
+     "Check the blast operator's air-fed helmet, breathing air quality and hose",
+     "Check the abrasive type (never silica sand) and the paint SDS",
+     "Check the exclusion zone, signs and hose coupling whip checks"
+    ],
+    "hidden_hazards": [
+     "Respirable crystalline silica from the surface or abrasive",
+     "Lead or chromate in old paint",
+     "Static discharge igniting solvent vapour during spraying",
+     "Hose connection failure whipping at pressure",
+     "Dust clouds hiding trip hazards and other workers"
+    ],
+    "protect_first": [
+     "The blast operator's airways",
+     "Other workers who enter the dust cloud"
+    ]
+   },
+   "hazards": [
+    "Dust inhalation",
+    "Solvent vapour and fire",
+    "High-pressure injection",
+    "Noise",
+    "Slips and falls",
+    "Skin contact with coatings"
+   ],
+   "controls": {
+    "elimination": [
+     "Use pre-coated materials or shop priming"
+    ],
+    "substitution": [
+     "Use low-dust abrasives, water blasting and low-VOC paints"
+    ],
+    "engineering": [
+     "Enclosure and ventilation, dust extraction, dead-man valve, whip checks on couplings"
+    ],
+    "administrative": [
+     "Permit, breathing air quality tests, health surveillance, exclusion zone, trained operators"
+    ],
+    "ppe": [
+     "Air-fed helmet, blast suit, gloves, hearing protection"
+    ]
+   },
+   "ppe": [
+    "Air-fed blast helmet (EN 14594)",
+    "Blast suit and gloves",
+    "Respirator for spray painting with correct filter (EN 14387 / EN 149)",
+    "Hearing protection (EN 352)",
+    "Safety boots (EN ISO 20345)"
+   ],
+   "permits": [
+    "Blasting and painting permit",
+    "Breathing air quality test record",
+    "Confined space permit where inside tanks"
+   ],
+   "checklist": [
+    "Abrasive is not silica sand",
+    "Containment and ventilation working",
+    "Breathing air tested and filtered",
+    "Hose couplings pinned with whip checks",
+    "Exclusion zone and signs set",
+    "Paint SDS read, ignition sources controlled",
+    "Health surveillance up to date"
+   ],
+   "legal": {
+    "india": "Factories Act 1948; MSIHC Rules 1989 for flammable coatings (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client coating and blasting procedures (verify)",
+    "canada": "Provincial OHS regulations; CSA Z94.4 (respirators); WHMIS 2015",
+    "usa": "OSHA 29 CFR 1910.94 (ventilation), 1910.134 (respiratory protection), 1926.1153 (respirable crystalline silica), 1910.1200"
+   },
+   "tbt": {
+    "title": "Blasting: protect your lungs first",
+    "points": [
+     "Only air-fed helmets in blasting, never a paper mask",
+     "Check the breathing air and the hose couplings every shift",
+     "Keep everyone else out of the dust zone"
+    ],
+    "question": "Who else could breathe this dust without knowing?"
+   },
+   "bridge": {
+    "hazard_category": "Chemical & Hazardous Substances",
+    "activity": "Blasting / painting",
+    "risk_rating": "High",
+    "typical": [
+     "Silica abrasive used",
+     "No air-fed helmet",
+     "Hose coupling not secured",
+     "Spray painting without ventilation"
+    ]
+   }
+  },
+  {
+   "id": "marine_mooring",
+   "title": "Marine Mooring Operations",
+   "icon": "⚓",
+   "industries": [
+    "marine",
+    "oilgas"
+   ],
+   "category": "Marine deck",
+   "summary": "Handling mooring lines and winches when a vessel berths, shifts or departs.",
+   "walkthrough": {
+    "where_first": [
+     "Check the mooring plan, ropes and winches are inspected and in date",
+     "Check snap-back zones are marked and clear",
+     "Check crew positions, communication and the bridge to deck briefing",
+     "Check the deck is clear of oil and trip hazards"
+    ],
+    "hidden_hazards": [
+     "Ropes with internal damage or past retirement",
+     "Snap-back zones that look safe but are in the line of the rope",
+     "Sudden tension changes from wind, tide or swell",
+     "Rope bights around feet on deck",
+     "Poor communication between bridge, deck and shore"
+    ],
+    "protect_first": [
+     "Crew standing in snap-back zones",
+     "People on the quay or in launches near lines"
+    ]
+   },
+   "hazards": [
+    "Rope snap-back",
+    "Entanglement",
+    "Crush injuries",
+    "Slips and falls",
+    "Man overboard"
+   ],
+   "controls": {
+    "elimination": [
+     "Use remote or automated mooring systems where fitted"
+    ],
+    "substitution": [
+     "Use ropes with higher breaking load and lower snap-back energy"
+    ],
+    "engineering": [
+     "Good fairleads, bitts and bollards, winch brakes and guards, marked snap-back zones"
+    ],
+    "administrative": [
+     "Mooring plan and risk assessment, briefing, defined roles, never stand in the bight, rope inspection records"
+    ],
+    "ppe": [
+     "Helmet, gloves, safety boots, lifejacket where overboard risk, high-visibility"
+    ]
+   },
+   "ppe": [
+    "Helmet (EN 397)",
+    "Gloves (EN 388)",
+    "Safety boots (EN ISO 20345)",
+    "Lifejacket or buoyancy aid where overboard risk (EN ISO 12402)",
+    "High-visibility clothing (EN ISO 20471)"
+   ],
+   "permits": [
+    "Mooring risk assessment",
+    "Mooring equipment inspection records"
+   ],
+   "checklist": [
+    "Mooring plan briefed to all crew",
+    "Ropes inspected and within life",
+    "Winches, brakes and fairleads checked",
+    "Snap-back zones marked and cleared",
+    "Communication tested bridge to deck",
+    "Deck clear of oil and obstructions",
+    "Lifejackets worn where overboard risk"
+   ],
+   "legal": {
+    "india": "Merchant Shipping Act 1958; DG Shipping requirements; ISM Code (verify)",
+    "gulf": "Flag state and port authority rules; ISM Code; OCIMF Mooring Equipment Guidelines (MEG4) (verify)",
+    "canada": "Canada Shipping Act 2001 and Marine Occupational Health and Safety Regulations (SOR/2010-120)",
+    "usa": "US Coast Guard regulations (46 CFR); OSHA 29 CFR 1915 to 1918 for shipyards, marine terminals and longshoring where applicable"
+   },
+   "tbt": {
+    "title": "Mooring: never stand in the bight",
+    "points": [
+     "Know where the snap-back zone is and stay out",
+     "Only the person in charge gives signals",
+     "Report any damaged rope or winch before use"
+    ],
+    "question": "If this rope parted now, where would it fly?"
+   },
+   "bridge": {
+    "hazard_category": "Other",
+    "activity": "Marine mooring",
+    "risk_rating": "High",
+    "typical": [
+     "Crew standing in snap-back zone",
+     "Damaged mooring rope in use",
+     "No briefing before mooring",
+     "Oil on deck"
+    ]
+   }
+  },
+  {
+   "id": "working_aloft_marine",
+   "title": "Working Aloft (Marine)",
+   "icon": "🚢",
+   "industries": [
+    "marine",
+    "oilgas"
+   ],
+   "category": "Marine deck",
+   "summary": "Working on masts, funnels, cranes and high structures on a vessel.",
+   "walkthrough": {
+    "where_first": [
+     "Check the permit to work aloft, that the bridge has been told and radar and radio aerials are isolated",
+     "Check the harness, lanyards and attachment points",
+     "Check weather and ship movement",
+     "Check tools are secured and the area below is barricaded"
+    ],
+    "hidden_hazards": [
+     "Radar and radio transmission at the work position",
+     "Corroded ladders or rails",
+     "Ship movement causing sudden sway",
+     "Dropped objects reaching people on deck",
+     "Sun, heat or cold stress for the person aloft"
+    ],
+    "protect_first": [
+     "The person aloft",
+     "Crew on deck below"
+    ]
+   },
+   "hazards": [
+    "Fall from height",
+    "Dropped objects",
+    "Radiation from radar and radio",
+    "Heat or cold stress",
+    "Entanglement"
+   ],
+   "controls": {
+    "elimination": [
+     "Do the work in port or from a platform or cherry picker"
+    ],
+    "substitution": [
+     "Use remote inspection such as a drone where possible"
+    ],
+    "engineering": [
+     "Fixed anchor points, rescue equipment ready, nets or barriers below"
+    ],
+    "administrative": [
+     "Permit to work aloft, second person on deck, communication, weather limits, rescue plan"
+    ],
+    "ppe": [
+     "Full body harness with two lanyards, helmet with chin strap, lifejacket where overboard risk"
+    ]
+   },
+   "ppe": [
+    "Full body harness with two lanyards (EN 361, EN 355)",
+    "Helmet with chin strap (EN 397)",
+    "Lifejacket where overboard risk (EN ISO 12402)",
+    "Safety boots (EN ISO 20345)",
+    "Gloves (EN 388)"
+   ],
+   "permits": [
+    "Permit to work aloft",
+    "Radar and radio isolation record"
+   ],
+   "checklist": [
+    "Permit signed, bridge informed",
+    "Radar and radio isolated",
+    "Harness and lanyards inspected, two points of attachment",
+    "Weather and ship motion acceptable",
+    "Tools secured on lanyards",
+    "Deck below barricaded",
+    "Standby person and rescue plan ready"
+   ],
+   "legal": {
+    "india": "Merchant Shipping Act 1958; DG Shipping requirements; ISM Code (verify)",
+    "gulf": "Flag state rules and ISM Code; Code of Safe Working Practices for Merchant Seafarers widely used (verify)",
+    "canada": "Canada Shipping Act 2001 and Marine Occupational Health and Safety Regulations (SOR/2010-120)",
+    "usa": "US Coast Guard 46 CFR; OSHA 29 CFR 1915 for shipyards where applicable"
+   },
+   "tbt": {
+    "title": "Aloft: tell the bridge, switch off the radar",
+    "points": [
+     "Permit and bridge permission first",
+     "Always two points of attachment",
+     "Tie every tool and keep people clear below"
+    ],
+    "question": "What happens to the radar while I am up there?"
+   },
+   "bridge": {
+    "hazard_category": "Fall from Height",
+    "activity": "Working aloft (marine)",
+    "risk_rating": "Critical",
+    "typical": [
+     "Working aloft without permit",
+     "Radar not isolated",
+     "Single attachment only",
+     "Tools not secured"
+    ]
+   }
+  },
+  {
+   "id": "cold_room_ammonia",
+   "title": "Cold Room and Ammonia Refrigeration",
+   "icon": "❄️",
+   "industries": [
+    "food_safety",
+    "warehouse_logistics",
+    "manufacturing"
+   ],
+   "category": "Refrigeration",
+   "summary": "Working in cold rooms and with ammonia refrigeration plant.",
+   "walkthrough": {
+    "where_first": [
+     "Check ammonia detectors, alarms and ventilation are working",
+     "Check machinery room doors, exits and emergency stop",
+     "Check eyewash, shower and breathing apparatus",
+     "Check cold room door releases and a way out from the inside"
+    ],
+    "hidden_hazards": [
+     "Small slow leaks from valves, flanges and relief lines",
+     "Ammonia pooling in low areas or poorly ventilated spaces",
+     "Frozen door releases trapping people inside",
+     "Ice build-up on floors and racking",
+     "Liquid ammonia trapped between valves expanding"
+    ],
+    "protect_first": [
+     "People near a leak",
+     "A worker trapped in a cold room"
+    ]
+   },
+   "hazards": [
+    "Toxic ammonia exposure",
+    "Cold stress and frostbite",
+    "Entrapment",
+    "Slips on ice",
+    "Explosion in a machinery room at high concentration"
+   ],
+   "controls": {
+    "elimination": [
+     "Use a lower charge or alternative refrigerant where suitable"
+    ],
+    "substitution": [
+     "Consider CO2 or other lower-toxicity systems in new designs"
+    ],
+    "engineering": [
+     "Ammonia detection with alarms, emergency ventilation and shutdown, inside door release and alarm"
+    ],
+    "administrative": [
+     "Trained operators, emergency response plan, drills, mechanical integrity inspection, cold exposure limits and rewarming breaks"
+    ],
+    "ppe": [
+     "Cold-protective clothing, escape respirator, goggles, insulated boots"
+    ]
+   },
+   "ppe": [
+    "Cold-protective clothing and gloves (EN 342, EN 511)",
+    "Full face respirator with ammonia filter for escape (EN 14387 type K)",
+    "Chemical splash goggles (EN 166)",
+    "Insulated safety boots (EN ISO 20345)",
+    "Self-contained breathing apparatus for response teams (EN 137)"
+   ],
+   "permits": [
+    "Hot work and line break permits for refrigeration work",
+    "Emergency response plan"
+   ],
+   "checklist": [
+    "Ammonia detectors tested and alarming",
+    "Machinery room ventilation working",
+    "Emergency stop and exits clear",
+    "Eyewash, shower and escape respirators ready",
+    "Cold room door opens from inside and alarm works",
+    "Time limits and rewarming breaks set",
+    "Trained responders and drills up to date"
+   ],
+   "legal": {
+    "india": "Factories Act 1948; MSIHC Rules 1989; IS 660 (mechanical refrigeration safety code) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; Civil Defence requirements for ammonia (verify)",
+    "canada": "CSA B52 (mechanical refrigeration code) and provincial regulations",
+    "usa": "OSHA 29 CFR 1910.111 (anhydrous ammonia), 1910.119 (PSM above the threshold quantity); IIAR standards"
+   },
+   "tbt": {
+    "title": "Ammonia: if you smell it, move out and tell someone",
+    "points": [
+     "Know the escape route and the alarm",
+     "Never enter a leak area without breathing apparatus",
+     "Check that the cold room door opens from inside"
+    ],
+    "question": "If the lights failed now, could everyone get out of this room?"
+   },
+   "bridge": {
+    "hazard_category": "Chemical & Hazardous Substances",
+    "activity": "Cold room / ammonia",
+    "risk_rating": "High",
+    "typical": [
+     "Ammonia detector not working",
+     "Cold room door will not open inside",
+     "No escape respirator available",
+     "Ice on floors"
+    ]
+   }
+  },
+  {
+   "id": "manual_handling_racking",
+   "title": "Manual Handling and Racking",
+   "icon": "📦",
+   "industries": [
+    "warehouse_logistics",
+    "manufacturing",
+    "food_safety"
+   ],
+   "category": "Ergonomics",
+   "summary": "Lifting and moving loads by hand and storing goods on racking.",
+   "walkthrough": {
+    "where_first": [
+     "Check the load weight, shape and the route",
+     "Check racking for damage, bent uprights, missing beams and load notices",
+     "Check pallets and load stability",
+     "Check mechanical aids available (trolleys, hoists, lift assists)"
+    ],
+    "hidden_hazards": [
+     "Forklift damage to uprights that nobody reported",
+     "Overloaded beam levels or poor quality pallets",
+     "Repetitive strain from small loads handled many times",
+     "Slippery floors near docks",
+     "Stacking too high close to sprinklers"
+    ],
+    "protect_first": [
+     "Workers under or beside loaded racking",
+     "Workers at dock edges"
+    ]
+   },
+   "hazards": [
+    "Musculoskeletal injury",
+    "Racking collapse",
+    "Falling loads",
+    "Slips and trips",
+    "Dock edge falls"
+   ],
+   "controls": {
+    "elimination": [
+     "Remove handling by conveyors or direct delivery"
+    ],
+    "substitution": [
+     "Use smaller packages or lighter containers"
+    ],
+    "engineering": [
+     "Lifting aids, adjustable work heights, rack protectors, safe load notices, dock edge protection"
+    ],
+    "administrative": [
+     "Lifting technique training, team lifts, job rotation, racking inspections by a competent person, damage reporting"
+    ],
+    "ppe": [
+     "Gloves, safety boots, high-visibility clothing"
+    ]
+   },
+   "ppe": [
+    "Gloves (EN 388)",
+    "Safety boots (EN ISO 20345)",
+    "High-visibility clothing in traffic areas (EN ISO 20471)",
+    "Helmet where racking overhead risk (EN 397)"
+   ],
+   "permits": [
+    "Racking inspection record",
+    "Manual handling risk assessment"
+   ],
+   "checklist": [
+    "Load weight known and within the limit",
+    "Mechanical aid used where possible",
+    "Racking free of damage with load notices",
+    "Pallets sound and loads stable",
+    "Floors dry and walkways clear",
+    "Dock edge protected",
+    "Damage reported and tagged out"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.34 (excessive weights) and state rules (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; ISO 11228 and EN 15512 (racking) commonly specified (verify)",
+    "canada": "Provincial OHS regulations on musculoskeletal injury prevention",
+    "usa": "OSHA General Duty Clause; 29 CFR 1910.176 (handling materials)"
+   },
+   "tbt": {
+    "title": "Lifting by hand: use your head, not your back",
+    "points": [
+     "Test the weight first and use a trolley when you can",
+     "Report any damaged racking and keep clear of it",
+     "Ask for help with long or heavy loads"
+    ],
+    "question": "What could we change so nobody has to lift this?"
+   },
+   "bridge": {
+    "hazard_category": "Ergonomics",
+    "activity": "Manual handling / racking",
+    "risk_rating": "Medium",
+    "typical": [
+     "Damaged racking upright",
+     "Overloaded beam",
+     "Heavy load lifted by one person",
+     "Wet floor at dock"
+    ]
+   }
+  },
+  {
+   "id": "hydrocarbon_line_breaking",
+   "title": "Line Breaking and Intrusive Maintenance",
+   "icon": "🛢️",
+   "industries": [
+    "oilgas",
+    "manufacturing",
+    "marine"
+   ],
+   "category": "Process",
+   "summary": "Opening pipes, flanges and equipment that may contain hydrocarbons or other hazardous fluids.",
+   "walkthrough": {
+    "where_first": [
+     "Check the isolation plan: positive isolation, depressurise, drain, purge and verify",
+     "Check the line contents and the SDS",
+     "Check the permit, gas test and ignition source control",
+     "Check emergency response, escape route and wind direction"
+    ],
+    "hidden_hazards": [
+     "Trapped pressure or liquid between valves",
+     "Residual hydrocarbons and H2S in dead legs",
+     "Wrong line opened because of labelling errors",
+     "Static electricity during draining",
+     "Wind carrying vapour to ignition sources or people"
+    ],
+    "protect_first": [
+     "The crew at the flange",
+     "People downwind"
+    ]
+   },
+   "hazards": [
+    "Hydrocarbon release",
+    "Fire and explosion",
+    "H2S exposure",
+    "Pressure release",
+    "Chemical contact"
+   ],
+   "controls": {
+    "elimination": [
+     "Avoid breaking containment through design (double block and bleed, spool pieces)"
+    ],
+    "substitution": [
+     "Use approved alternatives such as hot tapping under a strict procedure"
+    ],
+    "engineering": [
+     "Double block and bleed or blinds, vent and drain points, gas detection, drip trays"
+    ],
+    "administrative": [
+     "Line break permit, isolation certificate, supervised depressurising with gauges, controlled bolt loosening, rescue and fire plan"
+    ],
+    "ppe": [
+     "Flame-resistant coverall, chemical gloves, face shield, gas detector, escape set"
+    ]
+   },
+   "ppe": [
+    "Flame-resistant coveralls (EN ISO 11612)",
+    "Chemical gloves (EN 374)",
+    "Face shield and goggles (EN 166)",
+    "Personal gas detector (H2S and LEL)",
+    "Escape breathing apparatus where H2S is possible (EN 13794)",
+    "Safety boots (EN ISO 20345)"
+   ],
+   "permits": [
+    "Line breaking / intrusive work permit",
+    "Isolation certificate",
+    "Gas test record"
+   ],
+   "checklist": [
+    "Isolation verified by a second competent person",
+    "Pressure gauge reads zero at the break point",
+    "Line drained and purged as planned",
+    "Right line confirmed against the isolation list",
+    "Gas test done and ignition sources controlled",
+    "Wind direction and escape route known",
+    "Emergency and fire response ready"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 Chapter IVA; MSIHC Rules 1989 (verify)",
+    "gulf": "ADNOC and Aramco process isolation and permit standards (client documents) and UAE Cabinet Decision No. 33 of 2020 (verify)",
+    "canada": "Provincial regulations and CSA Z767 (process safety management)",
+    "usa": "OSHA 29 CFR 1910.119 (PSM), 1910.147 (energy control); API standards"
+   },
+   "tbt": {
+    "title": "Line break: assume it is full until proven empty",
+    "points": [
+     "Check the isolation and the gauge before opening",
+     "Open slowly and stand clear of the first release",
+     "Know the wind direction and your escape route"
+    ],
+    "question": "How do we know this line is really isolated and empty?"
+   },
+   "bridge": {
+    "hazard_category": "Fire & Explosion",
+    "activity": "Line breaking / intrusive maintenance",
+    "risk_rating": "Critical",
+    "typical": [
+     "Isolation not verified",
+     "Wrong line opened",
+     "No gas test before break",
+     "Ignition source near work"
+    ]
+   }
+  },
+  {
+   "id": "h2s_gas_hazards",
+   "title": "H2S and Toxic Gas Hazards",
+   "icon": "☠️",
+   "industries": [
+    "oilgas",
+    "marine",
+    "manufacturing",
+    "construction"
+   ],
+   "category": "Toxic gas",
+   "summary": "Working where hydrogen sulfide or other toxic gases may be present.",
+   "walkthrough": {
+    "where_first": [
+     "Check personal and area gas detectors: calibration and bump test",
+     "Check wind socks and the upwind muster point",
+     "Check escape breathing apparatus or SCBA and who is trained",
+     "Check alarm levels and the emergency plan"
+    ],
+    "hidden_hazards": [
+     "H2S is heavier than air and collects in low areas and trenches",
+     "Smell fades at higher concentrations, so do not rely on your nose",
+     "Sudden release from sludge, tanks or sour lines",
+     "A rescuer becomes a second victim",
+     "Wind shifts that change the safe direction"
+    ],
+    "protect_first": [
+     "Anyone who collapses in the area",
+     "Workers alone or in low spots"
+    ]
+   },
+   "hazards": [
+    "Toxic gas exposure",
+    "Collapse and death at high concentrations",
+    "Eye and respiratory irritation",
+    "Fire risk (flammable)",
+    "Rescue casualties"
+   ],
+   "controls": {
+    "elimination": [
+     "Remove exposure by remote operation and closed systems"
+    ],
+    "substitution": [
+     "Use closed sampling instead of open sampling"
+    ],
+    "engineering": [
+     "Fixed gas detection and alarms, ventilation, closed drains"
+    ],
+    "administrative": [
+     "H2S awareness training, buddy system, permit and gas testing, wind direction signs, drills"
+    ],
+    "ppe": [
+     "Personal H2S monitor, escape set, SCBA for rescue"
+    ]
+   },
+   "ppe": [
+    "Personal H2S detector worn at breathing height",
+    "Escape breathing apparatus (EN 13794)",
+    "SCBA for rescue and entry (EN 137)",
+    "Flame-resistant clothing where flammable (EN ISO 11612)"
+   ],
+   "permits": [
+    "Gas test record",
+    "H2S contingency plan",
+    "Permit to work"
+   ],
+   "checklist": [
+    "Detector calibrated and bump tested",
+    "Wind sock visible, upwind muster known",
+    "Escape sets and SCBA available and checked",
+    "Alarm levels set by site standard understood",
+    "Buddy system in place",
+    "Rescue plan and trained rescuers ready",
+    "Drill done in the last 6 months"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.36 and Chapter IVA (verify)",
+    "gulf": "ADNOC and Aramco H2S standards and contingency requirements (client documents) (verify)",
+    "canada": "Provincial energy and OHS rules (for example Alberta OHS Code and Alberta Energy Regulator requirements); CSA Z1006",
+    "usa": "OSHA 29 CFR 1910.1000 Table Z-2 (hydrogen sulfide ceiling limit); API RP 54 and API RP 49"
+   },
+   "tbt": {
+    "title": "H2S: when the alarm sounds, go upwind",
+    "points": [
+     "Never trust your nose. Trust the detector",
+     "Move to the upwind muster point and help others on the way",
+     "Do not run in to rescue without breathing apparatus"
+    ],
+    "question": "Which way is upwind from where I am standing?"
+   },
+   "bridge": {
+    "hazard_category": "Chemical & Hazardous Substances",
+    "activity": "H2S / toxic gas",
+    "risk_rating": "Critical",
+    "typical": [
+     "Detector not calibrated",
+     "No wind sock or muster point",
+     "Escape set missing",
+     "Working alone in gas area"
+    ]
+   }
+  },
+  {
+   "id": "heat_stress_outdoor",
+   "title": "Heat Stress in Outdoor Work",
+   "icon": "☀️",
+   "industries": [
+    "construction",
+    "oilgas",
+    "manufacturing",
+    "marine",
+    "facilities_maintenance"
+   ],
+   "category": "Heat and cold",
+   "summary": "Working outdoors or in hot areas where heat illness can happen.",
+   "walkthrough": {
+    "where_first": [
+     "Check the heat index or WBGT and the forecast for the shift",
+     "Check shade, a cool rest area and drinking water within easy reach",
+     "Check workers new to the heat or returning from leave (acclimatisation)",
+     "Check the buddy system and emergency plan"
+    ],
+    "hidden_hazards": [
+     "Heat stress builds during the shift and often peaks after lunch",
+     "Workers hide symptoms for fear of losing work or pay",
+     "Dehydration from tea and coffee instead of water",
+     "Dark PPE and enclosed spaces raise body heat",
+     "Humid heat is dangerous even when the number looks lower"
+    ],
+    "protect_first": [
+     "New workers not yet acclimatised",
+     "Anyone with confusion, hot dry skin or collapse (emergency)"
+    ]
+   },
+   "hazards": [
+    "Heat exhaustion",
+    "Heat stroke (life threatening)",
+    "Dehydration",
+    "Reduced alertness and accidents",
+    "Sunburn"
+   ],
+   "controls": {
+    "elimination": [
+     "Reschedule heavy work to cooler hours"
+    ],
+    "substitution": [
+     "Use mechanical aids to reduce effort"
+    ],
+    "engineering": [
+     "Shade, fans, misting, cooled rest areas, reflective covers"
+    ],
+    "administrative": [
+     "Acclimatise over 5 to 7 days, work-rest cycles, water and electrolytes, buddy checks, midday work ban where law requires, heat illness first aid training"
+    ],
+    "ppe": [
+     "Light breathable clothing, cooling vests, neck and sun cover"
+    ]
+   },
+   "ppe": [
+    "Light-coloured breathable clothing",
+    "Helmet with neck and sun cover (EN 397)",
+    "Cooling vests or neck wraps where provided",
+    "Sun protection: hat, sunglasses (EN 166 or EN ISO 12312-1), sunscreen",
+    "High-visibility clothing in lighter fabric (EN ISO 20471)"
+   ],
+   "permits": [
+    "Heat stress management plan",
+    "Daily heat risk assessment",
+    "Work-rest schedule"
+   ],
+   "checklist": [
+    "Heat index or WBGT checked and level noted",
+    "Shade and cool rest area available",
+    "Cool drinking water close and used",
+    "New workers acclimatising",
+    "Work-rest cycle followed",
+    "Buddy checks and emergency plan known",
+    "Midday work ban respected where applicable"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.13 (ventilation and temperature) and state rules; OSH Code 2020; state heat advisories (verify)",
+    "gulf": "National midday work ban in summer: UAE 15 June to 15 September 12:30 to 15:00; Saudi Arabia 15 June to 15 September 12:00 to 15:00; Qatar 1 June to 15 September 10:00 to 15:30 (verify current year notices)",
+    "canada": "Provincial OHS general duty and heat stress provisions; ACGIH TLV for heat stress",
+    "usa": "OSHA General Duty Clause; NIOSH criteria for heat; state rules such as Cal/OSHA Section 3395"
+   },
+   "tbt": {
+    "title": "Heat: water, shade, rest, and look after your partner",
+    "points": [
+     "Drink a cup of water every 15 to 20 minutes, even if not thirsty",
+     "Dizziness, confusion or stopping sweating means stop and call for help",
+     "Check your partner. Heat stroke is an emergency"
+    ],
+    "question": "Who on our team is new to this heat today?"
+   },
+   "bridge": {
+    "hazard_category": "Heat & Cold",
+    "activity": "Outdoor work in heat",
+    "risk_rating": "High",
+    "typical": [
+     "No drinking water at work area",
+     "No shade or rest area",
+     "New worker not acclimatised",
+     "Work during midday ban"
+    ]
+   }
+  },
+  {
+   "id": "cold_stress_winter",
+   "title": "Cold Stress and Winter Work",
+   "icon": "🥶",
+   "industries": [
+    "construction",
+    "oilgas",
+    "manufacturing",
+    "facilities_maintenance",
+    "warehouse_logistics"
+   ],
+   "category": "Heat and cold",
+   "summary": "Working outdoors or in cold stores in low temperatures, snow and ice.",
+   "walkthrough": {
+    "where_first": [
+     "Check the wind chill and forecast",
+     "Check warm rest areas and warm drinks",
+     "Check footing: ice, snow and black ice on routes",
+     "Check vehicles and equipment are winter ready"
+    ],
+    "hidden_hazards": [
+     "Wind chill makes real risk far worse than the air temperature",
+     "Wet clothing causes fast heat loss",
+     "Early signs (shivering, clumsiness, slurred speech) are missed",
+     "Black ice on routes that look just wet",
+     "Metal tools and surfaces cause cold contact injury"
+    ],
+    "protect_first": [
+     "Workers with early hypothermia signs",
+     "Lone workers and drivers in remote areas"
+    ]
+   },
+   "hazards": [
+    "Hypothermia",
+    "Frostbite",
+    "Slips on ice",
+    "Vehicle skids",
+    "Carbon monoxide from heaters in enclosed spaces"
+   ],
+   "controls": {
+    "elimination": [
+     "Postpone non-urgent outdoor work in extreme cold"
+    ],
+    "substitution": [
+     "Move tasks indoors or under heated shelter"
+    ],
+    "engineering": [
+     "Heated shelters, wind breaks, de-icing, anti-slip surfaces"
+    ],
+    "administrative": [
+     "Work-warm-up schedule by wind chill, buddy checks, symptom training, safe heater use, winter driving rules"
+    ],
+    "ppe": [
+     "Layered insulated clothing, insulated waterproof boots and gloves, face and neck cover, ice cleats"
+    ]
+   },
+   "ppe": [
+    "Layered insulated clothing (EN 342)",
+    "Insulated waterproof boots (EN ISO 20345 CI WR)",
+    "Insulated gloves (EN 511)",
+    "Face and neck cover",
+    "Ice cleats for walking routes"
+   ],
+   "permits": [
+    "Cold stress plan",
+    "Winter road and site ice management plan"
+   ],
+   "checklist": [
+    "Wind chill and forecast checked",
+    "Warm shelter and warm drinks available",
+    "Routes salted or sanded",
+    "Workers dressed in dry layers",
+    "Buddy checks and warm-up breaks set",
+    "Vehicles winter ready with emergency kit",
+    "Heaters used safely with ventilation"
+   ],
+   "legal": {
+    "india": "Not usually a main hazard in India; Factories Act 1948 general duties apply (verify)",
+    "gulf": "Not usually a main hazard in the Gulf; UAE Cabinet Decision No. 33 of 2020 general duties apply (verify)",
+    "canada": "Provincial OHS regulations on thermal exposure (for example WorkSafeBC OHS Regulation Part 7); ACGIH TLV for cold stress",
+    "usa": "OSHA General Duty Clause; NIOSH guidance on cold stress"
+   },
+   "tbt": {
+    "title": "Cold: stay dry, stay warm, watch your partner",
+    "points": [
+     "Wet clothes lose heat fast. Change them",
+     "Shivering, clumsy hands or slurred speech means get warm now",
+     "Check ice on walkways before you carry anything"
+    ],
+    "question": "Where is our nearest warm shelter and how long to reach it?"
+   },
+   "bridge": {
+    "hazard_category": "Heat & Cold",
+    "activity": "Cold weather work",
+    "risk_rating": "High",
+    "typical": [
+     "No warm shelter",
+     "Icy walkway not treated",
+     "Worker in wet clothing in cold",
+     "Heater used in closed space"
+    ]
+   }
+  },
+  {
+   "id": "mobile_plant_traffic",
+   "title": "Mobile Plant and Site Traffic",
+   "icon": "🚧",
+   "industries": [
+    "construction",
+    "manufacturing",
+    "oilgas",
+    "warehouse_logistics",
+    "facilities_maintenance"
+   ],
+   "category": "Vehicles",
+   "summary": "Controlling vehicles, mobile plant and pedestrians on site.",
+   "walkthrough": {
+    "where_first": [
+     "Check the traffic management plan and the separation of people and vehicles",
+     "Check reversing alarms, cameras and banksmen",
+     "Check blind spots, speed limits and signs",
+     "Check pedestrian crossings and lighting"
+    ],
+    "hidden_hazards": [
+     "Blind spots larger than drivers expect",
+     "Reversing near the end of a shift when fatigue is high",
+     "Visitors and new workers who do not know the rules",
+     "Soft ground and edges close to excavations",
+     "Overhead power lines when tipping"
+    ],
+    "protect_first": [
+     "Pedestrians near moving plant",
+     "The banksman and signaller"
+    ]
+   },
+   "hazards": [
+    "Struck by vehicle",
+    "Rollover",
+    "Crushing against structures",
+    "Collision",
+    "Overhead line contact"
+   ],
+   "controls": {
+    "elimination": [
+     "Design the site layout to separate vehicles from people and reduce reversing"
+    ],
+    "substitution": [
+     "Use smaller plant or one-way systems"
+    ],
+    "engineering": [
+     "Barriers, reversing cameras and sensors, lights, speed limiters, marked walkways"
+    ],
+    "administrative": [
+     "Traffic management plan, trained banksmen, authorised drivers, speed limits, visitor induction"
+    ],
+    "ppe": [
+     "High-visibility clothing, safety boots, helmet"
+    ]
+   },
+   "ppe": [
+    "High-visibility clothing (EN ISO 20471 class 2 or 3)",
+    "Safety boots (EN ISO 20345)",
+    "Helmet (EN 397)",
+    "Hearing protection where noisy (EN 352)"
+   ],
+   "permits": [
+    "Traffic management plan",
+    "Operator authorisation",
+    "Daily plant check"
+   ],
+   "checklist": [
+    "Traffic plan briefed and up to date",
+    "Walkways separated and marked",
+    "Reversing alarms and cameras working",
+    "Banksman used at blind areas",
+    "Speed limit signed and followed",
+    "Visitors inducted and escorted",
+    "Power lines marked and avoided"
+   ],
+   "legal": {
+    "india": "Factories Act 1948; Motor Vehicles Act 1988; BOCW Central Rules 1998 (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client driving and site traffic rules (verify)",
+    "canada": "Provincial OHS regulations; Ontario Traffic Manual Book 7 for temporary road work (verify)",
+    "usa": "OSHA 29 CFR 1926 Subpart O (motor vehicles, mechanized equipment); MUTCD for road work"
+   },
+   "tbt": {
+    "title": "Site traffic: be seen, stay out of the blind spot",
+    "points": [
+     "Wear high-visibility clothing and stay on marked walkways",
+     "If you cannot see the driver, the driver cannot see you",
+     "Never walk behind reversing plant"
+    ],
+    "question": "Where is the nearest blind spot on our site?"
+   },
+   "bridge": {
+    "hazard_category": "Vehicles & Traffic",
+    "activity": "Mobile plant / site traffic",
+    "risk_rating": "High",
+    "typical": [
+     "Pedestrian behind reversing plant",
+     "No banksman at blind area",
+     "Reversing alarm not working",
+     "Pedestrian in vehicle route"
+    ]
+   }
+  },
+  {
+   "id": "food_sanitation_cleaning",
+   "title": "Machine Cleaning and Sanitation (Food)",
+   "icon": "🍽️",
+   "industries": [
+    "food_safety",
+    "manufacturing"
+   ],
+   "category": "Machinery",
+   "summary": "Cleaning food processing machines with chemicals, hot water and steam.",
+   "walkthrough": {
+    "where_first": [
+     "Check the machine is isolated with lockout before any cleaning",
+     "Check the cleaning chemical label and dilution",
+     "Check floors, drains and wet areas for slip risk",
+     "Check guards are refitted before restart"
+    ],
+    "hidden_hazards": [
+     "Machines restarted by another person during cleaning",
+     "Mixing chlorine with acid products releases toxic gas",
+     "Hot water and steam at nozzles",
+     "Blades and slicers still moving after power off",
+     "Allergen and cross contamination from poor cleaning"
+    ],
+    "protect_first": [
+     "The cleaner inside or near the machine",
+     "Others who may restart the equipment"
+    ]
+   },
+   "hazards": [
+    "Contact with moving parts",
+    "Chemical burns",
+    "Slips on wet floors",
+    "Scalds",
+    "Cuts from blades",
+    "Gas release from mixed chemicals"
+   ],
+   "controls": {
+    "elimination": [
+     "Use clean-in-place systems to avoid manual cleaning"
+    ],
+    "substitution": [
+     "Use less hazardous sanitisers"
+    ],
+    "engineering": [
+     "Interlocked guards, automatic dosing, non-slip flooring, drainage"
+    ],
+    "administrative": [
+     "Lockout for every cleaning task, trained cleaners, chemical storage and no-mixing rule, wet floor signs"
+    ],
+    "ppe": [
+     "Chemical gloves, cut-resistant gloves for blades, goggles, non-slip boots, waterproof apron"
+    ]
+   },
+   "ppe": [
+    "Chemical-resistant gloves (EN 374)",
+    "Cut-resistant gloves for blades (EN 388 cut level)",
+    "Splash goggles (EN 166)",
+    "Non-slip safety boots (EN ISO 20345 SRC)",
+    "Waterproof apron"
+   ],
+   "permits": [
+    "LOTO record for cleaning",
+    "Chemical SDS register",
+    "Cleaning verification checklist"
+   ],
+   "checklist": [
+    "Machine isolated and locked, stored energy released",
+    "Chemicals labelled and diluted correctly",
+    "No mixing of chlorine with acids",
+    "Floors and drains clear, wet floor signs out",
+    "Blades fully stopped before cleaning",
+    "Guards refitted and tested before restart",
+    "Cleaning verified and signed off"
+   ],
+   "legal": {
+    "india": "Factories Act 1948; FSSAI food safety hygiene requirements; MSIHC Rules where applicable (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; municipality food control rules (for example Dubai Municipality) (verify)",
+    "canada": "CSA Z432 (machine safeguarding); WHMIS 2015; provincial OHS regulations",
+    "usa": "OSHA 29 CFR 1910.147 (LOTO), 1910.1200 (HazCom), 1910.212 (machine guarding)"
+   },
+   "tbt": {
+    "title": "Cleaning machines: lock it before you wipe it",
+    "points": [
+     "Your own lock on the machine before any cleaning",
+     "Never mix cleaning chemicals",
+     "Test the guards before the machine restarts"
+    ],
+    "question": "Who could start this machine while my hands are inside?"
+   },
+   "bridge": {
+    "hazard_category": "Machinery & Guarding",
+    "activity": "Machine cleaning / sanitation",
+    "risk_rating": "High",
+    "typical": [
+     "Cleaning without lockout",
+     "Guard removed during cleaning",
+     "Chemicals mixed or unlabelled",
+     "Wet floor with no sign"
+    ]
+   }
+  }
+ ]
+}
