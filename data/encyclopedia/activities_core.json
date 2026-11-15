@@ -1,0 +1,1164 @@
+{
+ "version": 1,
+ "verifyNote": "Reference guidance. Verify laws, clauses and standards for your site and country before audit use. The official site procedure always takes priority.",
+ "activities": [
+  {
+   "id": "welding_hot_work",
+   "title": "Welding and Hot Work",
+   "icon": "🔥",
+   "industries": [
+    "manufacturing",
+    "construction",
+    "oilgas",
+    "marine",
+    "facilities_maintenance"
+   ],
+   "category": "Hot work",
+   "summary": "Any work that makes sparks, flame or heat that can start a fire or explosion.",
+   "walkthrough": {
+    "where_first": [
+     "Check the permit, the fire watch and the area within 11 m (35 ft) for combustibles",
+     "Look below and behind the work: floors, cracks, openings, ducts",
+     "Check cylinders, hoses, regulators and flashback arrestors",
+     "Check the extinguisher type and where it is placed"
+    ],
+    "hidden_hazards": [
+     "Sparks falling through gaps to lower levels",
+     "Hot slag igniting dust, oil or insulation behind walls",
+     "Fumes in enclosed areas, especially on stainless steel",
+     "Smouldering fire that starts 30 to 60 minutes after work stops",
+     "Gas hose leaks and backfire"
+    ],
+    "protect_first": [
+     "People working below or beside the work",
+     "A welder in a confined space or at height"
+    ]
+   },
+   "hazards": [
+    "Fire and explosion",
+    "Welding fumes and gases",
+    "Arc eye and burns",
+    "Electric shock",
+    "Compressed gas cylinder failure"
+   ],
+   "controls": {
+    "elimination": [
+     "Fabricate in a designated welding bay instead of in place",
+     "Use cold cutting or mechanical joining where possible"
+    ],
+    "substitution": [
+     "Use lower-fume processes or consumables where suitable"
+    ],
+    "engineering": [
+     "Local exhaust ventilation at the arc",
+     "Welding screens and fire blankets",
+     "Flashback arrestors on gas lines"
+    ],
+    "administrative": [
+     "Hot work permit and gas test",
+     "Fire watch during and after work",
+     "Cylinders upright, secured and separated"
+    ],
+    "ppe": [
+     "Helmet with correct shade, flame-resistant clothing, gloves, respirator"
+    ]
+   },
+   "ppe": [
+    "Welding helmet with correct shade (EN 175 / EN 379, ANSI Z87.1)",
+    "Flame-resistant welding clothing and apron (EN ISO 11611)",
+    "Welding gloves (EN 12477)",
+    "Respirator for the fume (EN 149 FFP3 or P100) or PAPR",
+    "Safety boots (EN ISO 20345 / ASTM F2413)",
+    "Safety glasses under the helmet (EN 166)"
+   ],
+   "permits": [
+    "Hot work permit",
+    "Gas test record where flammables may be present",
+    "Fire watch log"
+   ],
+   "checklist": [
+    "Permit signed and valid for this place and time",
+    "Combustibles removed or covered within 11 m (35 ft)",
+    "Extinguisher of the right type within reach",
+    "Trained fire watch assigned",
+    "Cylinders secured, hoses and regulators checked",
+    "Ventilation or extraction in place",
+    "Area watched for at least 30 minutes after work (many sites require 60)"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 and state rules; IS 818 (safety in electric and gas welding and cutting); BOCW Central Rules 1998 on construction sites (verify current OSH Code status)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; UAE Fire and Life Safety Code of Practice; client hot work procedures such as ADNOC and Aramco (verify)",
+    "canada": "CSA W117.2 (safety in welding, cutting and allied processes); provincial OHS regulations (verify province)",
+    "usa": "OSHA 29 CFR 1910 Subpart Q (1910.251-.255); 29 CFR 1926 Subpart J (1926.350-.354); NFPA 51B"
+   },
+   "tbt": {
+    "title": "Hot work: stop sparks before they start",
+    "points": [
+     "No permit, no spark",
+     "Look 11 metres around and below. If it can burn, move it or cover it",
+     "Fire watch stays at least 30 minutes after the last spark"
+    ],
+    "question": "What could a spark reach here that we cannot see?"
+   },
+   "bridge": {
+    "hazard_category": "Hot Work",
+    "activity": "Welding / hot work",
+    "risk_rating": "High",
+    "typical": [
+     "Hot work without a permit",
+     "No fire watch",
+     "Combustibles near welding",
+     "Cylinders not secured"
+    ]
+   }
+  },
+  {
+   "id": "scaffolding",
+   "title": "Scaffolding",
+   "icon": "🏗️",
+   "industries": [
+    "construction",
+    "oilgas",
+    "manufacturing",
+    "facilities_maintenance"
+   ],
+   "category": "Work at height",
+   "summary": "Erecting, inspecting, using and dismantling temporary access structures.",
+   "walkthrough": {
+    "where_first": [
+     "Read the scaffold tag, inspection date and load class before climbing",
+     "Check the base: sole boards, base jacks, ground and drainage",
+     "Check bracing, ties and guardrails at every lift",
+     "Check platforms are fully boarded with toe boards and no gaps"
+    ],
+    "hidden_hazards": [
+     "Ties or braces removed by another trade",
+     "Ground softened by rain or digging beside the base",
+     "Platforms overloaded with stored materials",
+     "Damaged or mixed incompatible components",
+     "Gaps at ladder openings and next to the structure"
+    ],
+    "protect_first": [
+     "Workers below the scaffold (falling objects)",
+     "Anyone using an untagged or unfinished scaffold"
+    ]
+   },
+   "hazards": [
+    "Fall from height",
+    "Scaffold collapse",
+    "Falling objects",
+    "Contact with overhead power lines",
+    "Unsafe access"
+   ],
+   "controls": {
+    "elimination": [
+     "Use mobile elevated work platforms or work from the ground where possible"
+    ],
+    "substitution": [
+     "Use system scaffold with fewer loose parts where suitable"
+    ],
+    "engineering": [
+     "Design by a competent person with base plates, ties, bracing, guardrails and toe boards",
+     "Debris netting or covered walkways"
+    ],
+    "administrative": [
+     "Only trained scaffolders erect, alter and dismantle",
+     "Inspect before first use, after weather or change, and at set intervals",
+     "Tag system: green safe, red do not use"
+    ],
+    "ppe": [
+     "Helmet with chin strap, harness where required, safety boots"
+    ]
+   },
+   "ppe": [
+    "Helmet with chin strap (EN 397 / ANSI Z89.1)",
+    "Full body harness and lanyard when erecting or dismantling (EN 361, EN 355)",
+    "Safety boots (EN ISO 20345)",
+    "Gloves (EN 388)",
+    "High-visibility clothing (EN ISO 20471)"
+   ],
+   "permits": [
+    "Scaffold inspection tag and register",
+    "Permit to work at height where site rules require"
+   ],
+   "checklist": [
+    "Tag present and current",
+    "Base plates and sole boards sound",
+    "Ties and braces complete",
+    "Platforms fully boarded and secured",
+    "Guardrails and toe boards fitted",
+    "Safe access ladder or stair",
+    "Safe distance from power lines"
+   ],
+   "legal": {
+    "india": "BOCW Central Rules 1998; IS 4014 (steel tubular scaffolding); Factories Act 1948 and state rules (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; Dubai Municipality and client scaffold standards; BS EN 12811 commonly specified (verify)",
+    "canada": "Provincial OHS regulations; CSA S269.2 (access scaffolding)",
+    "usa": "OSHA 29 CFR 1926 Subpart L (1926.451)"
+   },
+   "tbt": {
+    "title": "Scaffold: read the tag before you climb",
+    "points": [
+     "Green tag means inspected and safe. No tag or red tag: do not use",
+     "Never remove a tie or brace. Call the scaffolder",
+     "Keep the platform clear and within the load limit on the tag"
+    ],
+    "question": "Who is working under this scaffold right now?"
+   },
+   "bridge": {
+    "hazard_category": "Scaffolding",
+    "activity": "Scaffolding",
+    "risk_rating": "High",
+    "typical": [
+     "No scaffold tag",
+     "Missing guardrail or toe board",
+     "Gaps in platform boards",
+     "Ties removed"
+    ]
+   }
+  },
+  {
+   "id": "confined_space_entry",
+   "title": "Confined and Enclosed Space Entry",
+   "icon": "🕳️",
+   "industries": [
+    "manufacturing",
+    "oilgas",
+    "marine",
+    "construction",
+    "food_safety"
+   ],
+   "category": "Confined space",
+   "summary": "Entering tanks, vessels, pits, manholes, silos, ship holds and other spaces not built for people to stay in.",
+   "walkthrough": {
+    "where_first": [
+     "Check the entry permit, isolation of pipes and power, and the rescue plan",
+     "Check atmosphere test results for oxygen, flammable and toxic gas at all levels",
+     "Check ventilation, lighting and communication with the standby",
+     "Check the way in and out and rescue equipment at the entrance"
+    ],
+    "hidden_hazards": [
+     "Gas layers: heavy gases sink and light gases rise, so test top, middle and bottom",
+     "Residue and sludge that release gas when disturbed",
+     "Oxygen depletion from rust, cargo or inerting",
+     "Liquids or steam entering through valves not properly isolated",
+     "Untrained rescuers who become second victims"
+    ],
+    "protect_first": [
+     "The person inside and the standby at the entrance",
+     "Anyone who might rush in without breathing apparatus"
+    ]
+   },
+   "hazards": [
+    "Low or high oxygen",
+    "Toxic gas such as H2S or CO",
+    "Flammable atmosphere",
+    "Engulfment",
+    "Heat stress",
+    "Entrapment and difficult rescue"
+   ],
+   "controls": {
+    "elimination": [
+     "Do the work from outside, for example by camera or robot"
+    ],
+    "substitution": [
+     "Use a safer cleaning method that avoids entry"
+    ],
+    "engineering": [
+     "Mechanical ventilation, continuous gas monitoring, safe voltage lighting, lifelines and retrieval system"
+    ],
+    "administrative": [
+     "Entry permit, trained attendant at all times, rescue plan with equipment and trained team, communication check"
+    ],
+    "ppe": [
+     "Breathing apparatus where the air is not safe, harness with lifeline, personal gas detector"
+    ]
+   },
+   "ppe": [
+    "Personal multi-gas detector, calibrated and bump tested",
+    "Harness with retrieval line (EN 361, EN 1496 rescue lifting device)",
+    "Breathing apparatus or airline where required (EN 137, EN 14594)",
+    "Helmet, safety boots and coverall suited to the residues",
+    "Intrinsically safe torch and radio"
+   ],
+   "permits": [
+    "Confined space entry permit",
+    "Atmospheric test log",
+    "Isolation certificate",
+    "Rescue plan"
+   ],
+   "checklist": [
+    "Permit valid and signed",
+    "Pipes, power and moving parts isolated and locked",
+    "Atmosphere tested at all levels and within limits",
+    "Ventilation running",
+    "Trained attendant at the entrance, entrants logged",
+    "Rescue team and equipment ready, not dependent on entry",
+    "Communication tested"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.36 (dangerous fumes) and state rules; BOCW Central Rules 1998 (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; ADNOC and Aramco confined space procedures; for ships IMO Resolution A.1050(27) (verify)",
+    "canada": "Provincial confined space regulations (for example Ontario Reg. 632/05, WorkSafeBC OHS Regulation Part 9); CSA Z1006",
+    "usa": "OSHA 29 CFR 1910.146 (permit-required confined spaces); 29 CFR 1926 Subpart AA; shipyards 29 CFR 1915 Subpart B; ships SOLAS and IMO A.1050(27)"
+   },
+   "tbt": {
+    "title": "Confined space: test before you enter, never rescue alone",
+    "points": [
+     "Permit and gas test first, every time",
+     "The attendant never leaves and never goes in without breathing apparatus",
+     "If someone collapses, raise the alarm. Do not rush in"
+    ],
+    "question": "What is our rescue plan if the person inside collapses?"
+   },
+   "bridge": {
+    "hazard_category": "Confined Space",
+    "activity": "Confined / enclosed space entry",
+    "risk_rating": "Critical",
+    "typical": [
+     "Entry without gas test",
+     "No attendant at the entrance",
+     "Permit not displayed",
+     "No rescue plan"
+    ]
+   }
+  },
+  {
+   "id": "crane_rigging_lifting",
+   "title": "Crane, Rigging and Lifting",
+   "icon": "🏗️",
+   "industries": [
+    "construction",
+    "manufacturing",
+    "oilgas",
+    "marine",
+    "facilities_maintenance"
+   ],
+   "category": "Lifting",
+   "summary": "Lifting loads with cranes, hoists and rigging gear.",
+   "walkthrough": {
+    "where_first": [
+     "Check the lift plan, load weight, radius and crane load chart",
+     "Check ground conditions and outrigger pads",
+     "Check slings, shackles and hooks: tags, wear and safe working load",
+     "Check the lift zone is barricaded and the signaller is identified"
+    ],
+    "hidden_hazards": [
+     "Voids or buried services under outrigger pads",
+     "Overhead power lines within reach of the boom",
+     "Wind and the surface area of the load",
+     "Hidden damage inside wire ropes and slings",
+     "Centre of gravity not where it looks",
+     "Other cranes or equipment working in the same area"
+    ],
+    "protect_first": [
+     "People under or near the suspended load",
+     "The signaller and rigger in the swing area"
+    ]
+   },
+   "hazards": [
+    "Dropped load",
+    "Crane overturn",
+    "Contact with power lines",
+    "Crushing",
+    "Rigging failure"
+   ],
+   "controls": {
+    "elimination": [
+     "Reduce lifting by prefabricating in smaller units or using other transport"
+    ],
+    "substitution": [
+     "Use a larger or better placed crane instead of working near capacity"
+    ],
+    "engineering": [
+     "Load moment indicator, anti-two-block, exclusion zone, tag lines"
+    ],
+    "administrative": [
+     "Lift plan by a competent person, certified operator and rigger, daily and periodic inspection, wind limit, clear signals"
+    ],
+    "ppe": [
+     "Helmet, gloves, safety boots, high-visibility clothing"
+    ]
+   },
+   "ppe": [
+    "Helmet (EN 397)",
+    "Cut-resistant gloves (EN 388)",
+    "Safety boots (EN ISO 20345)",
+    "High-visibility clothing (EN ISO 20471)",
+    "Hearing protection where noisy (EN 352)"
+   ],
+   "permits": [
+    "Lift plan and critical lift permit",
+    "Crane and lifting gear inspection certificates",
+    "Operator and rigger competence records"
+   ],
+   "checklist": [
+    "Lift plan approved for this load and place",
+    "Crane certificate and daily check done",
+    "Load weight known and within the load chart",
+    "Outriggers fully extended on firm pads",
+    "Slings and shackles tagged and undamaged",
+    "Exclusion zone barricaded, signaller clear",
+    "Safe distance from overhead lines, wind within limit"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 ss.28-29 (hoists, lifts and lifting machines); BOCW Central Rules 1998; IS 3177 (EOT cranes) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client lifting standards; BS 7121 commonly used (verify)",
+    "canada": "CSA Z150 (mobile cranes) and provincial OHS regulations",
+    "usa": "OSHA 29 CFR 1926 Subpart CC (cranes and derricks in construction); 29 CFR 1910.179 and 1910.184 (overhead cranes, slings)"
+   },
+   "tbt": {
+    "title": "Lifting: nobody stands under a load",
+    "points": [
+     "Check the tag and the load weight before the hook goes on",
+     "Only the signaller gives signals. Anyone can shout stop",
+     "Keep out of the swing and fall zone"
+    ],
+    "question": "If this load slipped now, where would it land?"
+   },
+   "bridge": {
+    "hazard_category": "Lifting & Cranes",
+    "activity": "Crane / lifting operation",
+    "risk_rating": "High",
+    "typical": [
+     "Person under suspended load",
+     "Damaged sling in use",
+     "No lift plan",
+     "Exclusion zone not barricaded"
+    ]
+   }
+  },
+  {
+   "id": "excavation_trenching",
+   "title": "Excavation and Trenching",
+   "icon": "⛏️",
+   "industries": [
+    "construction",
+    "oilgas",
+    "facilities_maintenance"
+   ],
+   "category": "Ground work",
+   "summary": "Digging trenches, pits and foundations.",
+   "walkthrough": {
+    "where_first": [
+     "Check utility drawings and scan results before any dig",
+     "Check soil type, water and nearby loads or vibration",
+     "Check edge protection and a way out within reach of workers",
+     "Check shoring or sloping matches the depth and soil"
+    ],
+    "hidden_hazards": [
+     "Live cables, gas and water lines not on drawings",
+     "Water seeping in after rain and undermining the wall",
+     "Spoil heaps and equipment too close to the edge",
+     "Previously disturbed soil that is weaker",
+     "Toxic or oxygen-poor air in deeper trenches"
+    ],
+    "protect_first": [
+     "Workers inside the trench",
+     "People and vehicles near the edge"
+    ]
+   },
+   "hazards": [
+    "Trench collapse",
+    "Striking utilities",
+    "Falls into the excavation",
+    "Hazardous atmospheres",
+    "Flooding",
+    "Vehicle edge loading"
+   ],
+   "controls": {
+    "elimination": [
+     "Use trenchless methods where possible"
+    ],
+    "substitution": [
+     "Use shorter open lengths and backfill promptly"
+    ],
+    "engineering": [
+     "Shoring, trench boxes or sloping",
+     "Edge barriers and ladders or ramps so no worker has more than 7.5 m (25 ft) to travel to exit"
+    ],
+    "administrative": [
+     "Competent person inspects daily and after rain",
+     "Permit to dig and utility locate",
+     "Keep spoil and equipment at least 0.6 m (2 ft) from the edge"
+    ],
+    "ppe": [
+     "Helmet, boots, high-visibility clothing"
+    ]
+   },
+   "ppe": [
+    "Helmet (EN 397)",
+    "Safety boots (EN ISO 20345)",
+    "High-visibility clothing (EN ISO 20471)",
+    "Gloves (EN 388)",
+    "Gas detector for deep or suspect trenches"
+   ],
+   "permits": [
+    "Permit to dig / ground disturbance",
+    "Utility scan record",
+    "Daily excavation inspection checklist"
+   ],
+   "checklist": [
+    "Utilities located and marked",
+    "Protective system in place for trenches 1.5 m (5 ft) or deeper unless in stable rock",
+    "Ladder or ramp within reach",
+    "Edge protection and spoil set back",
+    "Atmosphere tested if deep or near contamination",
+    "Daily and post-rain inspection done",
+    "Water controlled"
+   ],
+   "legal": {
+    "india": "BOCW Central Rules 1998; IS 3764 (excavation work code of safety) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; utility authority approvals and client permit to dig (verify)",
+    "canada": "Provincial construction regulations (for example WorkSafeBC OHS Regulation Part 20, Ontario Reg. 213/91)",
+    "usa": "OSHA 29 CFR 1926 Subpart P (1926.650-.652)"
+   },
+   "tbt": {
+    "title": "Trench: never work in an unprotected trench",
+    "points": [
+     "Scan and permit before the first dig",
+     "Shoring or sloping before anyone goes in",
+     "Keep spoil and machines back from the edge"
+    ],
+    "question": "What is holding the wall up where we are standing?"
+   },
+   "bridge": {
+    "hazard_category": "Excavation",
+    "activity": "Excavation / trenching",
+    "risk_rating": "High",
+    "typical": [
+     "No shoring in deep trench",
+     "Spoil at the edge",
+     "No ladder access",
+     "Utilities not located"
+    ]
+   }
+  },
+  {
+   "id": "work_at_height",
+   "title": "Working at Height",
+   "icon": "🪜",
+   "industries": [
+    "construction",
+    "manufacturing",
+    "oilgas",
+    "marine",
+    "facilities_maintenance",
+    "warehouse_logistics"
+   ],
+   "category": "Work at height",
+   "summary": "Any work where a person could fall and be injured: roofs, ladders, platforms, edges, openings.",
+   "walkthrough": {
+    "where_first": [
+     "Check the method: can the work be done from the ground or a platform?",
+     "Check anchor points are rated and edge protection is complete",
+     "Check the harness, lanyard and rescue plan",
+     "Check the surface: fragile roof, wet or loose material"
+    ],
+    "hidden_hazards": [
+     "Fragile roof sheets and skylights hidden by paint or dirt",
+     "Anchors that look strong but are not rated",
+     "Suspension trauma if a fallen worker cannot be rescued fast",
+     "Unprotected openings and edges around the work",
+     "Swing fall when the anchor is not overhead"
+    ],
+    "protect_first": [
+     "Workers near an unprotected edge",
+     "People below the work area"
+    ]
+   },
+   "hazards": [
+    "Fall from height",
+    "Dropped objects",
+    "Fragile surface collapse",
+    "Suspension trauma",
+    "Unstable ladder or platform"
+   ],
+   "controls": {
+    "elimination": [
+     "Do the work at ground level or by prefabrication"
+    ],
+    "substitution": [
+     "Use a platform or MEWP instead of a ladder"
+    ],
+    "engineering": [
+     "Guardrails, covers on openings, safety nets, rated anchor points, tool lanyards"
+    ],
+    "administrative": [
+     "Permit, trained workers, rescue plan, inspect equipment before use, barricade below"
+    ],
+    "ppe": [
+     "Full body harness with shock absorber on a rated anchor"
+    ]
+   },
+   "ppe": [
+    "Full body harness (EN 361) with energy absorber (EN 355)",
+    "Rated anchor device (EN 795)",
+    "Helmet with chin strap (EN 397)",
+    "Safety boots with grip (EN ISO 20345)",
+    "Gloves (EN 388)"
+   ],
+   "permits": [
+    "Work at height permit",
+    "Harness and equipment inspection record",
+    "Rescue plan"
+   ],
+   "checklist": [
+    "Ground-level alternative considered first",
+    "Guardrails or covers in place",
+    "Anchor point rated and checked",
+    "Harness inspected and fitted correctly",
+    "Rescue plan and trained rescuers ready",
+    "Fragile surfaces marked and covered",
+    "Protection starts at 1.8 m (6 ft) in US construction and 1.2 m (4 ft) in US general industry; other countries set their own height"
+   ],
+   "legal": {
+    "india": "BOCW Central Rules 1998; Factories Act 1948 and state rules; IS 3521 (industrial safety belts and harnesses) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client standards; EN 363 fall protection systems commonly specified (verify)",
+    "canada": "CSA Z259 series (fall protection) and provincial OHS regulations, which set the height trigger",
+    "usa": "OSHA 29 CFR 1926 Subpart M (1926.501); 29 CFR 1910 Subpart D (1910.28)"
+   },
+   "tbt": {
+    "title": "Height: clip on before you step out",
+    "points": [
+     "Check your harness and anchor every time",
+     "Never walk on a roof sheet unless it is proven safe",
+     "Keep tools tied so they cannot fall on others"
+    ],
+    "question": "If I fell now, who would reach me and how fast?"
+   },
+   "bridge": {
+    "hazard_category": "Fall from Height",
+    "activity": "Work at height",
+    "risk_rating": "Critical",
+    "typical": [
+     "No harness or not clipped on",
+     "Open edge unprotected",
+     "Unprotected opening",
+     "Fragile roof not marked"
+    ]
+   }
+  },
+  {
+   "id": "electrical_loto",
+   "title": "Electrical Work and Energy Isolation",
+   "icon": "⚡",
+   "industries": [
+    "manufacturing",
+    "construction",
+    "oilgas",
+    "marine",
+    "facilities_maintenance",
+    "food_safety",
+    "warehouse_logistics"
+   ],
+   "category": "Electrical",
+   "summary": "Working on or near electrical equipment and isolating all energy before maintenance.",
+   "walkthrough": {
+    "where_first": [
+     "Confirm who is qualified and authorised for this work",
+     "Check isolation points and a lock and tag on every energy source",
+     "Test for dead with a proven tester before touching (test, prove, test)",
+     "Check arc flash and shock boundaries and PPE category"
+    ],
+    "hidden_hazards": [
+     "Back-feed from generators, UPS and solar",
+     "Stored energy in capacitors, springs and hydraulics",
+     "Wrong circuit isolated because panels are not labelled",
+     "Damaged tools and leads with cracked insulation",
+     "Wet conditions that change the risk"
+    ],
+    "protect_first": [
+     "The person working on the equipment",
+     "Others who might switch it on"
+    ]
+   },
+   "hazards": [
+    "Electric shock",
+    "Arc flash and arc blast",
+    "Burns",
+    "Fire",
+    "Release of stored energy"
+   ],
+   "controls": {
+    "elimination": [
+     "Work de-energised whenever possible"
+    ],
+    "substitution": [
+     "Use lower voltage or battery tools"
+    ],
+    "engineering": [
+     "RCD / GFCI protection, insulated tools, barriers and covers, interlocked doors"
+    ],
+    "administrative": [
+     "Lockout tagout with personal locks, permit, authorised persons only, test-prove-test, arc flash labels"
+    ],
+    "ppe": [
+     "Arc-rated clothing and face shield, insulated gloves, rated tools"
+    ]
+   },
+   "ppe": [
+    "Arc-rated clothing and face shield (IEC 61482-2, NFPA 70E)",
+    "Insulating gloves with leather protectors (IEC 60903, ASTM D120)",
+    "Insulated tools (IEC 60900)",
+    "Dielectric safety boots (EN ISO 20345 or ASTM F2413 EH)",
+    "Safety glasses (EN 166)"
+   ],
+   "permits": [
+    "Electrical isolation permit / LOTO",
+    "Live work permit (only when justified)",
+    "Test-before-touch record"
+   ],
+   "checklist": [
+    "Worker qualified and authorised",
+    "All energy sources identified and isolated",
+    "Personal lock and tag on every isolation point",
+    "Tested dead with a tester proved before and after",
+    "Stored energy released",
+    "Barriers and signs set",
+    "Arc flash boundary and PPE checked"
+   ],
+   "legal": {
+    "india": "CEA (Measures relating to Safety and Electric Supply) Regulations; Indian Electricity Rules 1956 where applicable (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; local utility regulations (DEWA, SEWA, Kahramaa, SEC) and client LOTO standards (verify)",
+    "canada": "CSA Z460 (control of hazardous energy) and CSA Z462 (workplace electrical safety); provincial regulations",
+    "usa": "OSHA 29 CFR 1910.147 (LOTO), 1910.333 (work practices), 1910 Subpart S; 1926 Subpart K; NFPA 70E"
+   },
+   "tbt": {
+    "title": "Electrical: lock it, tag it, test it, then touch it",
+    "points": [
+     "Every person puts on their own lock",
+     "Test the tester, test the circuit, test the tester again",
+     "If you did not isolate it, treat it as live"
+    ],
+    "question": "How do we know this circuit is really dead?"
+   },
+   "bridge": {
+    "hazard_category": "Electrical",
+    "activity": "Electrical work / LOTO",
+    "risk_rating": "Critical",
+    "typical": [
+     "No lockout on isolation",
+     "Exposed live parts",
+     "Damaged cable or lead",
+     "Unauthorised person working on panel"
+    ]
+   }
+  },
+  {
+   "id": "chemical_sds_handling",
+   "title": "Chemical and SDS Handling",
+   "icon": "🧪",
+   "industries": [
+    "manufacturing",
+    "oilgas",
+    "marine",
+    "food_safety",
+    "warehouse_logistics",
+    "facilities_maintenance"
+   ],
+   "category": "Chemicals",
+   "summary": "Storing, using, decanting and disposing of hazardous chemicals.",
+   "walkthrough": {
+    "where_first": [
+     "Check the label and SDS for every chemical in use",
+     "Check storage: segregation, bunding, ventilation and labels",
+     "Check the spill kit, eyewash and shower are within reach and working",
+     "Check decanted containers are labelled"
+    ],
+    "hidden_hazards": [
+     "Incompatible chemicals stored together (acids with bases, oxidisers with fuels)",
+     "Unlabelled decanted bottles",
+     "Vapours collecting in low areas or closed rooms",
+     "Expired or damaged containers leaking at the back of the store",
+     "Eyewash stations that are blocked or dry"
+    ],
+    "protect_first": [
+     "The person with contact, splash or inhalation",
+     "Workers downwind in poorly ventilated areas"
+    ]
+   },
+   "hazards": [
+    "Skin and eye burns",
+    "Toxic inhalation",
+    "Fire and explosion",
+    "Reactive incompatibility",
+    "Environmental release"
+   ],
+   "controls": {
+    "elimination": [
+     "Remove the chemical or process step if not needed"
+    ],
+    "substitution": [
+     "Use a less hazardous product"
+    ],
+    "engineering": [
+     "Local exhaust, closed transfer, bunded storage, segregated cabinets"
+    ],
+    "administrative": [
+     "SDS in a language workers understand, training, labelling, inventory, spill procedure"
+    ],
+    "ppe": [
+     "Gloves and goggles matched to the chemical, apron, respirator where needed"
+    ]
+   },
+   "ppe": [
+    "Chemical-resistant gloves chosen from the SDS (EN 374)",
+    "Splash goggles or face shield (EN 166)",
+    "Chemical-resistant apron or suit (EN 943 for severe hazards)",
+    "Respirator with correct filter (EN 14387 gas filters, EN 149 particle)",
+    "Safety boots with chemical resistance (EN ISO 20345)"
+   ],
+   "permits": [
+    "Chemical inventory and SDS register",
+    "Hot work or hazardous area permit where flammable"
+   ],
+   "checklist": [
+    "SDS available and understood",
+    "Containers labelled including decanted ones",
+    "Incompatibles segregated",
+    "Bunding and ventilation in place",
+    "Eyewash and shower tested weekly",
+    "Spill kit complete",
+    "PPE chosen from the SDS"
+   ],
+   "legal": {
+    "india": "MSIHC Rules 1989; Factories Act 1948 Chapter IVA (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; GHS labelling and SDS; local authority chemical control rules (verify)",
+    "canada": "WHMIS 2015 under the Hazardous Products Act and Hazardous Products Regulations; provincial OHS",
+    "usa": "OSHA 29 CFR 1910.1200 (Hazard Communication, GHS); 29 CFR 1910 Subpart Z"
+   },
+   "tbt": {
+    "title": "Chemicals: read the label before you open it",
+    "points": [
+     "If the bottle has no label, do not use it",
+     "Never mix chemicals. Acid and chlorine make toxic gas",
+     "Know where the eyewash is before you start"
+    ],
+    "question": "What would we do in the first minute of a splash in the eyes?"
+   },
+   "bridge": {
+    "hazard_category": "Chemical & Hazardous Substances",
+    "activity": "Chemical handling",
+    "risk_rating": "High",
+    "typical": [
+     "Unlabelled container",
+     "Incompatible chemicals stored together",
+     "Eyewash blocked or dry",
+     "SDS not available"
+    ]
+   }
+  },
+  {
+   "id": "forklift_mhe",
+   "title": "Forklift and Material Handling Equipment",
+   "icon": "🚜",
+   "industries": [
+    "manufacturing",
+    "warehouse_logistics",
+    "food_safety",
+    "construction"
+   ],
+   "category": "Vehicles",
+   "summary": "Operating forklifts, pallet trucks and other powered handling equipment.",
+   "walkthrough": {
+    "where_first": [
+     "Check the daily inspection: brakes, steering, horn, lights, forks, mast, chains, tyres",
+     "Check the route: ramps, blind corners, doors and pedestrian crossings",
+     "Check the operator's licence or authorisation",
+     "Check the load rating plate and that the seat belt works"
+    ],
+    "hidden_hazards": [
+     "Blind spots when reversing with a high load",
+     "Pedestrians stepping out of racking aisles",
+     "Damaged, wet or sloped floors",
+     "Battery charging areas where hydrogen collects",
+     "Forks left raised or trucks left unattended"
+    ],
+    "protect_first": [
+     "Pedestrians near travel routes",
+     "The operator in a tip-over (seat belt on)"
+    ]
+   },
+   "hazards": [
+    "Pedestrian strike",
+    "Tip-over",
+    "Falling loads",
+    "Crush against racking",
+    "Battery hazards",
+    "Exhaust fumes from LPG or diesel trucks indoors"
+   ],
+   "controls": {
+    "elimination": [
+     "Change the layout to remove truck movement through pedestrian areas"
+    ],
+    "substitution": [
+     "Use pallet trucks for short moves"
+    ],
+    "engineering": [
+     "Segregated walkways, mirrors, blue spot lights, speed limiters, proximity sensors, seat belts"
+    ],
+    "administrative": [
+     "Trained and authorised operators, one-way traffic, speed limits, daily checks, banksman at blind areas"
+    ],
+    "ppe": [
+     "Safety boots, high-visibility clothing, helmet where overhead risk"
+    ]
+   },
+   "ppe": [
+    "Safety boots (EN ISO 20345)",
+    "High-visibility clothing (EN ISO 20471)",
+    "Helmet where overhead hazard (EN 397)",
+    "Hearing protection where noisy (EN 352)"
+   ],
+   "permits": [
+    "Operator authorisation card",
+    "Daily forklift check sheet",
+    "Traffic management plan"
+   ],
+   "checklist": [
+    "Operator authorised and wearing the seat belt",
+    "Daily check done and defects reported",
+    "Forks low when travelling, load stable",
+    "Horn works and speed limit followed",
+    "Pedestrians separated or controlled",
+    "Trucks parked with forks down and key out",
+    "Charging area ventilated"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 and state rules; Motor Vehicles Act 1988 for road use (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client MHE and operator authorisation rules (verify)",
+    "canada": "CSA B335 (lift trucks) and provincial regulations",
+    "usa": "OSHA 29 CFR 1910.178 (powered industrial trucks)"
+   },
+   "tbt": {
+    "title": "Forklift: eyes first, then wheels",
+    "points": [
+     "Stop and look at every blind corner",
+     "Pedestrians always have right of way",
+     "Forks down, key out when you leave the truck"
+    ],
+    "question": "Where are the blind spots on our busiest route?"
+   },
+   "bridge": {
+    "hazard_category": "Vehicles & Traffic",
+    "activity": "Forklift / MHE operation",
+    "risk_rating": "High",
+    "typical": [
+     "Pedestrian in forklift route",
+     "Speeding or reversing without looking",
+     "Daily check not done",
+     "No seat belt"
+    ]
+   }
+  },
+  {
+   "id": "grinding_cutting",
+   "title": "Grinding and Cutting",
+   "icon": "⚙️",
+   "industries": [
+    "manufacturing",
+    "construction",
+    "oilgas",
+    "marine",
+    "facilities_maintenance"
+   ],
+   "category": "Machinery",
+   "summary": "Using angle grinders, abrasive wheels and cutting discs.",
+   "walkthrough": {
+    "where_first": [
+     "Check the disc is the right type and size, in date and undamaged",
+     "Check the guard is fitted and adjusted",
+     "Check the disc speed rating is at or above the tool speed",
+     "Check spark direction and nearby combustibles"
+    ],
+    "hidden_hazards": [
+     "Cracked discs that have been dropped",
+     "Wrong disc for the job (cutting disc used for grinding)",
+     "Guards removed to reach tight spaces",
+     "Dust from silica, metal or paint",
+     "Kickback when the disc binds"
+    ],
+    "protect_first": [
+     "The operator's face, eyes and hands",
+     "People within the spark and fragment zone"
+    ]
+   },
+   "hazards": [
+    "Disc burst",
+    "Kickback",
+    "Sparks and fire",
+    "Noise and vibration",
+    "Dust and fumes",
+    "Cuts and amputation"
+   ],
+   "controls": {
+    "elimination": [
+     "Use cold cutting or prefabrication where possible"
+    ],
+    "substitution": [
+     "Use shears or saws that make less dust"
+    ],
+    "engineering": [
+     "Fixed guards, dead-man switch, dust extraction, clamps to hold work"
+    ],
+    "administrative": [
+     "Inspect and ring test discs, trained users, tool tagging, hot work permit where required, limit exposure time"
+    ],
+    "ppe": [
+     "Face shield over glasses, gloves, hearing and dust protection"
+    ]
+   },
+   "ppe": [
+    "Face shield over safety glasses (EN 166 / ANSI Z87.1)",
+    "Gloves (EN 388)",
+    "Hearing protection (EN 352)",
+    "Respirator for dust (EN 149 FFP2 or FFP3)",
+    "Flame-resistant clothing for heavy spark work (EN ISO 11612)",
+    "Safety boots (EN ISO 20345)"
+   ],
+   "permits": [
+    "Hot work permit where sparks can ignite",
+    "Tool inspection tag"
+   ],
+   "checklist": [
+    "Disc suitable, undamaged and in date",
+    "Guard fitted and set",
+    "Speed rating checked",
+    "Work held firmly",
+    "Sparks directed away, combustibles removed",
+    "Face and hand protection worn",
+    "Tool cord and plug undamaged"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 ss.21-22 (machinery safety) and the relevant IS code for abrasive wheels (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; EN 12413 for bonded abrasive products commonly specified (verify)",
+    "canada": "CSA Z432 (safeguarding of machinery) and provincial regulations",
+    "usa": "OSHA 29 CFR 1910.215 (abrasive wheel machinery) and 1910.243 (portable tools)"
+   },
+   "tbt": {
+    "title": "Grinder: guard on, shield on, eyes first",
+    "points": [
+     "Never remove the guard",
+     "Check the disc for cracks every time. If dropped, bin it",
+     "Hold with two hands and stand out of the line of the disc"
+    ],
+    "question": "What happens to my face if this disc breaks?"
+   },
+   "bridge": {
+    "hazard_category": "Machinery & Guarding",
+    "activity": "Grinding / cutting",
+    "risk_rating": "High",
+    "typical": [
+     "Guard removed",
+     "Damaged disc in use",
+     "No face shield",
+     "Sparks near combustibles"
+    ]
+   }
+  },
+  {
+   "id": "pressure_testing",
+   "title": "Pressure Testing",
+   "icon": "🔧",
+   "industries": [
+    "oilgas",
+    "manufacturing",
+    "marine",
+    "construction"
+   ],
+   "category": "Process",
+   "summary": "Testing pipes, vessels and systems under pressure with liquid or gas.",
+   "walkthrough": {
+    "where_first": [
+     "Check the approved test procedure, test pressure, medium and who approved it",
+     "Check the test boundary: blinds, isolation, drains and vents",
+     "Check gauges are calibrated and the relief device is set",
+     "Check the exclusion zone and warning signs"
+    ],
+    "hidden_hazards": [
+     "Trapped air in a hydro test which makes failure far more violent",
+     "Components not rated for the test pressure",
+     "Flange or thread leaks at the test boundary",
+     "Temperature changes raising pressure in a closed system",
+     "Untested temporary hoses and fittings"
+    ],
+    "protect_first": [
+     "People inside the exclusion zone",
+     "The test crew near connections while pressurising"
+    ]
+   },
+   "hazards": [
+    "Stored energy release",
+    "Hose whip",
+    "Flying parts",
+    "High-pressure injection injury",
+    "Slips from water"
+   ],
+   "controls": {
+    "elimination": [
+     "Use alternative verification where the code permits"
+    ],
+    "substitution": [
+     "Use liquid (hydro) testing instead of pneumatic where practicable"
+    ],
+    "engineering": [
+     "Barriers, relief valves, remote pressurising, restraints on hoses"
+    ],
+    "administrative": [
+     "Approved procedure and permit, competent supervisor, staged pressure increase with hold points, exclusion zone, no work on connections under pressure"
+    ],
+    "ppe": [
+     "Face shield, helmet, gloves, boots"
+    ]
+   },
+   "ppe": [
+    "Safety glasses or face shield (EN 166)",
+    "Helmet (EN 397)",
+    "Gloves (EN 388)",
+    "Safety boots (EN ISO 20345)",
+    "Hearing protection for pneumatic testing (EN 352)"
+   ],
+   "permits": [
+    "Pressure test permit",
+    "Isolation and blind list",
+    "Calibration certificates for gauges"
+   ],
+   "checklist": [
+    "Procedure approved and briefed",
+    "All components rated for the test pressure",
+    "Blinds and isolation verified",
+    "Air vented from a liquid test",
+    "Gauges calibrated, relief device set",
+    "Exclusion zone barricaded and signed",
+    "Pressure raised in stages with hold points"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.31 (pressure plant); Indian Boilers Act 1923 where applicable (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client pressure testing standards; ASME B31.3 and PCC-2 commonly specified (verify)",
+    "canada": "Provincial pressure equipment regulations (for example TSSA in Ontario, Technical Safety BC); CSA B51",
+    "usa": "ASME B31.3 and PCC-2; OSHA 29 CFR 1910.147 for energy control; General Duty Clause"
+   },
+   "tbt": {
+    "title": "Pressure test: respect the stored energy",
+    "points": [
+     "Nobody tightens or touches a connection under pressure",
+     "Keep out of the barrier zone during the test",
+     "Vent the air out of a hydro test first"
+    ],
+    "question": "What is the worst thing that fails at this pressure and where does it go?"
+   },
+   "bridge": {
+    "hazard_category": "Other",
+    "activity": "Pressure testing",
+    "risk_rating": "High",
+    "typical": [
+     "People inside exclusion zone",
+     "Uncalibrated gauge",
+     "Unrestrained hose",
+     "Air trapped in hydro test"
+    ]
+   }
+  }
+ ]
+}
