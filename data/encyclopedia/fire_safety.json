@@ -1,0 +1,571 @@
+{
+ "version": 1,
+ "verifyNote": "Reference guidance. Letter systems and colours differ by country and by extinguisher make. Always read the label on the extinguisher and follow the site fire plan.",
+ "label_systems": [
+  {
+   "id": "eu",
+   "label": "Europe, Gulf and many countries (EN 2)",
+   "note": "A solids, B liquids, C gases, D metals, F cooking oils and fats. Electrical is not a class: use a non-conductive agent after isolating power."
+  },
+  {
+   "id": "usa_canada",
+   "label": "USA and Canada (NFPA 10, ULC)",
+   "note": "A ordinary combustibles, B flammable liquids and gases, C energised electrical equipment, D combustible metals, K cooking oils and fats."
+  },
+  {
+   "id": "india",
+   "label": "India",
+   "note": "Check the label on the extinguisher. Letters usually follow the European style. Follow the site fire plan and local Fire Service requirements."
+  }
+ ],
+ "fire_types": [
+  {
+   "id": "solids",
+   "letter_eu": "A",
+   "letter_us": "A",
+   "name": "Ordinary combustibles",
+   "icon": "🪵",
+   "color": "#16a34a",
+   "materials": "Wood, paper, cardboard, cloth, rubber, many plastics",
+   "examples": "Pallets, packaging, furniture, waste bins",
+   "how": "Cool the fuel. Water is the best agent.",
+   "danger": "Smouldering inside piles can restart the fire."
+  },
+  {
+   "id": "liquids",
+   "letter_eu": "B",
+   "letter_us": "B",
+   "name": "Flammable liquids",
+   "icon": "🛢️",
+   "color": "#dc2626",
+   "materials": "Petrol, diesel, solvents, paint, oils, alcohol",
+   "examples": "Fuel spill, paint store, oil leak",
+   "how": "Smother the surface. Never use a straight water jet.",
+   "danger": "Burning liquid spreads. Water makes it worse."
+  },
+  {
+   "id": "gases",
+   "letter_eu": "C",
+   "letter_us": "B",
+   "name": "Flammable gases",
+   "icon": "💨",
+   "color": "#2563eb",
+   "materials": "LPG, propane, acetylene, natural gas, hydrogen",
+   "examples": "Gas cylinder or pipeline leak fire",
+   "how": "Stop the gas supply first. Then control the fire.",
+   "danger": "Putting out a leaking gas fire without stopping the leak can cause an explosion."
+  },
+  {
+   "id": "metals",
+   "letter_eu": "D",
+   "letter_us": "D",
+   "name": "Combustible metals",
+   "icon": "⚙️",
+   "color": "#a16207",
+   "materials": "Magnesium, aluminium powder, titanium, sodium, lithium metal",
+   "examples": "Machining swarf, metal dust",
+   "how": "Use only a special dry powder for metals or dry sand.",
+   "danger": "Water, CO2 and ordinary powder can react violently."
+  },
+  {
+   "id": "cooking",
+   "letter_eu": "F",
+   "letter_us": "K",
+   "name": "Cooking oils and fats",
+   "icon": "🍳",
+   "color": "#ea580c",
+   "materials": "Deep fryer oil, animal fat, vegetable oil",
+   "examples": "Kitchen fryers, canteen",
+   "how": "Use a wet chemical extinguisher. Turn off the heat if safe.",
+   "danger": "Water causes a fireball. Hot oil can reignite."
+  },
+  {
+   "id": "electrical",
+   "letter_eu": "-",
+   "letter_us": "C",
+   "name": "Energised electrical equipment",
+   "icon": "⚡",
+   "color": "#7c3aed",
+   "materials": "Live panels, motors, cables, transformers",
+   "examples": "Switchboard or motor fire",
+   "how": "Isolate power if safe. Use a non-conductive agent.",
+   "danger": "Water or foam on live equipment can electrocute you."
+  }
+ ],
+ "extinguishers": [
+  {
+   "id": "water",
+   "name": "Water",
+   "label_colour": "Red body, plain or red label zone",
+   "best_on": [
+    "solids"
+   ],
+   "never_on": [
+    "liquids",
+    "metals",
+    "cooking",
+    "electrical"
+   ],
+   "notes": "Cheap and effective on Class A only. Never on live electrics or burning oil."
+  },
+  {
+   "id": "foam",
+   "name": "Foam (AFFF / AR-AFFF)",
+   "label_colour": "Cream label zone (EN)",
+   "best_on": [
+    "solids",
+    "liquids"
+   ],
+   "never_on": [
+    "metals",
+    "cooking",
+    "electrical"
+   ],
+   "notes": "Good for liquid fires. Conducts electricity. Do not use on live equipment."
+  },
+  {
+   "id": "abc",
+   "name": "Dry powder ABC",
+   "label_colour": "Blue label zone (EN)",
+   "best_on": [
+    "solids",
+    "liquids",
+    "gases",
+    "electrical"
+   ],
+   "never_on": [
+    "metals",
+    "cooking"
+   ],
+   "notes": "Multi-purpose. Reduces visibility and leaves a corrosive residue. Not good in small closed rooms."
+  },
+  {
+   "id": "bc",
+   "name": "Dry powder BC",
+   "label_colour": "Blue label zone (EN)",
+   "best_on": [
+    "liquids",
+    "gases",
+    "electrical"
+   ],
+   "never_on": [
+    "solids",
+    "metals",
+    "cooking"
+   ],
+   "notes": "Fast knock-down on liquid and gas fires. Not rated for Class A."
+  },
+  {
+   "id": "co2",
+   "name": "Carbon dioxide (CO2)",
+   "label_colour": "Black label zone (EN)",
+   "best_on": [
+    "liquids",
+    "electrical"
+   ],
+   "never_on": [
+    "metals",
+    "solids"
+   ],
+   "notes": "Clean, no residue. Short range. Do not hold the metal horn with bare hands: it gets extremely cold. Danger in small closed rooms."
+  },
+  {
+   "id": "wetchem",
+   "name": "Wet chemical",
+   "label_colour": "Yellow label zone (EN)",
+   "best_on": [
+    "cooking",
+    "solids"
+   ],
+   "never_on": [
+    "electrical",
+    "metals",
+    "liquids"
+   ],
+   "notes": "Made for cooking oil fires. Forms a soapy layer on hot oil. Not for live electrics."
+  },
+  {
+   "id": "powderd",
+   "name": "Special powder for metals (Class D)",
+   "label_colour": "Check the label",
+   "best_on": [
+    "metals"
+   ],
+   "never_on": [
+    "solids",
+    "liquids",
+    "gases",
+    "cooking",
+    "electrical"
+   ],
+   "notes": "Only for metal fires. Needs trained users."
+  }
+ ],
+ "matrix": {
+  "solids": {
+   "water": {
+    "r": "yes",
+    "note": "Best choice"
+   },
+   "foam": {
+    "r": "yes",
+    "note": ""
+   },
+   "abc": {
+    "r": "yes",
+    "note": ""
+   },
+   "bc": {
+    "r": "no",
+    "note": "Not rated for Class A"
+   },
+   "co2": {
+    "r": "caution",
+    "note": "Only very small fires. No cooling effect"
+   },
+   "wetchem": {
+    "r": "yes",
+    "note": "Rated A on many units"
+   },
+   "powderd": {
+    "r": "no",
+    "note": ""
+   }
+  },
+  "liquids": {
+   "water": {
+    "r": "no",
+    "note": "Spreads the burning liquid"
+   },
+   "foam": {
+    "r": "yes",
+    "note": "Best choice"
+   },
+   "abc": {
+    "r": "yes",
+    "note": ""
+   },
+   "bc": {
+    "r": "yes",
+    "note": ""
+   },
+   "co2": {
+    "r": "caution",
+    "note": "Small fires, close range"
+   },
+   "wetchem": {
+    "r": "no",
+    "note": "For cooking oil only"
+   },
+   "powderd": {
+    "r": "no",
+    "note": ""
+   }
+  },
+  "gases": {
+   "water": {
+    "r": "caution",
+    "note": "Use only to cool cylinders and surroundings"
+   },
+   "foam": {
+    "r": "no",
+    "note": ""
+   },
+   "abc": {
+    "r": "caution",
+    "note": "Stop the gas first or it may reignite and explode"
+   },
+   "bc": {
+    "r": "caution",
+    "note": "Stop the gas first or it may reignite and explode"
+   },
+   "co2": {
+    "r": "caution",
+    "note": "Limited effect outdoors"
+   },
+   "wetchem": {
+    "r": "no",
+    "note": ""
+   },
+   "powderd": {
+    "r": "no",
+    "note": ""
+   }
+  },
+  "metals": {
+   "water": {
+    "r": "no",
+    "note": "Violent reaction"
+   },
+   "foam": {
+    "r": "no",
+    "note": ""
+   },
+   "abc": {
+    "r": "no",
+    "note": "Not effective"
+   },
+   "bc": {
+    "r": "no",
+    "note": ""
+   },
+   "co2": {
+    "r": "no",
+    "note": "Can react"
+   },
+   "wetchem": {
+    "r": "no",
+    "note": ""
+   },
+   "powderd": {
+    "r": "yes",
+    "note": "Only suitable agent. Dry sand for small amounts"
+   }
+  },
+  "cooking": {
+   "water": {
+    "r": "no",
+    "note": "Fireball"
+   },
+   "foam": {
+    "r": "caution",
+    "note": "Only if labelled for it"
+   },
+   "abc": {
+    "r": "caution",
+    "note": "Small fires only, can reignite"
+   },
+   "bc": {
+    "r": "caution",
+    "note": "Can reignite"
+   },
+   "co2": {
+    "r": "caution",
+    "note": "Small fires, can reignite"
+   },
+   "wetchem": {
+    "r": "yes",
+    "note": "Best choice"
+   },
+   "powderd": {
+    "r": "no",
+    "note": ""
+   }
+  },
+  "electrical": {
+   "water": {
+    "r": "no",
+    "note": "Electric shock"
+   },
+   "foam": {
+    "r": "no",
+    "note": "Electric shock"
+   },
+   "abc": {
+    "r": "yes",
+    "note": "Isolate power first. Residue damages equipment"
+   },
+   "bc": {
+    "r": "yes",
+    "note": "Isolate power first"
+   },
+   "co2": {
+    "r": "yes",
+    "note": "Best for sensitive equipment. Isolate power first"
+   },
+   "wetchem": {
+    "r": "no",
+    "note": "Electric shock"
+   },
+   "powderd": {
+    "r": "no",
+    "note": ""
+   }
+  }
+ },
+ "pass": [
+  {
+   "letter": "P",
+   "word": "Pull",
+   "detail": "Pull the pin and break the tamper seal."
+  },
+  {
+   "letter": "A",
+   "word": "Aim",
+   "detail": "Aim the nozzle at the base of the fire, not the flames."
+  },
+  {
+   "letter": "S",
+   "word": "Squeeze",
+   "detail": "Squeeze the handle to discharge."
+  },
+  {
+   "letter": "S",
+   "word": "Sweep",
+   "detail": "Sweep side to side across the base until the fire is out."
+  }
+ ],
+ "before_fighting": [
+  "Raise the alarm first and make sure others are leaving",
+  "Fight a fire only if it is small, such as the size of a waste bin, and you have a clear exit behind you",
+  "Check the label: is this the right extinguisher for this fire?",
+  "Stand 2 to 3 metres back and keep your back to the exit",
+  "Stay low if there is smoke and never let the fire get between you and the exit"
+ ],
+ "do_not_fight": [
+  "The fire is spreading fast or is larger than a waste bin",
+  "Smoke is filling the room or you cannot see",
+  "You do not know what is burning or which extinguisher to use",
+  "The extinguisher is empty, damaged or you are alone with no exit behind you",
+  "There are gas cylinders, explosives or hazardous chemicals nearby"
+ ],
+ "race": [
+  {
+   "letter": "R",
+   "word": "Rescue",
+   "detail": "Help people in immediate danger only if it is safe."
+  },
+  {
+   "letter": "A",
+   "word": "Alarm",
+   "detail": "Raise the alarm and call the emergency number."
+  },
+  {
+   "letter": "C",
+   "word": "Contain",
+   "detail": "Close doors and windows to slow the fire and smoke."
+  },
+  {
+   "letter": "E",
+   "word": "Extinguish or Evacuate",
+   "detail": "Fight a small fire if trained and safe. Otherwise leave and go to the assembly point."
+  }
+ ],
+ "inspection": {
+  "monthly_note": "A quick visual check every month is required by NFPA 10 and by most site fire plans. Record the date, the unit number and your name.",
+  "monthly": [
+   {
+    "id": "location",
+    "text": "Extinguisher is in its marked place, visible and not blocked",
+    "fail": "Move or clear the obstruction and report"
+   },
+   {
+    "id": "sign",
+    "text": "Sign or marker above the extinguisher is in place",
+    "fail": "Replace the sign"
+   },
+   {
+    "id": "seal",
+    "text": "Safety pin and tamper seal are intact",
+    "fail": "Report: it may have been used or tampered with"
+   },
+   {
+    "id": "gauge",
+    "text": "Pressure gauge needle is in the green zone (stored pressure types)",
+    "fail": "Tag out and replace the unit"
+   },
+   {
+    "id": "body",
+    "text": "Body has no dents, rust, leaks or damage",
+    "fail": "Tag out and replace the unit"
+   },
+   {
+    "id": "hose",
+    "text": "Hose and nozzle are free of cracks, blockages and insects",
+    "fail": "Tag out and have it repaired"
+   },
+   {
+    "id": "label",
+    "text": "Label is readable and the correct type for the hazard in this area",
+    "fail": "Replace the label or the extinguisher"
+   },
+   {
+    "id": "tag",
+    "text": "Service tag shows the last annual maintenance date",
+    "fail": "Arrange maintenance by a competent person"
+   },
+   {
+    "id": "weight",
+    "text": "CO2 units: weight is within tolerance of the full weight on the label",
+    "fail": "Tag out for refill"
+   },
+   {
+    "id": "mount",
+    "text": "Mounted securely. Top of units up to 18 kg (40 lb) no higher than 1.5 m (5 ft) from the floor (NFPA 10)",
+    "fail": "Re-mount at the correct height"
+   }
+  ],
+  "placement": [
+   "Travel distance to a Class A extinguisher should be no more than 22.9 m (75 ft) under NFPA 10",
+   "Class B travel distance is 9 to 15 m (30 to 50 ft) depending on the hazard rating under NFPA 10",
+   "Put extinguishers on escape routes and near exits, not behind equipment",
+   "Place the right type at the hazard: CO2 or powder near electrical rooms, wet chemical in kitchens, foam near fuel stores"
+  ],
+  "annual": [
+   "Annual maintenance and tag by a competent person",
+   "Pressure or hydrostatic testing at the intervals in NFPA 10, EN 3 or the local rule and the manufacturer instructions",
+   "Keep a register: unit number, location, type, last service date, next due date"
+  ]
+ },
+ "hot_work_fire_watch": {
+  "before": [
+   "Valid hot work permit for this place and time",
+   "Remove or cover all combustibles within 11 m (35 ft), including below and behind the work",
+   "Cover floor and wall openings and cracks so sparks cannot pass through",
+   "Sprinklers in service. Extinguisher of the right type within reach",
+   "Test for flammable gas or vapour where needed and record it",
+   "Name a trained fire watch who knows the alarm and extinguisher use"
+  ],
+  "during": [
+   "Fire watch stays at the work area the whole time and has no other task",
+   "Watch the floors above, below and the other side of walls",
+   "Stop work at once if a spark lands on something that can burn",
+   "Keep communication to raise the alarm quickly"
+  ],
+  "after": [
+   "Fire watch continues for at least 30 minutes after work ends (NFPA 51B). Many sites require 60 minutes or more",
+   "Check hidden areas, ducts and the floor below for smouldering",
+   "Sign off on the permit only after the final check",
+   "Report any fire, however small, and review the cause"
+  ],
+  "rules": [
+   "No fire watch means no hot work",
+   "The fire watch must be able to see all spark areas. Use extra watchers if needed",
+   "Never leave a fire watch alone in a confined space"
+  ]
+ },
+ "drill": {
+  "frequency": "At least once a year, or as required by local law, the site fire plan and the client. Include night shift and contractors.",
+  "before": [
+   "Plan the scenario and the date. Tell management and the emergency services where required",
+   "Name the drill leader, timekeeper and observers",
+   "Check alarms, exits, assembly points and warden lists are ready",
+   "Brief the fire wardens on their duties"
+  ],
+  "during": [
+   "Sound the alarm and start the timer",
+   "Wardens sweep their areas and close doors",
+   "People leave by the nearest safe exit and do not use lifts",
+   "Everyone reports to the assembly point and wardens do the headcount",
+   "Record the time to clear the building and the time to complete the headcount",
+   "Observers note blocked exits, people ignoring the alarm and confusion"
+  ],
+  "after": [
+   "Hold a short debrief the same day",
+   "List findings: what worked, what failed, who was missing",
+   "Raise corrective actions with owners and dates in the Action Tracker",
+   "Record the drill: date, time, number of people, evacuation time, findings",
+   "Share the lessons with all workers and contractors"
+  ],
+  "record_fields": [
+   "Date and time",
+   "Scenario",
+   "Number of people evacuated",
+   "Time to clear building",
+   "Time to complete headcount",
+   "Findings",
+   "Actions, owners and dates",
+   "Drill leader and observers"
+  ]
+ }
+}
