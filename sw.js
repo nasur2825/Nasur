@@ -1,5 +1,5 @@
-/* NASUR service worker - offline-first (Phase 4, cache v4) */
-const CACHE_VERSION = 'v4';
+/* NASUR service worker - offline-first (Phase 5, cache v5) */
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = 'nasur-' + CACHE_VERSION;
 
 const CORE_FILES = [
@@ -12,6 +12,7 @@ const CORE_FILES = [
   'css/home.css',
   'css/settings.css',
   'css/observations.css',
+  'css/reference.css',
   'js/core/config.js',
   'js/core/eventbus.js',
   'js/core/router.js',
@@ -37,6 +38,8 @@ const CORE_FILES = [
   'js/services/rca.js',
   'js/services/search.js',
   'js/services/jarvis_core.js',
+  'js/services/encyclopedia.js',
+  'js/services/safety_reference.js',
   'js/jarvis/context.js',
   'js/jarvis/voice.js',
   'js/jarvis/drawer.js',
@@ -51,12 +54,21 @@ const CORE_FILES = [
   'js/modules/incidents.js',
   'js/modules/history_search.js',
   'js/modules/jarvis_studio.js',
+  'js/modules/activity_encyclopedia.js',
+  'js/modules/fire_safety.js',
+  'js/modules/ppe_guide.js',
+  'js/modules/machine_safety.js',
   'data/modules.json',
   'data/hooks/manufacturing-hooks.json',
   'data/workspaces/base.json',
   'data/regions.json',
   'data/competency.json',
-  'data/nasur_master_blueprint.json'
+  'data/nasur_master_blueprint.json',
+  'data/encyclopedia/activities_core.json',
+  'data/encyclopedia/activities_more.json',
+  'data/fire_safety.json',
+  'data/ppe_guide.json',
+  'data/machine_safety.json'
 ];
 
 async function precacheOne(cache, url) {
