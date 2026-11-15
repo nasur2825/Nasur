@@ -1,0 +1,946 @@
+{
+ "version": 1,
+ "verifyNote": "Standard codes are references. Check the marking on the product and the current edition. Indian codes marked verify should be confirmed before audit use.",
+ "selection_rules": [
+  "PPE is the last line of defence. Use elimination, substitution and engineering controls first",
+  "PPE must fit the person and be compatible with other PPE (for example glasses with respirator)",
+  "Train workers to put on, use, inspect and store PPE",
+  "Keep a record of issue, inspection and replacement",
+  "Choose certified PPE with the correct standard marking for your country",
+  "Never use damaged PPE. Tag it out and replace it"
+ ],
+ "items": {
+  "helmet": {
+   "id": "helmet",
+   "name": "Safety helmet",
+   "icon": "⛑️",
+   "standards": {
+    "eu": "EN 397 (EN 50365 for electrical use)",
+    "usa": "ANSI/ISEA Z89.1 (Type I top impact, Type II top and lateral; Class E for electrical)",
+    "canada": "CSA Z94.1",
+    "india": "IS 2925"
+   },
+   "protects_against": "Falling objects, bumps, electrical contact (Class E)",
+   "choose": [
+    "Choose the type for the hazard: lateral impact, electrical, high heat",
+    "Use a chin strap when working at height or in wind",
+    "Do not paint, drill or put stickers over the shell"
+   ]
+  },
+  "safety_glasses": {
+   "id": "safety_glasses",
+   "name": "Safety glasses",
+   "icon": "🥽",
+   "standards": {
+    "eu": "EN 166",
+    "usa": "ANSI/ISEA Z87.1",
+    "canada": "CSA Z94.3",
+    "india": "IS 5983"
+   },
+   "protects_against": "Flying particles, dust, UV, splashes (with side shields)",
+   "choose": [
+    "Look for the marking on the frame and lens (for example Z87+ or EN 166 F for impact)",
+    "Wear over prescription glasses only if designed for it or use prescription safety glasses",
+    "Choose tinted lenses for outdoor sun"
+   ]
+  },
+  "goggles": {
+   "id": "goggles",
+   "name": "Splash goggles",
+   "icon": "🥽",
+   "standards": {
+    "eu": "EN 166 (field of use 3 liquid splash, 4 dust, 5 gas)",
+    "usa": "ANSI/ISEA Z87.1 (D3 splash, D4 dust, D5 fine dust)",
+    "canada": "CSA Z94.3",
+    "india": "IS 5983"
+   },
+   "protects_against": "Chemical splash, dust, fine particles",
+   "choose": [
+    "Indirect vent goggles for splash",
+    "Sealed goggles for fine dust and gas",
+    "Check compatibility with your respirator"
+   ]
+  },
+  "face_shield": {
+   "id": "face_shield",
+   "name": "Face shield",
+   "icon": "🛡️",
+   "standards": {
+    "eu": "EN 166 (3 splash, 8 electric arc, 9 molten metal)",
+    "usa": "ANSI/ISEA Z87.1",
+    "canada": "CSA Z94.3",
+    "india": "IS 5983"
+   },
+   "protects_against": "Splash, sparks, grinding fragments, arc flash (arc-rated type)",
+   "choose": [
+    "Always wear safety glasses under a face shield",
+    "For arc flash use an arc-rated shield with a suitable rating"
+   ]
+  },
+  "welding_helmet": {
+   "id": "welding_helmet",
+   "name": "Welding helmet",
+   "icon": "🧑‍🏭",
+   "standards": {
+    "eu": "EN 175 and EN 379 (auto-darkening)",
+    "usa": "ANSI/ISEA Z87.1",
+    "canada": "CSA Z94.3 and CSA W117.2",
+    "india": "Check the marking (verify)"
+   },
+   "protects_against": "Arc radiation, sparks, spatter",
+   "choose": [
+    "Choose the shade for the process and amperage (commonly shade 10 to 13)",
+    "Use auto-darkening with a manual backup",
+    "Wear safety glasses under the helmet"
+   ]
+  },
+  "earplugs": {
+   "id": "earplugs",
+   "name": "Ear plugs",
+   "icon": "👂",
+   "standards": {
+    "eu": "EN 352-2",
+    "usa": "ANSI/ASA S3.19 (NRR) and S12.6 (fit testing)",
+    "canada": "CSA Z94.2",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Noise",
+   "choose": [
+    "Choose by the noise level and the rating (SNR or NRR) so you are not over-protected",
+    "Train workers to insert plugs deeply and correctly",
+    "Use corded plugs for easy removal"
+   ]
+  },
+  "earmuffs": {
+   "id": "earmuffs",
+   "name": "Ear muffs",
+   "icon": "🎧",
+   "standards": {
+    "eu": "EN 352-1",
+    "usa": "ANSI/ASA S3.19 (NRR)",
+    "canada": "CSA Z94.2",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Noise",
+   "choose": [
+    "Good for on and off use",
+    "Check that they seal over hair, hard hats and glasses arms",
+    "Combine with plugs for very high noise"
+   ]
+  },
+  "respirator_particle": {
+   "id": "respirator_particle",
+   "name": "Respirator for dust and fume",
+   "icon": "😷",
+   "standards": {
+    "eu": "EN 149 filtering facepiece FFP1, FFP2, FFP3",
+    "usa": "NIOSH 42 CFR 84: N95 and P100 (US)",
+    "canada": "CSA Z94.4 (selection, use and care); NIOSH-approved devices accepted",
+    "india": "IS 9473 (verify)"
+   },
+   "protects_against": "Dust, silica, welding fume, mist",
+   "choose": [
+    "Choose the class for the hazard (FFP3 or P100 for toxic dust and welding fume)",
+    "Fit test before first use and annually. No beard under the seal",
+    "Replace when breathing becomes hard or the mask is damaged or wet"
+   ]
+  },
+  "respirator_gas": {
+   "id": "respirator_gas",
+   "name": "Respirator for gas and vapour",
+   "icon": "😷",
+   "standards": {
+    "eu": "EN 140 half mask or EN 136 full face with EN 14387 gas and combined filters",
+    "usa": "NIOSH-approved half or full facepiece with organic vapour or combination cartridges",
+    "canada": "CSA Z94.4",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Solvent vapour, acid gas, ammonia (type K)",
+   "choose": [
+    "Match the filter type and colour to the gas using the SDS",
+    "Change cartridges on a schedule or when you smell or taste the contaminant",
+    "Not for oxygen-poor air"
+   ]
+  },
+  "air_fed": {
+   "id": "air_fed",
+   "name": "Air-fed or breathing apparatus",
+   "icon": "🫁",
+   "standards": {
+    "eu": "EN 14594 (airline), EN 12941/12942 (powered), EN 137 (SCBA)",
+    "usa": "NIOSH-approved SCBA, supplied air respirator",
+    "canada": "CSA Z94.4",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Oxygen-poor air, unknown atmospheres, abrasive blasting, high toxic concentrations",
+   "choose": [
+    "Only trained and medically fit users",
+    "Check breathing air quality and pressure every shift",
+    "Always keep a trained standby for entry work"
+   ]
+  },
+  "escape_set": {
+   "id": "escape_set",
+   "name": "Escape breathing set",
+   "icon": "🆘",
+   "standards": {
+    "eu": "EN 13794 (closed circuit) / EN 1146 (compressed air hood)",
+    "usa": "NIOSH-approved escape respirator (CBRN or EEBA)",
+    "canada": "CSA Z94.4",
+    "india": "Follow site standard"
+   },
+   "protects_against": "Sudden release of H2S or toxic gas",
+   "choose": [
+    "Carry within reach at all times in gas areas",
+    "Train every user to don it within seconds",
+    "Check pressure and seals as the manufacturer says"
+   ]
+  },
+  "gloves_mech": {
+   "id": "gloves_mech",
+   "name": "Mechanical protection gloves",
+   "icon": "🧤",
+   "standards": {
+    "eu": "EN 388 (abrasion, cut, tear, puncture; EN ISO 13997 cut level A to F)",
+    "usa": "ANSI/ISEA 105 (cut levels A1 to A9)",
+    "canada": "ANSI/ISEA 105 accepted",
+    "india": "IS 6994"
+   },
+   "protects_against": "Cuts, abrasion, punctures, splinters",
+   "choose": [
+    "Match cut level to the task, not the highest level for everything",
+    "Avoid loose gloves near rotating machinery",
+    "Choose grip type for wet or oily work"
+   ]
+  },
+  "gloves_chem": {
+   "id": "gloves_chem",
+   "name": "Chemical-resistant gloves",
+   "icon": "🧤",
+   "standards": {
+    "eu": "EN ISO 374-1 (types A, B, C) and EN ISO 374-5",
+    "usa": "ANSI/ISEA 105 chemical ratings; ASTM F739 permeation",
+    "canada": "CSA and ANSI/ISEA 105",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Acids, alkalis, solvents, oils",
+   "choose": [
+    "Choose the glove material from the SDS and the manufacturer chemical chart",
+    "Check breakthrough time against the task length",
+    "Do not reuse after heavy contact"
+   ]
+  },
+  "gloves_heat": {
+   "id": "gloves_heat",
+   "name": "Welding and heat gloves",
+   "icon": "🧤",
+   "standards": {
+    "eu": "EN 12477 (welding), EN 407 (heat)",
+    "usa": "ANSI/ISEA 105; ASTM F2675 for heat",
+    "canada": "Check supplier marking (verify)",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Heat, sparks, spatter, hot surfaces",
+   "choose": [
+    "Choose by contact heat level",
+    "Dry gloves only. Wet gloves conduct heat",
+    "Do not use for live electrical work"
+   ]
+  },
+  "gloves_insulating": {
+   "id": "gloves_insulating",
+   "name": "Insulating gloves (electrical)",
+   "icon": "🧤",
+   "standards": {
+    "eu": "IEC 60903",
+    "usa": "ASTM D120 (Class 00 to 4), worn with leather protectors; OSHA 29 CFR 1910.137",
+    "canada": "CSA Z462 and CSA C22.2",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Electric shock",
+   "choose": [
+    "Choose the class for the voltage",
+    "Air test before every use and keep electrical test dates current (about every 6 months in service in the US)",
+    "Always wear leather protectors over them"
+   ]
+  },
+  "gloves_cold": {
+   "id": "gloves_cold",
+   "name": "Cold-protection gloves",
+   "icon": "🧤",
+   "standards": {
+    "eu": "EN 511",
+    "usa": "ANSI/ISEA 105",
+    "canada": "Check supplier marking (verify)",
+    "india": "Check supplier"
+   },
+   "protects_against": "Cold, cold stores, winter work",
+   "choose": [
+    "Choose insulation for the temperature and the dexterity needed",
+    "Keep spare dry gloves"
+   ]
+  },
+  "boots": {
+   "id": "boots",
+   "name": "Safety footwear",
+   "icon": "🥾",
+   "standards": {
+    "eu": "EN ISO 20345 (SB basic, S1, S1P, S3; SRC slip resistance)",
+    "usa": "ASTM F2413 (I/75 C/75 plus EH, PR, Mt)",
+    "canada": "CSA Z195 (green triangle toe, green rectangle sole puncture)",
+    "india": "IS 15298 Part 2"
+   },
+   "protects_against": "Crush, puncture, slips, electrical hazard (EH), metatarsal (Mt)",
+   "choose": [
+    "Choose toecap, midsole puncture plate and slip rating for the work",
+    "Wellington style for wet and chemical areas",
+    "Replace when the sole is worn smooth or the toecap is exposed"
+   ]
+  },
+  "harness": {
+   "id": "harness",
+   "name": "Full body harness and lanyard",
+   "icon": "🪢",
+   "standards": {
+    "eu": "EN 361 harness, EN 355 energy absorber, EN 795 anchor devices, EN 363 systems",
+    "usa": "ANSI/ASSP Z359.11 and Z359 series",
+    "canada": "CSA Z259.10",
+    "india": "IS 3521"
+   },
+   "protects_against": "Falls from height",
+   "choose": [
+    "Choose the harness type for the task (rescue loops, positioning belt, work at height)",
+    "Fit adjustment before each use and match to the user's size",
+    "Plan rescue before work starts"
+   ]
+  },
+  "hivis": {
+   "id": "hivis",
+   "name": "High-visibility clothing",
+   "icon": "🦺",
+   "standards": {
+    "eu": "EN ISO 20471 (class 1 to 3)",
+    "usa": "ANSI/ISEA 107 (Type O, R, P; Class 1 to 3)",
+    "canada": "CSA Z96",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "Being struck by vehicles and plant",
+   "choose": [
+    "Class 2 or 3 near traffic",
+    "Replace when faded, dirty or tape peels",
+    "Lighter fabrics help in the heat"
+   ]
+  },
+  "fr_arc": {
+   "id": "fr_arc",
+   "name": "Arc-rated clothing",
+   "icon": "🔥",
+   "standards": {
+    "eu": "IEC 61482-2 (arc test) with EN ISO 11612",
+    "usa": "NFPA 70E, ASTM F1506, arc rating in cal/cm2",
+    "canada": "CSA Z462",
+    "india": "Follow site standard"
+   },
+   "protects_against": "Arc flash and burns",
+   "choose": [
+    "Choose the arc rating from the arc flash study",
+    "Wear natural or arc-rated underlayers only (no melting synthetics)",
+    "Keep clean and undamaged"
+   ]
+  },
+  "fr_coverall": {
+   "id": "fr_coverall",
+   "name": "Flame-resistant coverall",
+   "icon": "🔥",
+   "standards": {
+    "eu": "EN ISO 11612, EN ISO 14116",
+    "usa": "NFPA 2112 (flash fire), ASTM F1506",
+    "canada": "CSA Z96 or CSA Z462 as relevant",
+    "india": "Follow site standard"
+   },
+   "protects_against": "Flash fire and heat",
+   "choose": [
+    "Required in many oil and gas and process areas",
+    "Never wear synthetic underwear that melts",
+    "Follow wash instructions so protection is not lost"
+   ]
+  },
+  "welding_clothing": {
+   "id": "welding_clothing",
+   "name": "Welding clothing and apron",
+   "icon": "🧥",
+   "standards": {
+    "eu": "EN ISO 11611 (Class 1 or 2)",
+    "usa": "ASTM F1506, NFPA 2112 where relevant",
+    "canada": "CSA W117.2",
+    "india": "Check supplier marking (verify)"
+   },
+   "protects_against": "Sparks, spatter, UV",
+   "choose": [
+    "Class 2 for heavier welding and overhead work",
+    "Leather apron and sleeves for heavy spatter",
+    "Buttoned collars and no turn-ups where sparks can collect"
+   ]
+  },
+  "chem_suit": {
+   "id": "chem_suit",
+   "name": "Chemical protective suit",
+   "icon": "🥼",
+   "standards": {
+    "eu": "EN 943 (gas tight), EN 14605 (liquid tight types 3 and 4), EN 13034 (type 6), EN 13982 (type 5 particles)",
+    "usa": "NFPA 1991 and 1992 for hazmat",
+    "canada": "Check supplier marking (verify)",
+    "india": "Check supplier marking (verify)"
+   },
+   "protects_against": "Liquid chemicals, particles, hazardous splashes",
+   "choose": [
+    "Match suit type to the physical state: gas, liquid, particle",
+    "Limit wear time because suits trap heat",
+    "Train on putting on and taking off to avoid contamination"
+   ]
+  },
+  "blast_suit": {
+   "id": "blast_suit",
+   "name": "Abrasive blasting suit",
+   "icon": "🧥",
+   "standards": {
+    "eu": "EN ISO 14877",
+    "usa": "ANSI Z9.4 and OSHA 29 CFR 1910.94",
+    "canada": "CSA Z94.4",
+    "india": "Follow site standard"
+   },
+   "protects_against": "Abrasive impact, dust, rebound",
+   "choose": [
+    "Worn with an air-fed blasting helmet",
+    "Heavy leather or reinforced fabric"
+   ]
+  },
+  "cold_clothing": {
+   "id": "cold_clothing",
+   "name": "Cold protective clothing",
+   "icon": "🧥",
+   "standards": {
+    "eu": "EN 342 (clothing), EN 14058 (garments)",
+    "usa": "ASTM F1060 and cold work standards",
+    "canada": "CSA Z96 where relevant",
+    "india": "Check supplier"
+   },
+   "protects_against": "Cold, wind chill, cold stores",
+   "choose": [
+    "Use layers: base, insulation, shell",
+    "Keep dry and have a spare set",
+    "Cover head, hands, face and feet"
+   ]
+  },
+  "lifejacket": {
+   "id": "lifejacket",
+   "name": "Lifejacket or buoyancy aid",
+   "icon": "🦺",
+   "standards": {
+    "eu": "EN ISO 12402 (levels 50N, 100N, 150N, 275N)",
+    "usa": "USCG approved; SOLAS and LSA Code for ships",
+    "canada": "Transport Canada approved",
+    "india": "DG Shipping approved (verify)"
+   },
+   "protects_against": "Drowning",
+   "choose": [
+    "Choose automatic inflatable or foam for the job",
+    "Inspect gas cylinders and bladders on a schedule",
+    "Wear it fastened and with a crotch strap where fitted"
+   ]
+  },
+  "sun_protection": {
+   "id": "sun_protection",
+   "name": "Sun protection",
+   "icon": "😎",
+   "standards": {
+    "eu": "EN ISO 12312-1 (sunglasses), UV 400",
+    "usa": "ANSI Z80.3 and Z87.1",
+    "canada": "CSA Z94.3",
+    "india": "Check the Indian Standard marking (verify)"
+   },
+   "protects_against": "UV radiation and heat",
+   "choose": [
+    "Broad-brim hat or helmet neck cover",
+    "UV 400 tinted safety glasses",
+    "Sunscreen on exposed skin"
+   ]
+  },
+  "hygiene_wear": {
+   "id": "hygiene_wear",
+   "name": "Food hygiene wear",
+   "icon": "🧢",
+   "standards": {
+    "eu": "EN 14065 and site hygiene standard",
+    "usa": "Site food safety standard",
+    "canada": "Site food safety standard",
+    "india": "Site food safety standard and FSSAI where relevant"
+   },
+   "protects_against": "Contamination of food",
+   "choose": [
+    "Hairnet, beard cover, clean outer clothing",
+    "No jewellery",
+    "Colour code by zone if the site uses it"
+   ]
+  }
+ },
+ "tasks": [
+  {
+   "id": "general_site",
+   "label": "General site entry",
+   "icon": "🏗️",
+   "ppe": [
+    "helmet",
+    "safety_glasses",
+    "boots",
+    "hivis",
+    "gloves_mech"
+   ],
+   "note": "Minimum for most sites. Add more for the task."
+  },
+  {
+   "id": "welding",
+   "label": "Welding and hot work",
+   "icon": "🔥",
+   "ppe": [
+    "welding_helmet",
+    "welding_clothing",
+    "gloves_heat",
+    "respirator_particle",
+    "boots",
+    "safety_glasses"
+   ],
+   "note": "Add extraction and a fire watch. Respirator for stainless and galvanised steel fume."
+  },
+  {
+   "id": "grinding",
+   "label": "Grinding and cutting",
+   "icon": "⚙️",
+   "ppe": [
+    "face_shield",
+    "safety_glasses",
+    "gloves_mech",
+    "earplugs",
+    "respirator_particle",
+    "boots"
+   ],
+   "note": "Face shield over safety glasses."
+  },
+  {
+   "id": "work_at_height",
+   "label": "Work at height",
+   "icon": "🪜",
+   "ppe": [
+    "harness",
+    "helmet",
+    "boots",
+    "gloves_mech",
+    "hivis"
+   ],
+   "note": "Helmet with chin strap. Rescue plan before work."
+  },
+  {
+   "id": "electrical",
+   "label": "Electrical work",
+   "icon": "⚡",
+   "ppe": [
+    "fr_arc",
+    "gloves_insulating",
+    "face_shield",
+    "boots",
+    "helmet",
+    "safety_glasses"
+   ],
+   "note": "Use Class E helmet and EH boots. Arc rating from the arc flash study."
+  },
+  {
+   "id": "chemical",
+   "label": "Chemical handling",
+   "icon": "🧪",
+   "ppe": [
+    "gloves_chem",
+    "goggles",
+    "chem_suit",
+    "respirator_gas",
+    "boots"
+   ],
+   "note": "Choose everything from the SDS."
+  },
+  {
+   "id": "confined_space",
+   "label": "Confined space entry",
+   "icon": "🕳️",
+   "ppe": [
+    "air_fed",
+    "harness",
+    "helmet",
+    "boots",
+    "gloves_mech"
+   ],
+   "note": "Breathing apparatus where the air is not proven safe. Gas detector and rescue plan are essential."
+  },
+  {
+   "id": "lifting",
+   "label": "Lifting and rigging",
+   "icon": "🏗️",
+   "ppe": [
+    "helmet",
+    "gloves_mech",
+    "boots",
+    "hivis"
+   ],
+   "note": "Never stand under the load."
+  },
+  {
+   "id": "excavation",
+   "label": "Excavation and trenching",
+   "icon": "⛏️",
+   "ppe": [
+    "helmet",
+    "boots",
+    "hivis",
+    "gloves_mech"
+   ],
+   "note": "Gas detector for deep trenches."
+  },
+  {
+   "id": "warehouse",
+   "label": "Forklift and warehouse",
+   "icon": "🚜",
+   "ppe": [
+    "boots",
+    "hivis",
+    "helmet",
+    "earplugs"
+   ],
+   "note": "Helmet where racking overhead risk."
+  },
+  {
+   "id": "noise",
+   "label": "High noise area",
+   "icon": "🔊",
+   "ppe": [
+    "earplugs",
+    "earmuffs"
+   ],
+   "note": "Use both for very high noise. Check fit."
+  },
+  {
+   "id": "spray_painting",
+   "label": "Spray painting",
+   "icon": "🎨",
+   "ppe": [
+    "respirator_gas",
+    "respirator_particle",
+    "gloves_chem",
+    "goggles",
+    "chem_suit"
+   ],
+   "note": "Use extraction and ventilation first."
+  },
+  {
+   "id": "sandblasting",
+   "label": "Abrasive blasting",
+   "icon": "💨",
+   "ppe": [
+    "air_fed",
+    "blast_suit",
+    "gloves_mech",
+    "earmuffs",
+    "boots"
+   ],
+   "note": "Air-fed helmet only. Check breathing air quality."
+  },
+  {
+   "id": "cold_room",
+   "label": "Cold room and cold store",
+   "icon": "❄️",
+   "ppe": [
+    "cold_clothing",
+    "gloves_cold",
+    "boots",
+    "helmet"
+   ],
+   "note": "Limit time and use rewarming breaks."
+  },
+  {
+   "id": "outdoor_heat",
+   "label": "Outdoor heat",
+   "icon": "☀️",
+   "ppe": [
+    "helmet",
+    "sun_protection",
+    "hivis",
+    "safety_glasses"
+   ],
+   "note": "See the heat stress adjustments below."
+  },
+  {
+   "id": "marine_deck",
+   "label": "Marine deck work",
+   "icon": "⚓",
+   "ppe": [
+    "lifejacket",
+    "helmet",
+    "boots",
+    "gloves_mech",
+    "hivis"
+   ],
+   "note": "Chin strap. Lifejacket where there is an overboard risk."
+  },
+  {
+   "id": "oilgas_process",
+   "label": "Oil and gas process area",
+   "icon": "🛢️",
+   "ppe": [
+    "fr_coverall",
+    "helmet",
+    "safety_glasses",
+    "boots",
+    "escape_set",
+    "gloves_mech"
+   ],
+   "note": "Plus a personal gas detector. Flame-resistant clothing with no melting underwear."
+  },
+  {
+   "id": "food_processing",
+   "label": "Food processing and sanitation",
+   "icon": "🍽️",
+   "ppe": [
+    "hygiene_wear",
+    "gloves_chem",
+    "goggles",
+    "boots",
+    "earplugs"
+   ],
+   "note": "Non-slip boots with SRC rating. Cut gloves where blades are used."
+  }
+ ],
+ "inspection": [
+  {
+   "id": "harness",
+   "name": "Full body harness and lanyard",
+   "icon": "🪢",
+   "before_use": [
+    "Read the label: it must be legible and show the date",
+    "Check all webbing along its full length by running it through your hands",
+    "Check stitching, buckles, D-rings and attachment points",
+    "Check the energy absorber pack is intact and not deployed",
+    "Check connectors and gates close and lock fully"
+   ],
+   "reject_if": [
+    "Cuts, fraying, burns, melting, hard or stiff areas",
+    "Chemical damage, paint, heavy dirt or UV fading",
+    "Pulled or broken stitching",
+    "Cracked, bent, corroded or sharp-edged metal parts",
+    "Energy absorber deployed or label missing",
+    "Has arrested a fall"
+   ],
+   "care": [
+    "Store dry, away from sunlight, chemicals and sharp objects",
+    "Wash by the manufacturer instructions",
+    "Competent person inspection at set intervals and record it"
+   ],
+   "life": "Follow the manufacturer's instructions. Many sites inspect formally every 3 to 12 months."
+  },
+  {
+   "id": "helmet",
+   "name": "Safety helmet",
+   "icon": "⛑️",
+   "before_use": [
+    "Check the shell for cracks, dents, chalking or fading",
+    "Check the suspension and headband are intact and adjust properly",
+    "Check the chin strap and buckle work",
+    "Check the date mark inside the shell"
+   ],
+   "reject_if": [
+    "Cracks or deep scratches in the shell",
+    "Hit by a heavy impact, even if no damage is visible",
+    "Brittle, chalky or discoloured shell",
+    "Torn suspension or missing parts",
+    "Drilled, painted with solvent or glued stickers hiding damage"
+   ],
+   "care": [
+    "Clean with mild soap and water",
+    "Do not store in a hot car",
+    "Do not put hard objects on top"
+   ],
+   "life": "Follow the manufacturer. Many sites replace polyethylene helmets about every 3 to 5 years, or after impact."
+  },
+  {
+   "id": "respirator",
+   "name": "Respirator",
+   "icon": "😷",
+   "before_use": [
+    "Check the facepiece for cracks, splits or warping",
+    "Check valves, seals and straps are clean and flexible",
+    "Check the filter is the right type, in date and not damaged or wet",
+    "Do a seal check every time you put it on",
+    "Confirm you have passed a fit test for this model"
+   ],
+   "reject_if": [
+    "Cracked or distorted facepiece",
+    "Valves sticking or torn",
+    "Stretched or broken straps",
+    "Filter past expiry, damaged, wet or clogged",
+    "Breathing becomes hard or you taste or smell the contaminant"
+   ],
+   "care": [
+    "Clean after use per instructions",
+    "Store in a clean sealed bag away from dust and chemicals",
+    "Disposable masks are single shift use or per the site rule"
+   ],
+   "life": "Cartridge and filter change schedule from the SDS and the site respiratory programme."
+  },
+  {
+   "id": "gloves",
+   "name": "Gloves",
+   "icon": "🧤",
+   "before_use": [
+    "Check for holes, cuts, thin patches and stiff areas",
+    "Check inside for contamination",
+    "Insulating gloves: air test and check the electrical test date"
+   ],
+   "reject_if": [
+    "Holes, cuts, tears or worn through",
+    "Swollen, sticky, hard or discoloured from chemicals",
+    "Wet inside from leaks",
+    "Insulating gloves out of test date or with any damage"
+   ],
+   "care": [
+    "Wash and dry as the maker advises",
+    "Store flat, away from heat and sunlight",
+    "Replace by task, not by a calendar"
+   ],
+   "life": "Replace when damaged. Insulating gloves must stay within their electrical test interval."
+  },
+  {
+   "id": "eye",
+   "name": "Safety glasses and goggles",
+   "icon": "🥽",
+   "before_use": [
+    "Check lenses for scratches, cracks and pitting",
+    "Check frame and side shields are secure",
+    "Check the markings are visible and correct for the hazard",
+    "Check the strap is elastic and the vents are clear"
+   ],
+   "reject_if": [
+    "Deep scratches or cracks",
+    "Loose or bent frames",
+    "Fogging that cannot be cleared",
+    "Lens markings worn off"
+   ],
+   "care": [
+    "Clean with lens cleaner and a soft cloth",
+    "Store in a clean case"
+   ],
+   "life": "Replace when scratched or damaged."
+  },
+  {
+   "id": "ear",
+   "name": "Ear plugs and ear muffs",
+   "icon": "🎧",
+   "before_use": [
+    "Muffs: check cushions for cracks and hardness and that the headband still clamps well",
+    "Plugs: check they are clean, soft and not deformed",
+    "Check the correct protection rating for the noise"
+   ],
+   "reject_if": [
+    "Cracked or hard cushions",
+    "Weak headband",
+    "Dirty, hard or damaged plugs",
+    "Muffs that do not seal over glasses or a helmet"
+   ],
+   "care": [
+    "Wash plugs as directed",
+    "Replace single-use plugs every day"
+   ],
+   "life": "Replace cushions regularly and plugs when dirty."
+  },
+  {
+   "id": "boots",
+   "name": "Safety boots",
+   "icon": "🥾",
+   "before_use": [
+    "Check the sole tread and the heel",
+    "Check the toecap: no exposed or crushed steel or composite",
+    "Check the upper for cuts and split seams",
+    "Check for midsole puncture or separation"
+   ],
+   "reject_if": [
+    "Sole worn smooth or cracked",
+    "Exposed or deformed toecap",
+    "Upper splitting or sole parting",
+    "Chemical damage or wet insulation"
+   ],
+   "care": [
+    "Dry boots between shifts",
+    "Clean and keep laces in good condition"
+   ],
+   "life": "Replace when worn or after a heavy impact on the toecap."
+  },
+  {
+   "id": "hivis",
+   "name": "High-visibility clothing",
+   "icon": "🦺",
+   "before_use": [
+    "Check colour is bright and not faded",
+    "Check reflective tape is not peeling or cracked",
+    "Check the garment is clean and fits properly"
+   ],
+   "reject_if": [
+    "Faded or stained so it no longer stands out",
+    "Reflective tape peeling or dirty",
+    "Torn or worn through"
+   ],
+   "care": [
+    "Wash by the label and do not use fabric softener"
+   ],
+   "life": "Replace when colour or tape no longer meets the standard."
+  }
+ ],
+ "heat_stress": {
+  "principle": "Heat stress PPE adjustments never remove protection from the real hazard. Change the work method, schedule or controls before reducing PPE.",
+  "adjustments": [
+   {
+    "issue": "Heavy flame-resistant or chemical clothing traps heat",
+    "adjust": "Use lighter breathable FR fabrics where the standard allows, shorten wear time and add work-rest cycles"
+   },
+   {
+    "issue": "Impermeable suits (chemical, blasting)",
+    "adjust": "Strictly limit time, monitor heart rate or core temperature and add cooling and rest breaks"
+   },
+   {
+    "issue": "Respirators add heat load",
+    "adjust": "Consider powered air or air-fed hoods with cooled air for long tasks"
+   },
+   {
+    "issue": "Hot dark helmets and hats",
+    "adjust": "Use light colours, ventilated helmets, neck shades and sweat bands"
+   },
+   {
+    "issue": "Heavy gloves and boots",
+    "adjust": "Choose breathable materials and spare dry socks and gloves"
+   },
+   {
+    "issue": "Cooling vests",
+    "adjust": "Phase-change vests work in dry heat. Evaporative vests do much less in very humid heat"
+   },
+   {
+    "issue": "Sunlight exposure",
+    "adjust": "UV 400 safety glasses, sunscreen and neck cover"
+   },
+   {
+    "issue": "Hi-vis clothing",
+    "adjust": "Use lighter-weight mesh style hi-vis that still meets the class"
+   }
+  ],
+  "rules": [
+   "Acclimatise workers over 5 to 7 days",
+   "Provide cool drinking water and electrolytes, and rest in shade",
+   "Use a buddy system and know the signs: dizziness, confusion, hot dry skin, collapse",
+   "Do not remove PPE that protects from a real hazard to cool down: stop the job and use a cool area",
+   "Follow national midday work bans where they apply"
+  ]
+ }
+}
