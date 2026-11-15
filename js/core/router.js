@@ -1,448 +1,3 @@
-/**
- * NASUR – Module Registry and Router
- * File: js/core/router.js
- *
- * Two jobs:
- *   1. MODULE REGISTRY: loads data/modules.json, validates it, and answers
- *      questions about it (navigation items, groups, PDCA stages).
- *   2. ROUTER: shows the right view for the address in the browser
- *      (#/observations, #/observations/abc123?status=open).
- *
- * ADDRESS FORMAT
- *   #/<module-route>/<segment>/<segment>?key=value
- *   The first part picks the module. Anything after it is passed to the
- *   module as `segments` (for example a record id) and `query`.
- *   An empty address goes to DEFAULT_ROUTE (/home).
- *   Build links with routePath() / hrefFor() so values are encoded safely.
- *
- * VIEW CONTRACT (for files in js/modules/ and for built-in views)
- *   export async function render(ctx) { ...; return cleanup; }
- *   ctx = {
- *     root      a fresh <div> for this view. Write ONLY inside it.
- *     module    the module's registry entry (read-only)
- *     route     the module's route, e.g. "/observations"
- *     path      the full normalized path, e.g. "/observations/abc123"
- *     segments  parts after the module route, decoded, e.g. ["abc123"]
- *     query     a URLSearchParams object
- *     signal    an AbortSignal that aborts when the user leaves the view
- *     navigate  navigate(path, { replace })
- *     setTitle  setTitle("text") sets the browser tab title
- *   }
- *   The returned cleanup function is optional. It runs when the view is left.
- *   Rules:
- *     - After any `await`, check ctx.signal.aborted before touching the DOM
- *       or saving anything.
- *     - Listeners on elements inside ctx.root disappear with the view.
- *       Listeners on window, document or the event bus must be removed in
- *       the cleanup function.
- *     - Build markup with html`` and renderHtml() from sanitize.js, or use
- *       textContent. Never assign raw strings to innerHTML.
- *
- * LEAVING A FORM (unsaved changes)
- *   setNavigationGuard(fn): fn({ from, to }) runs before the address changes
- *   and must return true to allow it or false to stay. It must be synchronous
- *   (window.confirm works). It returns a function that removes the guard.
- *
- * START-UP ORDER (js/core/app.js)
- *   registerBuiltin('home', …); registerBuiltin('more', …);
- *   await startRouter({ root, focusTarget });
- */
-
-import { APP, EVENTS, LS_KEYS } from './config.js';
-import { emit } from './eventbus.js';
-import { html, renderHtml } from '../services/sanitize.js';
-
-
-/* ==========================================================================
-   1. CONSTANTS AND STATE
-   ========================================================================== */
-
-/** The route shown when the address is empty. */
-export const DEFAULT_ROUTE = '/home';
-
-const MODULES_URL = new URL('../../data/modules.json', import.meta.url).href;
-const MODULE_BASE_URL = new URL('../../', import.meta.url).href;
-
-const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
-const ROUTE_PATTERN = /^\/[a-z0-9]+(-[a-z0-9]+)*$/;
-const FILE_PATTERN = /^js\/modules\/[a-z0-9]+(-[a-z0-9]+)*\.js$/;
-const STATUSES = Object.freeze(['active', 'planned']);
-
-const SLOW_LOAD_MS = 200;
-const MAX_HASH_LENGTH = 2000;
-
-let registry = null;
-let registryPromise = null;
-let modulesById = new Map();
-let modulesByRoute = new Map();
-
-const builtins = new Map();
-const moduleCache = new Map();
-
-let running = false;
-let rootEl = null;
-let focusEl = null;
-let guard = null;
-let navToken = 0;
-let currentHash = '';
-let currentRoute = null;
-let currentView = null;
-let currentCleanup = null;
-let currentController = null;
-let firstRender = true;
-
-
-/* ==========================================================================
-   2. SMALL HELPERS
-   ========================================================================== */
-
-function isPlainObject(value) {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return false;
-  }
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
-}
-
-function isNonEmptyString(value) {
-  return typeof value === 'string' && value.trim() !== '';
-}
-
-function deepFreeze(value) {
-  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const key of Object.keys(value)) {
-      deepFreeze(value[key]);
-    }
-  }
-  return value;
-}
-
-function setDocumentTitle(title) {
-  document.title = isNonEmptyString(title)
-    ? title + ' – ' + APP.NAME
-    : APP.NAME + ' – ' + APP.TAGLINE;
-}
-
-
-/* ==========================================================================
-   3. MODULE REGISTRY: VALIDATION
-   ========================================================================== */
-
-function fail(message) {
-  throw new Error('NASUR modules.json: ' + message);
-}
-
-/** Checks a list of { id, title, order } entries and returns the set of ids. */
-function checkOrderedList(list, label) {
-  const ids = new Set();
-  for (const item of list) {
-    if (!isPlainObject(item)) {
-      fail('every entry in "' + label + '" must be an object.');
-    }
-    if (typeof item.id !== 'string' || !ID_PATTERN.test(item.id)) {
-      fail('invalid id "' + String(item.id) + '" in "' + label + '".');
-    }
-    if (ids.has(item.id)) {
-      fail('duplicate id "' + item.id + '" in "' + label + '".');
-    }
-    ids.add(item.id);
-    if (!isNonEmptyString(item.title)) {
-      fail('"' + label + '" entry "' + item.id + '" needs a title.');
-    }
-    if (typeof item.order !== 'number' || !Number.isFinite(item.order)) {
-      fail('"' + label + '" entry "' + item.id + '" needs a numeric order.');
-    }
-  }
-  return ids;
-}
-
-/**
- * Throws an Error with a readable message when the registry data is wrong.
- * Returns true when it is valid.
- */
-export function validateRegistry(data) {
-  if (!isPlainObject(data)) {
-    fail('the file must contain an object.');
-  }
-  for (const key of ['pdca_stages', 'groups', 'modules']) {
-    if (!Array.isArray(data[key])) {
-      fail('"' + key + '" must be a list.');
-    }
-  }
-
-  const stageIds = checkOrderedList(data.pdca_stages, 'pdca_stages');
-  const groupIds = checkOrderedList(data.groups, 'groups');
-  const moduleIds = new Set();
-
-  for (const mod of data.modules) {
-    if (!isPlainObject(mod)) {
-      fail('every module must be an object.');
-    }
-    if (typeof mod.id !== 'string' || !ID_PATTERN.test(mod.id)) {
-      fail('invalid module id "' + String(mod.id) + '".');
-    }
-    if (moduleIds.has(mod.id)) {
-      fail('duplicate module id "' + mod.id + '".');
-    }
-    moduleIds.add(mod.id);
-
-    const where = 'module "' + mod.id + '"';
-    const expectedRoute = '/' + mod.id.replace(/_/g, '-');
-    if (mod.route !== expectedRoute || !ROUTE_PATTERN.test(mod.route)) {
-      fail(where + ' must have the route "' + expectedRoute + '".');
-    }
-    if (!isNonEmptyString(mod.title)) {
-      fail(where + ' needs a title.');
-    }
-    if (!isNonEmptyString(mod.icon)) {
-      fail(where + ' needs an icon.');
-    }
-    if (!isNonEmptyString(mod.description)) {
-      fail(where + ' needs a description.');
-    }
-    if (!groupIds.has(mod.group)) {
-      fail(where + ' uses an unknown group "' + String(mod.group) + '".');
-    }
-    if (mod.pdca !== null && !stageIds.has(mod.pdca)) {
-      fail(where + ' uses an unknown PDCA stage "' + String(mod.pdca) + '".');
-    }
-    if (mod.phase !== null && !(Number.isInteger(mod.phase) && mod.phase >= 1)) {
-      fail(where + ' must have a phase number of 1 or more, or null.');
-    }
-    if (!STATUSES.includes(mod.status)) {
-      fail(where + ' must have the status "active" or "planned".');
-    }
-    if (typeof mod.builtin !== 'boolean') {
-      fail(where + ' needs builtin set to true or false.');
-    }
-    if (mod.file !== null && !(typeof mod.file === 'string' && FILE_PATTERN.test(mod.file))) {
-      fail(where + ' has an invalid file path. Use null or "js/modules/<name>.js".');
-    }
-    if (mod.nav !== null
-      && !(isPlainObject(mod.nav) && Number.isFinite(mod.nav.order) && isNonEmptyString(mod.nav.label))) {
-      fail(where + ' has an invalid nav entry.');
-    }
-    if (mod.status === 'active' && !mod.builtin && mod.file === null) {
-      fail(where + ' is active but has no file and is not built in.');
-    }
-  }
-  return true;
-}
-
-
-/* ==========================================================================
-   4. MODULE REGISTRY: LOADING AND QUERIES
-   ========================================================================== */
-
-/**
- * Validates and stores registry data (a frozen private copy is kept).
- * Used by loadModuleRegistry() and by tests.
- */
-export function setModuleRegistry(data) {
-  validateRegistry(data);
-  const copy = deepFreeze(JSON.parse(JSON.stringify(data)));
-  registry = copy;
-  modulesById = new Map(copy.modules.map((mod) => [mod.id, mod]));
-  modulesByRoute = new Map(copy.modules.map((mod) => [mod.route, mod]));
-  return registry;
-}
-
-/** Forgets the registry (used by tests). */
-export function clearModuleRegistry() {
-  registry = null;
-  registryPromise = null;
-  modulesById = new Map();
-  modulesByRoute = new Map();
-}
-
-/**
- * Loads data/modules.json (once). Pass { force: true } to load it again.
- * Resolves with the registry; rejects with a readable Error.
- */
-export function loadModuleRegistry(options = {}) {
-  const force = Boolean(options && options.force);
-  if (registry && !force) {
-    return Promise.resolve(registry);
-  }
-  if (registryPromise && !force) {
-    return registryPromise;
-  }
-
-  const attempt = (async () => {
-    let response;
-    try {
-      response = await fetch(MODULES_URL);
-    } catch (error) {
-      throw new Error('NASUR could not load its module list (data/modules.json). Check your connection and reload.', { cause: error });
-    }
-    if (!response.ok) {
-      throw new Error('NASUR could not load its module list (data/modules.json, status ' + response.status + '). Check that the file was uploaded.');
-    }
-    let data;
-    try {
-      data = await response.json();
-    } catch (error) {
-      throw new Error('NASUR could not read its module list. data/modules.json is not valid JSON.', { cause: error });
-    }
-    return setModuleRegistry(data);
-  })();
-
-  registryPromise = attempt;
-  attempt.then(
-    () => { if (registryPromise === attempt) { registryPromise = null; } },
-    () => { if (registryPromise === attempt) { registryPromise = null; } }
-  );
-  return attempt;
-}
-
-/** The loaded registry, or null before it has loaded. */
-export function getRegistry() {
-  return registry;
-}
-
-/** All modules in file order (empty before the registry has loaded). */
-export function getModules() {
-  return registry ? registry.modules : [];
-}
-
-/** One module by id, or null. */
-export function getModule(id) {
-  return modulesById.get(id) || null;
-}
-
-/** One module by route (for example "/home"), or null. */
-export function getModuleByRoute(route) {
-  return modulesByRoute.get(route) || null;
-}
-
-/** True when the module has a working view. */
-export function isModuleOpenable(mod) {
-  return Boolean(mod) && mod.status === 'active';
-}
-
-/** Active modules that appear in the main navigation, in display order. */
-export function getNavItems() {
-  return getModules()
-    .filter((mod) => mod.nav !== null && mod.status === 'active')
-    .slice()
-    .sort((a, b) => a.nav.order - b.nav.order);
-}
-
-/** [{ group, modules }] in group order. Groups without modules are left out. */
-export function getModulesByGroup() {
-  if (!registry) {
-    return [];
-  }
-  return registry.groups
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((group) => ({ group, modules: registry.modules.filter((mod) => mod.group === group.id) }))
-    .filter((entry) => entry.modules.length > 0);
-}
-
-/** [{ stage, modules }] in PDCA order. Modules without a PDCA stage are left out. */
-export function getModulesByPdca() {
-  if (!registry) {
-    return [];
-  }
-  return registry.pdca_stages
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((stage) => ({ stage, modules: registry.modules.filter((mod) => mod.pdca === stage.id) }))
-    .filter((entry) => entry.modules.length > 0);
-}
-
-
-/* ==========================================================================
-   5. ADDRESS HELPERS
-   ========================================================================== */
-
-/**
- * Splits a browser hash ("#/observations/ab%20c?x=1") into:
- *   { valid, path, segments, query }
- *   path      normalized, still encoded ("/observations/ab%20c")
- *   segments  decoded parts (["observations", "ab c"])
- *   query     URLSearchParams
- *   valid     false when the address is too long or badly encoded
- */
-export function parseHash(hash) {
-  let text = typeof hash === 'string' ? hash : '';
-  let valid = text.length <= MAX_HASH_LENGTH;
-  if (text.startsWith('#')) {
-    text = text.slice(1);
-  }
-
-  let queryText = '';
-  const mark = text.indexOf('?');
-  if (mark !== -1) {
-    queryText = text.slice(mark + 1);
-    text = text.slice(0, mark);
-  }
-
-  const rawSegments = text.split('/').filter((part) => part !== '');
-  const segments = [];
-  for (const part of rawSegments) {
-    try {
-      segments.push(decodeURIComponent(part));
-    } catch {
-      valid = false;
-      segments.push(part);
-    }
-  }
-
-  return {
-    valid,
-    path: '/' + rawSegments.join('/'),
-    segments,
-    query: new URLSearchParams(queryText)
-  };
-}
-
-/**
- * Builds a path for a module, with every part encoded safely.
- *   routePath('observations', ['abc123'], { status: 'open' })
- *   -> "/observations/abc123?status=open"
- * Module ids use underscores; routes use hyphens (report_check -> /report-check).
- */
-export function routePath(moduleId, segments = [], query = {}) {
-  if (typeof moduleId !== 'string' || !ID_PATTERN.test(moduleId)) {
-    throw new TypeError('NASUR router: routePath needs a module id such as "observations".');
-  }
-  if (!Array.isArray(segments)) {
-    throw new TypeError('NASUR router: segments must be an array.');
-  }
-
-  let path = '/' + moduleId.replace(/_/g, '-');
-  for (const segment of segments) {
-    const text = String(segment);
-    if (text === '') {
-      throw new TypeError('NASUR router: a path segment cannot be empty.');
-    }
-    path += '/' + encodeURIComponent(text);
-  }
-
-  const params = new URLSearchParams();
-  const source = query !== null && typeof query === 'object' ? query : {};
-  for (const key of Object.keys(source)) {
-    const value = source[key];
-    if (value !== undefined && value !== null) {
-      params.set(key, String(value));
-    }
-  }
-  const queryText = params.toString();
-  return queryText === '' ? path : path + '?' + queryText;
-}
-
-/** Same as routePath() with a leading "#", ready for an href attribute. */
-export function hrefFor(moduleId, segments, query) {
-  return '#' + routePath(moduleId, segments, query);
-}
-
-function toHash(path) {
-  if (typeof path !== 'string') {
-    throw new TypeError('NASUR router: a route must be a string.');
-  }
   const text = path.startsWith('#') ? path.slice(1) : path;
   if (!text.startsWith('/') || /[\s#]/.test(text)) {
     throw new TypeError('NASUR router: a route must start with "/" and contain no spaces or "#".');
@@ -450,15 +5,6 @@ function toHash(path) {
   return '#' + text;
 }
 
-
-/* ==========================================================================
-   6. BUILT-IN VIEWS AND NAVIGATION GUARD
-   ========================================================================== */
-
-/**
- * Registers the view for a module that has builtin: true in modules.json.
- * renderFn follows the view contract at the top of this file.
- */
 export function registerBuiltin(moduleId, renderFn) {
   if (typeof moduleId !== 'string' || !ID_PATTERN.test(moduleId)) {
     throw new TypeError('NASUR router: registerBuiltin needs a module id.');
@@ -469,10 +15,6 @@ export function registerBuiltin(moduleId, renderFn) {
   builtins.set(moduleId, renderFn);
 }
 
-/**
- * Sets (or with null, removes) the function that is asked before the user
- * leaves a view. See "LEAVING A FORM" at the top. Returns a remover function.
- */
 export function setNavigationGuard(fn) {
   if (fn !== null && typeof fn !== 'function') {
     throw new TypeError('NASUR router: the navigation guard must be a function or null.');
@@ -496,11 +38,6 @@ function guardAllows(from, to) {
     return true;
   }
 }
-
-
-/* ==========================================================================
-   7. STATE VIEWS (not found, planned, error, loading)
-   ========================================================================== */
 
 function homeActions() {
   return [
@@ -558,7 +95,6 @@ function loadingView() {
   </div>`;
 }
 
-/** Connects the "Try again" button of an error view (if there is one). */
 function wireRetry(viewEl) {
   const button = viewEl.querySelector('[data-router-action="retry"]');
   if (button) {
@@ -567,11 +103,6 @@ function wireRetry(viewEl) {
     });
   }
 }
-
-
-/* ==========================================================================
-   8. RENDERING
-   ========================================================================== */
 
 function runCleanup(fn) {
   if (typeof fn !== 'function') {
@@ -587,7 +118,6 @@ function runCleanup(fn) {
   }
 }
 
-/** Leaves the current view: aborts its work, runs its cleanup, empties the page. */
 function teardown() {
   if (currentController) {
     currentController.abort();
@@ -602,7 +132,6 @@ function teardown() {
   }
 }
 
-/** Creates and shows a fresh container for one view. */
 function mountView() {
   const viewEl = document.createElement('div');
   viewEl.className = 'view';
@@ -616,11 +145,10 @@ function rememberRoute(info) {
   try {
     localStorage.setItem(LS_KEYS.LAST_ROUTE, value);
   } catch {
-    /* storage is blocked; remembering the last page is optional */
+    /* optional */
   }
 }
 
-/** Finishes a navigation: title, focus, remembered route and the route event. */
 function commit(token, info, title) {
   if (token !== navToken || !rootEl) {
     return;
@@ -641,7 +169,6 @@ function commit(token, info, title) {
   emit(EVENTS.ROUTE_CHANGED, { ...info, segments: info.segments.slice() });
 }
 
-/** Shows a finished state view (not found, planned or error) and commits it. */
 function showState(token, info, title, view) {
   if (token !== navToken || !rootEl) {
     return;
@@ -652,7 +179,6 @@ function showState(token, info, title, view) {
   commit(token, info, title);
 }
 
-/** Finds the render function for a module (imports its file the first time). */
 async function loadRenderer(mod) {
   if (mod.builtin) {
     const builtin = builtins.get(mod.id);
@@ -696,8 +222,9 @@ async function resolveRoute(token) {
     query_string: parsed.query.toString()
   };
 
-  const mod = parsed.valid && parsed.segments.length > 0
-    ? modulesByRoute.get('/' + parsed.segments[0].toLowerCase())
+  const firstSeg = parsed.segments.length > 0 ? parsed.segments[0] : '';
+  const mod = parsed.valid && firstSeg !== ''
+    ? modulesByRoute.get('/' + firstSeg.toLowerCase())
     : undefined;
 
   if (!mod) {
@@ -787,7 +314,6 @@ async function resolveRoute(token) {
   commit(token, info, viewTitle || mod.title);
 }
 
-/** Shows the view for the current browser address. Never rejects. */
 async function resolveCurrent() {
   navToken += 1;
   const token = navToken;
@@ -812,11 +338,6 @@ async function resolveCurrent() {
   }
 }
 
-
-/* ==========================================================================
-   9. STARTING, STOPPING AND NAVIGATING
-   ========================================================================== */
-
 function onHashChange() {
   if (!running) {
     return;
@@ -832,12 +353,6 @@ function onHashChange() {
   void resolveCurrent();
 }
 
-/**
- * Starts the router (loads the module registry first if needed) and shows the
- * view for the current address. Resolves after the first view is shown.
- * options: { root: element for views, focusTarget: element to focus after
- * navigation (the <main> element) }
- */
 export async function startRouter(options = {}) {
   if (running) {
     throw new Error('NASUR router: the router is already running.');
@@ -857,7 +372,6 @@ export async function startRouter(options = {}) {
   await resolveCurrent();
 }
 
-/** Stops the router, leaves the current view and clears the guard (used by tests). */
 export function stopRouter() {
   if (!running) {
     return;
@@ -876,17 +390,10 @@ export function stopRouter() {
   currentHash = '';
 }
 
-/** True while the router is running. */
 export function isRouterRunning() {
   return running;
 }
 
-/**
- * Goes to a route such as "/observations/abc123?status=open".
- *   { replace: true }  replaces the current history entry instead of adding one
- * Going to the address already shown shows that view again. The navigation
- * guard is asked first. Returns nothing.
- */
 export function navigate(path, options = {}) {
   const hash = toHash(path);
   if (!running) {
@@ -904,23 +411,17 @@ export function navigate(path, options = {}) {
     void resolveCurrent();
     return;
   }
-  window.location.hash = hash; // the hashchange handler asks the guard
+  window.location.hash = hash;
 }
 
-/** A copy of the information about the view being shown, or null. */
 export function getCurrentRoute() {
   return currentRoute ? { ...currentRoute, segments: currentRoute.segments.slice() } : null;
 }
 
-/** The container of the current view, or null (used by tests). */
 export function getCurrentView() {
   return currentView;
 }
 
-/**
- * The last page the user visited, like "/observations", or null. Only returns
- * a page whose module exists and is active (needs the registry to be loaded).
- */
 export function getLastRoute() {
   let stored = null;
   try {
@@ -935,6 +436,7 @@ export function getLastRoute() {
   if (!parsed.valid || parsed.segments.length === 0) {
     return null;
   }
-  const mod = modulesByRoute.get('/' + parsed.segments[0].toLowerCase());
+  const firstSeg = parsed.segments[0];
+  const mod = modulesByRoute.get('/' + firstSeg.toLowerCase());
   return mod && mod.status === 'active' ? stored : null;
 }
