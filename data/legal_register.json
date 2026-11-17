@@ -1,0 +1,906 @@
+{
+ "version": 1,
+ "notice": "Starting register of key laws and standards for each country. The list is a guide, not legal advice. Verify the current text, applicability and your own obligations with the regulator, your legal adviser or your client before audit use. Laws change.",
+ "statuses": [
+  {
+   "id": "unreviewed",
+   "label": "Not reviewed"
+  },
+  {
+   "id": "compliant",
+   "label": "Compliant"
+  },
+  {
+   "id": "partial",
+   "label": "Partly compliant"
+  },
+  {
+   "id": "gap",
+   "label": "Gap"
+  },
+  {
+   "id": "na",
+   "label": "Not applicable"
+  }
+ ],
+ "countries": {
+  "india": {
+   "label": "India"
+  },
+  "gulf": {
+   "label": "Gulf (UAE / Saudi / Qatar)"
+  },
+  "canada": {
+   "label": "Canada"
+  },
+  "usa": {
+   "label": "USA"
+  }
+ },
+ "register": {
+  "india": [
+   {
+    "id": "in_osh_code",
+    "title": "Occupational Safety, Health and Working Conditions Code, 2020",
+    "type": "Act",
+    "scope": "Consolidates the OSH laws for factories, construction, mines, docks and other establishments (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Provide a safe workplace and safe systems of work",
+     "Provide PPE, training and health surveillance as required",
+     "Report accidents and dangerous occurrences"
+    ],
+    "authority": "Ministry of Labour and Employment / state labour departments"
+   },
+   {
+    "id": "in_factories",
+    "title": "Factories Act 1948 and state Factories Rules",
+    "type": "Act",
+    "scope": "Manufacturing premises (verify current status)",
+    "applies": [
+     "manufacturing",
+     "food_safety",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Fence dangerous machinery (s.21)",
+     "Examine hoists and lifting machines (s.28 and s.29)",
+     "Control pressure plant (s.31), dangerous fumes (s.36) and fire (s.38)"
+    ],
+    "authority": "State Directorate of Factories / Industrial Safety and Health"
+   },
+   {
+    "id": "in_bocw",
+    "title": "Building and Other Construction Workers Act 1996 and Central Rules 1998",
+    "type": "Act",
+    "scope": "Construction work (verify current status)",
+    "applies": [
+     "construction"
+    ],
+    "duties": [
+     "Safe scaffolds, excavation, work at height and lifting",
+     "Safety committees and safety officers on larger sites",
+     "Welfare facilities"
+    ],
+    "authority": "State labour department"
+   },
+   {
+    "id": "in_msihc",
+    "title": "Manufacture, Storage and Import of Hazardous Chemicals Rules 1989",
+    "type": "Rules",
+    "scope": "Major accident hazard installations and hazardous chemicals (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "food_safety",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Notify and prepare on-site emergency plans",
+     "Safety data sheets and labelling",
+     "Safety reports for major hazard sites"
+    ],
+    "authority": "State Pollution Control Board / Factories Inspectorate"
+   },
+   {
+    "id": "in_cea",
+    "title": "CEA (Measures relating to Safety and Electric Supply) Regulations and Indian Electricity Rules",
+    "type": "Regulation",
+    "scope": "Electrical installations (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Safe installation, earthing and periodic inspection",
+     "Authorised persons only for electrical work"
+    ],
+    "authority": "Central Electricity Authority / Electrical Inspectors"
+   },
+   {
+    "id": "in_boilers",
+    "title": "Indian Boilers Act 1923 and Boiler Regulations",
+    "type": "Act",
+    "scope": "Boilers and steam pipes (verify current status)",
+    "applies": [
+     "manufacturing",
+     "food_safety"
+    ],
+    "duties": [
+     "Registered boilers with a valid certificate",
+     "Competent boiler attendants"
+    ],
+    "authority": "Inspector of Boilers"
+   },
+   {
+    "id": "in_smpv",
+    "title": "Static and Mobile Pressure Vessels (Unfired) Rules 1981 and Gas Cylinders Rules 2016",
+    "type": "Rules",
+    "scope": "Pressure vessels and gas cylinders (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "construction",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Licence for storage and filling",
+     "Periodic testing of cylinders and vessels"
+    ],
+    "authority": "PESO (Petroleum and Explosives Safety Organisation)"
+   },
+   {
+    "id": "in_explosives",
+    "title": "Explosives Act 1884, Explosives Rules 2008 and Petroleum Rules 2002",
+    "type": "Act",
+    "scope": "Explosives and petroleum storage (verify current status)",
+    "applies": [
+     "oilgas",
+     "manufacturing",
+     "construction"
+    ],
+    "duties": [
+     "Licences for storage, transport and use",
+     "Safe distances and fire precautions"
+    ],
+    "authority": "PESO"
+   },
+   {
+    "id": "in_compensation",
+    "title": "Employees' Compensation Act 1923 and Employees' State Insurance Act 1948",
+    "type": "Act",
+    "scope": "Injury compensation and social security (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Pay compensation for work injury",
+     "Register and insure eligible employees"
+    ],
+    "authority": "Labour courts / ESIC"
+   },
+   {
+    "id": "in_nbc",
+    "title": "National Building Code of India 2016 Part 4 (Fire and Life Safety)",
+    "type": "Code",
+    "scope": "Fire safety design and means of escape (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Fire exits, alarms, extinguishers and hydrants as per occupancy",
+     "Periodic fire drills"
+    ],
+    "authority": "State Fire Service"
+   },
+   {
+    "id": "in_env",
+    "title": "Environment (Protection) Act 1986 and Hazardous and Other Wastes Rules 2016",
+    "type": "Act",
+    "scope": "Environmental protection and waste (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Consent to operate and waste manifests",
+     "Safe storage and disposal of hazardous waste"
+    ],
+    "authority": "Pollution Control Boards"
+   },
+   {
+    "id": "in_iso",
+    "title": "ISO 45001:2018 Occupational health and safety management systems",
+    "type": "Standard",
+    "scope": "Voluntary management system standard",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Plan, do, check and act cycle",
+     "Worker participation and continual improvement"
+    ],
+    "authority": "Certification bodies"
+   }
+  ],
+  "gulf": [
+   {
+    "id": "ae_labour",
+    "title": "UAE Federal Decree-Law No. 33 of 2021 on the Regulation of Labour Relations",
+    "type": "Act",
+    "scope": "Employment and worker protections (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Employer duties for safety, health and working conditions",
+     "Worker protection from hazards"
+    ],
+    "authority": "Ministry of Human Resources and Emiratisation (MoHRE)"
+   },
+   {
+    "id": "ae_cab33",
+    "title": "UAE Cabinet Decision No. 33 of 2020 on occupational health and safety and labour accommodation",
+    "type": "Regulation",
+    "scope": "OSH duties and worker accommodation (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Provide a safe workplace, PPE and training",
+     "Risk assessment and safe labour accommodation",
+     "Report work injuries"
+    ],
+    "authority": "MoHRE"
+   },
+   {
+    "id": "ae_fire",
+    "title": "UAE Fire and Life Safety Code of Practice",
+    "type": "Code",
+    "scope": "Fire protection, means of escape and fire systems (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Approved fire systems and certificates",
+     "Fire drills and trained wardens"
+    ],
+    "authority": "UAE Civil Defence / General Command of Civil Defence"
+   },
+   {
+    "id": "ae_midday",
+    "title": "UAE summer midday work ban (15 June to 15 September, 12:30 to 15:00)",
+    "type": "Notice",
+    "scope": "Outdoor work in the summer heat (verify current status) for the current year",
+    "applies": [
+     "construction",
+     "oilgas",
+     "facilities_maintenance",
+     "marine"
+    ],
+    "duties": [
+     "Stop outdoor work in the ban hours",
+     "Provide shade, water and cooling"
+    ],
+    "authority": "MoHRE"
+   },
+   {
+    "id": "ae_local",
+    "title": "Dubai Municipality Code of Construction Safety Practice and Abu Dhabi OSHAD System Framework",
+    "type": "Code",
+    "scope": "Construction and Abu Dhabi OSH management (verify current status)",
+    "applies": [
+     "construction",
+     "oilgas",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Contractor safety management",
+     "Permit to work, work at height and lifting rules"
+    ],
+    "authority": "Dubai Municipality / Abu Dhabi Public Health Centre (OSHAD)"
+   },
+   {
+    "id": "sa_labour",
+    "title": "Saudi Labor Law and MHRSD occupational safety and health regulations",
+    "type": "Act",
+    "scope": "Employment and OSH duties in Saudi Arabia (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Protect workers from hazards and heat",
+     "Provide PPE and training",
+     "Report injuries"
+    ],
+    "authority": "Ministry of Human Resources and Social Development (MHRSD)"
+   },
+   {
+    "id": "sa_civil",
+    "title": "Saudi Building Code (fire protection) and Saudi Civil Defence requirements",
+    "type": "Code",
+    "scope": "Fire and life safety in buildings (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Approved fire systems and certificates",
+     "Evacuation plans and drills"
+    ],
+    "authority": "Saudi Civil Defence"
+   },
+   {
+    "id": "sa_midday",
+    "title": "Saudi midday work ban (15 June to 15 September, 12:00 to 15:00)",
+    "type": "Notice",
+    "scope": "Outdoor work in the summer heat (verify current status) for the current year",
+    "applies": [
+     "construction",
+     "oilgas",
+     "facilities_maintenance",
+     "marine"
+    ],
+    "duties": [
+     "Stop outdoor work in the ban hours",
+     "Provide shade and water"
+    ],
+    "authority": "MHRSD"
+   },
+   {
+    "id": "qa_labour",
+    "title": "Qatar Labour Law No. 14 of 2004 and ministerial decisions on heat stress",
+    "type": "Act",
+    "scope": "Employment and heat protection in Qatar (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Protect workers from heat and hazards",
+     "Outdoor work limits in summer (1 June to 15 September, 10:00 to 15:30)"
+    ],
+    "authority": "Ministry of Labour"
+   },
+   {
+    "id": "gulf_client",
+    "title": "Client HSE standards: ADNOC HSE Management System and Saudi Aramco engineering standards",
+    "type": "Client",
+    "scope": "Contract requirements on oil and gas and large projects (verify current status)",
+    "applies": [
+     "oilgas",
+     "construction",
+     "marine"
+    ],
+    "duties": [
+     "Permit to work, LOTO and contractor HSE management",
+     "Incident reporting and audits as the contract says"
+    ],
+    "authority": "Client HSE department"
+   },
+   {
+    "id": "gulf_iso",
+    "title": "ISO 45001:2018 Occupational health and safety management systems",
+    "type": "Standard",
+    "scope": "Voluntary management system standard",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Plan, do, check and act cycle",
+     "Worker participation and continual improvement"
+    ],
+    "authority": "Certification bodies"
+   }
+  ],
+  "canada": [
+   {
+    "id": "ca_clc2",
+    "title": "Canada Labour Code Part II and Canada Occupational Health and Safety Regulations",
+    "type": "Act",
+    "scope": "Federally regulated workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Hazard prevention program and workplace committees",
+     "Right to know, participate and refuse dangerous work"
+    ],
+    "authority": "Employment and Social Development Canada (ESDC) Labour Program"
+   },
+   {
+    "id": "ca_on",
+    "title": "Ontario Occupational Health and Safety Act and Regulations (Construction O. Reg. 213/91, Industrial Establishments Reg. 851)",
+    "type": "Act",
+    "scope": "Ontario workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Employer, supervisor and worker duties",
+     "Joint health and safety committee or representative",
+     "Report critical injuries immediately"
+    ],
+    "authority": "Ontario Ministry of Labour, Immigration, Training and Skills Development"
+   },
+   {
+    "id": "ca_bc",
+    "title": "British Columbia Workers Compensation Act and OHS Regulation",
+    "type": "Act",
+    "scope": "British Columbia workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Prevent injury and disease",
+     "Formal OHS program and committee for larger sites"
+    ],
+    "authority": "WorkSafeBC"
+   },
+   {
+    "id": "ca_ab",
+    "title": "Alberta Occupational Health and Safety Act, Regulation and Code",
+    "type": "Act",
+    "scope": "Alberta workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Hazard assessment and control",
+     "Joint work site health and safety committee"
+    ],
+    "authority": "Alberta Occupational Health and Safety"
+   },
+   {
+    "id": "ca_qc",
+    "title": "Quebec Act respecting occupational health and safety",
+    "type": "Act",
+    "scope": "Quebec workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Prevention programs and committees",
+     "Worker right to refuse"
+    ],
+    "authority": "CNESST"
+   },
+   {
+    "id": "ca_whmis",
+    "title": "WHMIS 2015 under the Hazardous Products Act and Hazardous Products Regulations",
+    "type": "Act",
+    "scope": "Hazardous products at work (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "food_safety",
+     "warehouse_logistics",
+     "construction"
+    ],
+    "duties": [
+     "Labels and safety data sheets",
+     "Worker education and training"
+    ],
+    "authority": "Health Canada / provincial regulators"
+   },
+   {
+    "id": "ca_tdg",
+    "title": "Transportation of Dangerous Goods Act and Regulations",
+    "type": "Act",
+    "scope": "Transport of dangerous goods (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Classification, labelling and documents",
+     "Trained persons"
+    ],
+    "authority": "Transport Canada"
+   },
+   {
+    "id": "ca_csa",
+    "title": "CSA standards: Z1000, Z1001, Z460, Z462, Z259 series, Z94 series",
+    "type": "Standard",
+    "scope": "Management, lockout, electrical safety, fall protection and PPE (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Use as recognised good practice and where referenced by regulation"
+    ],
+    "authority": "CSA Group"
+   },
+   {
+    "id": "ca_fire",
+    "title": "National Fire Code of Canada and provincial fire codes",
+    "type": "Code",
+    "scope": "Fire safety in buildings and operations (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Fire safety plans and drills",
+     "Inspect and maintain fire systems"
+    ],
+    "authority": "Provincial Fire Marshal"
+   },
+   {
+    "id": "ca_cor",
+    "title": "COR (Certificate of Recognition) audit standards",
+    "type": "Standard",
+    "scope": "Voluntary safety audit program (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Documented safety management system audited by a certified auditor"
+    ],
+    "authority": "Provincial health and safety associations"
+   },
+   {
+    "id": "ca_iso",
+    "title": "ISO 45001:2018 Occupational health and safety management systems",
+    "type": "Standard",
+    "scope": "Voluntary management system standard",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Plan, do, check and act cycle"
+    ],
+    "authority": "Certification bodies"
+   }
+  ],
+  "usa": [
+   {
+    "id": "us_osha_act",
+    "title": "Occupational Safety and Health Act of 1970 (General Duty Clause, Section 5(a)(1))",
+    "type": "Act",
+    "scope": "All private employers (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Provide a workplace free of recognised serious hazards",
+     "Comply with OSHA standards",
+     "Workers have the right to a safe workplace and to report hazards"
+    ],
+    "authority": "OSHA"
+   },
+   {
+    "id": "us_1910",
+    "title": "OSHA 29 CFR 1910 General Industry standards",
+    "type": "Regulation",
+    "scope": "General industry workplaces (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Hazard Communication 1910.1200",
+     "Lockout/Tagout 1910.147",
+     "Permit-required confined spaces 1910.146",
+     "Respiratory protection 1910.134 and PPE 1910.132"
+    ],
+    "authority": "OSHA"
+   },
+   {
+    "id": "us_1926",
+    "title": "OSHA 29 CFR 1926 Construction standards",
+    "type": "Regulation",
+    "scope": "Construction work (verify current status)",
+    "applies": [
+     "construction"
+    ],
+    "duties": [
+     "Fall protection Subpart M",
+     "Scaffolds Subpart L",
+     "Excavations Subpart P",
+     "Cranes Subpart CC"
+    ],
+    "authority": "OSHA"
+   },
+   {
+    "id": "us_1904",
+    "title": "OSHA 29 CFR 1904 Recording and reporting occupational injuries and illnesses",
+    "type": "Regulation",
+    "scope": "Injury and illness records (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Keep OSHA 300 logs",
+     "Report a fatality within 8 hours and an in-patient hospitalisation, amputation or eye loss within 24 hours (1904.39)"
+    ],
+    "authority": "OSHA"
+   },
+   {
+    "id": "us_psm",
+    "title": "OSHA 29 CFR 1910.119 Process Safety Management of Highly Hazardous Chemicals",
+    "type": "Regulation",
+    "scope": "Process facilities above threshold quantities (verify current status)",
+    "applies": [
+     "oilgas",
+     "manufacturing",
+     "food_safety"
+    ],
+    "duties": [
+     "Process hazard analysis and management of change",
+     "Operating procedures, mechanical integrity and audits"
+    ],
+    "authority": "OSHA"
+   },
+   {
+    "id": "us_maritime",
+    "title": "OSHA 29 CFR 1915, 1917 and 1918 (shipyards, marine terminals, longshoring)",
+    "type": "Regulation",
+    "scope": "Maritime work ashore (verify current status)",
+    "applies": [
+     "marine"
+    ],
+    "duties": [
+     "Confined space and hot work rules for ships",
+     "Fall protection and lifting rules for terminals"
+    ],
+    "authority": "OSHA / US Coast Guard"
+   },
+   {
+    "id": "us_nfpa",
+    "title": "NFPA 70E, 101, 10 and 51B",
+    "type": "Standard",
+    "scope": "Electrical safety, life safety, extinguishers and hot work (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Recognised good practice referenced by OSHA and fire codes"
+    ],
+    "authority": "NFPA / local Authority Having Jurisdiction"
+   },
+   {
+    "id": "us_env",
+    "title": "EPA regulations (RCRA hazardous waste, EPCRA Tier II reporting) and spill rules",
+    "type": "Regulation",
+    "scope": "Environmental compliance (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "food_safety",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Hazardous waste management",
+     "Annual chemical inventory reports"
+    ],
+    "authority": "EPA / state agencies"
+   },
+   {
+    "id": "us_dot",
+    "title": "US DOT Hazardous Materials Regulations (49 CFR)",
+    "type": "Regulation",
+    "scope": "Transport of hazardous materials (verify current status)",
+    "applies": [
+     "manufacturing",
+     "oilgas",
+     "warehouse_logistics"
+    ],
+    "duties": [
+     "Shipping papers, labels and placards",
+     "Hazmat employee training"
+    ],
+    "authority": "PHMSA / DOT"
+   },
+   {
+    "id": "us_state",
+    "title": "State OSHA plans such as Cal/OSHA, Washington L&I and others",
+    "type": "Regulation",
+    "scope": "Employers in states with an approved state plan (verify current status)",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Follow the state rules, which may be stricter than federal rules",
+     "For example Cal/OSHA Section 3395 heat illness prevention"
+    ],
+    "authority": "State OSHA agency"
+   },
+   {
+    "id": "us_ansi",
+    "title": "ANSI/ASSP Z10 Occupational health and safety management systems",
+    "type": "Standard",
+    "scope": "Voluntary management system standard",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Plan, do, check and act cycle"
+    ],
+    "authority": "ASSP"
+   },
+   {
+    "id": "us_iso",
+    "title": "ISO 45001:2018 Occupational health and safety management systems",
+    "type": "Standard",
+    "scope": "Voluntary management system standard",
+    "applies": [
+     "manufacturing",
+     "construction",
+     "oilgas",
+     "marine",
+     "food_safety",
+     "warehouse_logistics",
+     "facilities_maintenance"
+    ],
+    "duties": [
+     "Plan, do, check and act cycle"
+    ],
+    "authority": "Certification bodies"
+   }
+  ]
+ }
+}
