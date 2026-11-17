@@ -1,0 +1,838 @@
+{
+ "version": 1,
+ "notice": "The official site emergency plan always takes priority. Use this hub to prepare, practise and record. In a real emergency, follow the site plan and call the emergency number for your country.",
+ "plan_sections": [
+  {
+   "id": "site_overview",
+   "title": "1. Site description and hazards",
+   "hint": "Address, layout, number of people per shift, visitors and contractors, main hazards such as fuel, chemicals, gases, hot work, heights, neighbours."
+  },
+  {
+   "id": "organisation",
+   "title": "2. Emergency organisation",
+   "hint": "Who is the Incident Controller and deputy, fire wardens, first aiders, rescue team and muster coordinator for each shift. Include night and weekend cover."
+  },
+  {
+   "id": "alarms",
+   "title": "3. Alarm and communication",
+   "hint": "How the alarm sounds, who calls the emergency services, radio channels, public address, phone tree and how contractors are told."
+  },
+  {
+   "id": "evacuation",
+   "title": "4. Evacuation routes and muster points",
+   "hint": "Exit routes from every area, assembly points, wind direction, who does the headcount, how visitors and contractors are counted."
+  },
+  {
+   "id": "services",
+   "title": "5. Emergency services and outside help",
+   "hint": "Emergency numbers, site access gate, who meets the services, the site map and hazard information to hand over."
+  },
+  {
+   "id": "scenarios",
+   "title": "6. Emergency scenarios",
+   "hint": "Fire, chemical spill, toxic gas release, medical emergency, confined space rescue, severe weather and flood. Say who does what in the first 5 minutes."
+  },
+  {
+   "id": "equipment",
+   "title": "7. Emergency equipment",
+   "hint": "Extinguishers, hydrants, eyewash and showers, first aid, spill kits, breathing apparatus, stretchers, AED and where each is kept."
+  },
+  {
+   "id": "medical",
+   "title": "8. Medical response",
+   "hint": "First aiders, nearest hospital and best route, ambulance access, trauma kit and AED location."
+  },
+  {
+   "id": "training",
+   "title": "9. Training and drills",
+   "hint": "Drill schedule, who attends, how records are kept, contractor induction on emergency arrangements."
+  },
+  {
+   "id": "review",
+   "title": "10. Review and approval",
+   "hint": "Review date, who approved the plan, revision number and what changed."
+  }
+ ],
+ "roles": [
+  {
+   "id": "incident_controller",
+   "label": "Incident Controller",
+   "duties": [
+    "Takes charge and decides evacuation or stand-down",
+    "Keeps a log of times and decisions",
+    "Meets the emergency services and hands over site information",
+    "Declares the all clear"
+   ]
+  },
+  {
+   "id": "fire_warden",
+   "label": "Fire / Area Warden",
+   "duties": [
+    "Sweeps the area and closes doors",
+    "Directs people to the nearest safe exit",
+    "Reports missing people to the muster coordinator",
+    "Wears the warden vest"
+   ]
+  },
+  {
+   "id": "first_aider",
+   "label": "First Aider",
+   "duties": [
+    "Goes to the casualty with the first aid kit and AED",
+    "Gives first aid within their training",
+    "Hands over to the ambulance crew with a clear report"
+   ]
+  },
+  {
+   "id": "rescue_leader",
+   "label": "Rescue Team Leader",
+   "duties": [
+    "Checks the rescue plan, equipment and the team",
+    "Never allows entry without breathing apparatus where needed",
+    "Keeps the team members within their training"
+   ]
+  },
+  {
+   "id": "muster_coordinator",
+   "label": "Muster Coordinator",
+   "duties": [
+    "Holds the muster list and does the headcount",
+    "Reports the numbers and missing names to the Incident Controller",
+    "Keeps everyone at the muster point until released"
+   ]
+  },
+  {
+   "id": "comms",
+   "label": "Communications Officer",
+   "duties": [
+    "Calls the emergency services and the site management",
+    "Uses the radio channel and phone tree",
+    "Informs client, authorities and families as the plan says"
+   ]
+  },
+  {
+   "id": "gate",
+   "label": "Gate / Security",
+   "duties": [
+    "Keeps the access road clear for emergency vehicles",
+    "Directs responders to the incident",
+    "Controls entry and records who arrives"
+   ]
+  }
+ ],
+ "contact_types": [
+  "Emergency services",
+  "Site management",
+  "HSE",
+  "Medical",
+  "Rescue team",
+  "Client",
+  "Utility",
+  "Authority",
+  "Other"
+ ],
+ "muster_guidelines": [
+  "Choose at least two muster points in different directions",
+  "Place them upwind, away from buildings, fuel, gas and process areas",
+  "Keep them clear of emergency vehicle routes",
+  "Mark them with large signs that can be seen from every work area",
+  "Keep a muster board, forms and pens, hi-vis vests and torches at each point",
+  "Include a way to count contractors and visitors",
+  "Tell every worker which muster point to use from their area"
+ ],
+ "scenarios": [
+  {
+   "id": "fire",
+   "title": "Fire",
+   "icon": "🔥",
+   "color": "#dc2626",
+   "first_minutes": [
+    "Raise the alarm and call the emergency number",
+    "Rescue people in immediate danger only if it is safe",
+    "Close doors and windows to slow the fire",
+    "Fight a small fire only if trained and your exit is behind you",
+    "Evacuate to the muster point and report to the warden",
+    "Do not use lifts. Do not go back for belongings"
+   ],
+   "roles": [
+    "incident_controller",
+    "fire_warden",
+    "muster_coordinator",
+    "comms",
+    "gate"
+   ],
+   "inform": [
+    "Fire service and emergency services",
+    "Site manager and HSE manager",
+    "Client representative",
+    "Neighbouring sites if smoke or fire may spread"
+   ],
+   "dont": [
+    "Do not fight a large or spreading fire",
+    "Do not use water on oil, gas or electrical fires",
+    "Do not block exits or the access road",
+    "Do not re-enter until the all clear"
+   ],
+   "equipment": [
+    "Extinguishers",
+    "Fire alarm and call points",
+    "Emergency lighting",
+    "Muster board",
+    "Fire hydrants and hoses"
+   ],
+   "drill": {
+    "objective": "Raise the alarm, evacuate everyone and complete the headcount.",
+    "events": [
+     {
+      "id": "alarm",
+      "label": "Alarm raised",
+      "target_min": 0
+     },
+     {
+      "id": "sweep",
+      "label": "Wardens started area sweeps",
+      "target_min": 2
+     },
+     {
+      "id": "evacuated",
+      "label": "Building and work areas cleared",
+      "target_min": 5
+     },
+     {
+      "id": "headcount",
+      "label": "Headcount complete at muster point",
+      "target_min": 10
+     },
+     {
+      "id": "services",
+      "label": "Emergency services informed",
+      "target_min": 2
+     },
+     {
+      "id": "all_clear",
+      "label": "All clear declared",
+      "target_min": null
+     }
+    ],
+    "prompts": [
+     "Did everyone hear the alarm in every area?",
+     "Were any exits blocked or locked?",
+     "Did contractors and visitors know what to do?",
+     "Was anyone missing or slow to leave?",
+     "Did the wardens report correctly?"
+    ]
+   }
+  },
+  {
+   "id": "chemical_spill",
+   "title": "Chemical or oil spill",
+   "icon": "🧪",
+   "color": "#7c3aed",
+   "first_minutes": [
+    "Raise the alarm and warn people nearby",
+    "Stay upwind and keep away from the spill",
+    "Stop the source if it is safe (close valve, upright container)",
+    "Remove ignition sources and stop work nearby",
+    "Contain the spill with the spill kit and cover drains",
+    "Get help for anyone splashed: eyewash or shower for at least 15 minutes"
+   ],
+   "roles": [
+    "incident_controller",
+    "first_aider",
+    "comms",
+    "muster_coordinator"
+   ],
+   "inform": [
+    "Site manager and HSE manager",
+    "Emergency services if there is fire, injury or release off site",
+    "Environmental authority where the law requires",
+    "Client representative"
+   ],
+   "dont": [
+    "Do not touch the spill without the right PPE",
+    "Do not wash a spill into the drain",
+    "Do not mix absorbents or neutralisers without checking the SDS"
+   ],
+   "equipment": [
+    "Spill kit",
+    "Drain covers",
+    "SDS for the chemical",
+    "Eyewash and shower",
+    "Chemical PPE"
+   ],
+   "drill": {
+    "objective": "Contain a spill, protect people and call for help.",
+    "events": [
+     {
+      "id": "alarm",
+      "label": "Alarm raised",
+      "target_min": 0
+     },
+     {
+      "id": "isolated",
+      "label": "Area isolated and ignition sources removed",
+      "target_min": 3
+     },
+     {
+      "id": "contained",
+      "label": "Spill contained and drains covered",
+      "target_min": 8
+     },
+     {
+      "id": "services",
+      "label": "Emergency services or specialists informed",
+      "target_min": 5
+     },
+     {
+      "id": "headcount",
+      "label": "Headcount of people in the area",
+      "target_min": 8
+     },
+     {
+      "id": "all_clear",
+      "label": "All clear declared",
+      "target_min": null
+     }
+    ],
+    "prompts": [
+     "Did people know the chemical and its hazards?",
+     "Was the spill kit complete and easy to reach?",
+     "Were drains covered quickly?",
+     "Did the person with a splash get to the eyewash fast?"
+    ]
+   }
+  },
+  {
+   "id": "toxic_gas",
+   "title": "Toxic gas release (H2S, ammonia, chlorine)",
+   "icon": "☠️",
+   "color": "#0f766e",
+   "first_minutes": [
+    "Sound the gas alarm",
+    "Move crosswind then upwind away from the release, to the upwind muster point",
+    "Put on escape breathing apparatus if you have it",
+    "Do not run in to rescue anyone without breathing apparatus",
+    "Isolate the source only if safe and trained",
+    "Rescue team goes in with SCBA and a plan"
+   ],
+   "roles": [
+    "incident_controller",
+    "rescue_leader",
+    "muster_coordinator",
+    "comms",
+    "gate"
+   ],
+   "inform": [
+    "Emergency services",
+    "Site manager and HSE manager",
+    "Neighbours who may be downwind",
+    "Client and authority as required"
+   ],
+   "dont": [
+    "Never trust your sense of smell",
+    "Never enter the gas area to rescue without breathing apparatus",
+    "Never go to a downwind muster point"
+   ],
+   "equipment": [
+    "Fixed and personal gas detectors",
+    "Wind socks",
+    "Escape sets and SCBA",
+    "Upwind muster point signs"
+   ],
+   "drill": {
+    "objective": "Reach the upwind muster point and confirm everyone is accounted for.",
+    "events": [
+     {
+      "id": "alarm",
+      "label": "Gas alarm sounded",
+      "target_min": 0
+     },
+     {
+      "id": "muster",
+      "label": "Everyone at the upwind muster point",
+      "target_min": 5
+     },
+     {
+      "id": "headcount",
+      "label": "Headcount complete",
+      "target_min": 8
+     },
+     {
+      "id": "rescue_ready",
+      "label": "Rescue team ready with breathing apparatus",
+      "target_min": 8
+     },
+     {
+      "id": "services",
+      "label": "Emergency services informed",
+      "target_min": 3
+     },
+     {
+      "id": "all_clear",
+      "label": "All clear declared",
+      "target_min": null
+     }
+    ],
+    "prompts": [
+     "Did everyone go upwind?",
+     "Were escape sets within reach and used correctly?",
+     "Was anyone working alone and missed?",
+     "Was the wind direction obvious?"
+    ]
+   }
+  },
+  {
+   "id": "medical",
+   "title": "Serious injury or medical emergency",
+   "icon": "🚑",
+   "color": "#2563eb",
+   "first_minutes": [
+    "Make the area safe and stop the cause",
+    "Call the emergency number and the site first aider",
+    "Check responsiveness and breathing",
+    "Start CPR and use the AED if the person is not breathing normally",
+    "Control serious bleeding with firm pressure",
+    "Send someone to meet the ambulance at the gate"
+   ],
+   "roles": [
+    "first_aider",
+    "incident_controller",
+    "comms",
+    "gate"
+   ],
+   "inform": [
+    "Emergency services",
+    "Site manager and HSE manager",
+    "The worker's supervisor and employer",
+    "Family through the proper channel"
+   ],
+   "dont": [
+    "Do not move a person with a suspected spine injury unless in danger",
+    "Do not give food or drink",
+    "Do not leave the casualty alone"
+   ],
+   "equipment": [
+    "First aid kit",
+    "AED",
+    "Stretcher",
+    "Trauma kit and tourniquet where trained"
+   ],
+   "drill": {
+    "objective": "Get a first aider and AED to the casualty fast and hand over to the ambulance.",
+    "events": [
+     {
+      "id": "alarm",
+      "label": "Emergency called",
+      "target_min": 0
+     },
+     {
+      "id": "first_aider",
+      "label": "First aider reached the casualty",
+      "target_min": 3
+     },
+     {
+      "id": "aed",
+      "label": "AED on scene",
+      "target_min": 4
+     },
+     {
+      "id": "ambulance",
+      "label": "Ambulance called and gate informed",
+      "target_min": 2
+     },
+     {
+      "id": "handover",
+      "label": "Handover to ambulance crew",
+      "target_min": 15
+     },
+     {
+      "id": "all_clear",
+      "label": "Incident closed",
+      "target_min": null
+     }
+    ],
+    "prompts": [
+     "How fast did the first aider arrive?",
+     "Was the AED easy to find and ready?",
+     "Did someone meet the ambulance?",
+     "Was the report to the crew clear?"
+    ]
+   }
+  },
+  {
+   "id": "confined_space_rescue",
+   "title": "Confined space rescue",
+   "icon": "🕳️",
+   "color": "#a16207",
+   "first_minutes": [
+    "Attendant raises the alarm and stays at the entrance",
+    "Do not enter to rescue without breathing apparatus and a rescue plan",
+    "Call the rescue team and the emergency services",
+    "Rescue team checks the atmosphere and the plan before entry",
+    "Use the retrieval line and rescue equipment",
+    "Hand the casualty to the first aiders and ambulance"
+   ],
+   "roles": [
+    "rescue_leader",
+    "incident_controller",
+    "first_aider",
+    "comms"
+   ],
+   "inform": [
+    "Rescue team",
+    "Emergency services",
+    "Site manager and HSE manager",
+    "Permit issuer"
+   ],
+   "dont": [
+    "Never let an untrained person enter to rescue",
+    "Never cancel the alarm before the casualty is out and checked",
+    "Never enter without gas monitoring"
+   ],
+   "equipment": [
+    "SCBA",
+    "Retrieval line and tripod",
+    "Harness",
+    "Stretcher or rescue litter",
+    "Gas detector"
+   ],
+   "drill": {
+    "objective": "Reach and remove a casualty from a confined space safely.",
+    "events": [
+     {
+      "id": "alarm",
+      "label": "Alarm raised by the attendant",
+      "target_min": 0
+     },
+     {
+      "id": "rescue_called",
+      "label": "Rescue team called",
+      "target_min": 1
+     },
+     {
+      "id": "rescue_ready",
+      "label": "Rescue team ready with equipment",
+      "target_min": 5
+     },
+     {
+      "id": "reached",
+      "label": "Casualty reached",
+      "target_min": 10
+     },
+     {
+      "id": "out",
+      "label": "Casualty out of the space",
+      "target_min": 15
+     },
+     {
+      "id": "handover",
+      "label": "Handover to medical care",
+      "target_min": 20
+     }
+    ],
+    "prompts": [
+     "Did the attendant stay out and raise the alarm?",
+     "Was the rescue plan followed?",
+     "Was the equipment ready outside the space?",
+     "Did anyone try to enter without breathing apparatus?"
+    ]
+   }
+  },
+  {
+   "id": "flood_storm",
+   "title": "Flood, storm or extreme weather",
+   "icon": "⛈️",
+   "color": "#0891b2",
+   "first_minutes": [
+    "Stop outdoor and high-risk work: cranes, lifting, work at height",
+    "Move people away from low areas, trenches and temporary structures",
+    "Isolate power in flooded areas and shut down generators in water",
+    "Secure loose materials and equipment",
+    "Account for everyone and check on lone workers",
+    "Watch for displaced snakes, insects and damaged services"
+   ],
+   "roles": [
+    "incident_controller",
+    "muster_coordinator",
+    "comms",
+    "gate"
+   ],
+   "inform": [
+    "Site manager and HSE manager",
+    "Workers in the camp or hostel",
+    "Client and authority as required",
+    "Neighbours and utilities if services are damaged"
+   ],
+   "dont": [
+    "Do not walk or drive through flood water",
+    "Do not touch electrical equipment in water",
+    "Do not restart work until the area is checked as safe"
+   ],
+   "equipment": [
+    "Weather alert source",
+    "Pumps",
+    "Torches and radios",
+    "Barriers and signs"
+   ],
+   "drill": {
+    "objective": "Stop work, move people to safe areas and complete a headcount.",
+    "events": [
+     {
+      "id": "warning",
+      "label": "Weather warning issued",
+      "target_min": 0
+     },
+     {
+      "id": "stopped",
+      "label": "High-risk work stopped",
+      "target_min": 5
+     },
+     {
+      "id": "isolated",
+      "label": "Power isolated in affected areas",
+      "target_min": 10
+     },
+     {
+      "id": "moved",
+      "label": "People moved to safe areas",
+      "target_min": 15
+     },
+     {
+      "id": "headcount",
+      "label": "Headcount complete",
+      "target_min": 20
+     },
+     {
+      "id": "all_clear",
+      "label": "All clear declared",
+      "target_min": null
+     }
+    ],
+    "prompts": [
+     "How did the warning reach everyone including contractors?",
+     "Were trenches and lifts stopped fast?",
+     "Was anyone working alone and missed?",
+     "Was power isolated safely?"
+    ]
+   }
+  }
+ ],
+ "drill_targets": {
+  "evacuation_min": 5,
+  "headcount_min": 10,
+  "note": "Suggested targets. Set your own in the site plan."
+ },
+ "equipment_checklists": [
+  {
+   "id": "first_aid",
+   "title": "First aid kits and AED",
+   "icon": "🩹",
+   "frequency_days": 30,
+   "items": [
+    {
+     "id": "fa1",
+     "text": "Kit is sealed, in its place and easy to reach",
+     "fail": "Restock or replace the kit"
+    },
+    {
+     "id": "fa2",
+     "text": "Items are complete and in date",
+     "fail": "Replace missing or expired items"
+    },
+    {
+     "id": "fa3",
+     "text": "AED is in its place, charged and pads are in date",
+     "fail": "Service the AED or replace pads"
+    },
+    {
+     "id": "fa4",
+     "text": "Stretcher and burn dressings available",
+     "fail": "Provide the missing equipment"
+    },
+    {
+     "id": "fa5",
+     "text": "First aider list and numbers are posted and current",
+     "fail": "Update the list"
+    }
+   ]
+  },
+  {
+   "id": "eyewash",
+   "title": "Eyewash and emergency showers",
+   "icon": "🚿",
+   "frequency_days": 7,
+   "items": [
+    {
+     "id": "ew1",
+     "text": "Unit is clear, signed and within 10 seconds of the hazard",
+     "fail": "Clear access and sign it"
+    },
+    {
+     "id": "ew2",
+     "text": "Flush test: water runs clear and flows on both eyes",
+     "fail": "Clean and repair"
+    },
+    {
+     "id": "ew3",
+     "text": "Dust covers in place and water is tepid",
+     "fail": "Fix covers or the water supply"
+    },
+    {
+     "id": "ew4",
+     "text": "Portable bottles are in date and sealed",
+     "fail": "Replace the bottles"
+    }
+   ]
+  },
+  {
+   "id": "spill_kit",
+   "title": "Spill kits",
+   "icon": "🧯",
+   "frequency_days": 30,
+   "items": [
+    {
+     "id": "sk1",
+     "text": "Kit is sealed and placed near the hazard",
+     "fail": "Move or replace the kit"
+    },
+    {
+     "id": "sk2",
+     "text": "Absorbents, bags, gloves and goggles complete",
+     "fail": "Restock"
+    },
+    {
+     "id": "sk3",
+     "text": "Drain covers or mats are available",
+     "fail": "Provide drain covers"
+    },
+    {
+     "id": "sk4",
+     "text": "Procedure card is inside the kit",
+     "fail": "Add the procedure card"
+    }
+   ]
+  },
+  {
+   "id": "fire_equipment",
+   "title": "Fire equipment and alarms",
+   "icon": "🔥",
+   "frequency_days": 30,
+   "items": [
+    {
+     "id": "fe1",
+     "text": "Extinguishers pass the monthly check (see Fire Safety)",
+     "fail": "Tag out and replace the unit"
+    },
+    {
+     "id": "fe2",
+     "text": "Alarm call points and sounders tested this week",
+     "fail": "Repair and retest"
+    },
+    {
+     "id": "fe3",
+     "text": "Emergency lighting and exit signs work",
+     "fail": "Repair and retest"
+    },
+    {
+     "id": "fe4",
+     "text": "Hydrants, hose reels and fire blankets are accessible",
+     "fail": "Clear access and repair"
+    },
+    {
+     "id": "fe5",
+     "text": "Fire doors close fully and are not wedged open",
+     "fail": "Remove wedges and repair doors"
+    }
+   ]
+  },
+  {
+   "id": "rescue_breathing",
+   "title": "Rescue and breathing apparatus",
+   "icon": "🫁",
+   "frequency_days": 30,
+   "items": [
+    {
+     "id": "rb1",
+     "text": "SCBA cylinders are full and masks are clean and fit",
+     "fail": "Refill or replace"
+    },
+    {
+     "id": "rb2",
+     "text": "Escape sets are in date and sealed",
+     "fail": "Replace the escape sets"
+    },
+    {
+     "id": "rb3",
+     "text": "Tripod, winch, harness and rescue line are inspected",
+     "fail": "Repair or replace"
+    },
+    {
+     "id": "rb4",
+     "text": "Gas detectors are calibrated and bump tested",
+     "fail": "Calibrate or replace"
+    },
+    {
+     "id": "rb5",
+     "text": "Rescue team trained and list is current",
+     "fail": "Arrange training"
+    }
+   ]
+  },
+  {
+   "id": "comms_alarm",
+   "title": "Communications and alarms",
+   "icon": "📻",
+   "frequency_days": 7,
+   "items": [
+    {
+     "id": "ca1",
+     "text": "Siren or alarm tested and audible in all areas",
+     "fail": "Repair and retest"
+    },
+    {
+     "id": "ca2",
+     "text": "Radios charged and on the right channel",
+     "fail": "Charge or replace"
+    },
+    {
+     "id": "ca3",
+     "text": "Phone tree and emergency numbers are current",
+     "fail": "Update the list"
+    },
+    {
+     "id": "ca4",
+     "text": "Public address or megaphone works",
+     "fail": "Repair or replace"
+    }
+   ]
+  },
+  {
+   "id": "muster",
+   "title": "Muster points",
+   "icon": "📍",
+   "frequency_days": 30,
+   "items": [
+    {
+     "id": "mu1",
+     "text": "Signs are visible and clean",
+     "fail": "Replace the signs"
+    },
+    {
+     "id": "mu2",
+     "text": "Access is clear and upwind of hazards",
+     "fail": "Clear access or relocate"
+    },
+    {
+     "id": "mu3",
+     "text": "Muster boards, forms, vests and torches are available",
+     "fail": "Restock"
+    },
+    {
+     "id": "mu4",
+     "text": "Contractor and visitor counting method is known",
+     "fail": "Brief the wardens and security"
+    }
+   ]
+  }
+ ]
+}
