@@ -209,7 +209,6 @@ export function getNavItems() {
       href: hrefFor(m)
     }));
 }
-
 export function getModulesByGroup(group) {
   const list = getModules();
   if (group === undefined) {
@@ -283,6 +282,7 @@ export function setNavigationGuard(fn) {
   state.guard = typeof fn === 'function' ? fn : null;
   return state.guard;
 }
+
 /* ---------- module view adapter ---------- */
 
 function firstParamName(fn) {
@@ -378,22 +378,21 @@ export async function mountModuleView(mod, el, ctx) {
     }
   };
 }
-
 /* ---------- default builtin: All Modules ---------- */
 
-function defaultMoreView(el, ctx) {
+function defaultMoreView(el) {
   const wrap = document.createElement('div');
   wrap.className = 'more-view';
   const h = document.createElement('h2');
   h.textContent = 'All Modules';
   wrap.appendChild(h);
 
-  const groups = (state.registry && state.registry.groups) || [];
+  const groups = Array.isArray(state.registry && state.registry.groups) ? state.registry.groups : [];
   groups
     .slice()
     .sort((a, b) => (a.order || 0) - (b.order || 0))
     .forEach((g) => {
-      const mods = getModulesByGroup(g.id).filter((m) => m.id !== 'more' && isModuleOpenable(m));
+      const mods = getModules().filter((m) => m.group === g.id && m.id !== 'more' && isModuleOpenable(m));
       if (!mods.length) return;
       const sec = document.createElement('section');
       const t = document.createElement('h3');
@@ -463,6 +462,9 @@ function buildContext(route, el) {
     path: route.path,
     params: route.params,
     query: route.query,
+    segments: route.segments || [],
+    signal: new AbortController().signal,
+    setTitle(t) { document.title = String(t) + ' · NASUR'; },
     module: route.module,
     moduleId: route.id,
     navigate,
@@ -506,7 +508,7 @@ async function teardownView() {
 
 function loadModuleCode(m) {
   if (m.builtin) {
-    return Promise.resolve(state.builtins.get(m.id) || DEFAULT_BUILTINS[m.id] || null);
+    return Promise.resolve(DEFAULT_BUILTINS[m.id] || state.builtins.get(m.id) || null);
   }
   if (!state.imports.has(m.file)) {
     const href = new URL(m.file, document.baseURI).href;
@@ -593,7 +595,6 @@ async function renderHash(rawHash, options) {
   }
 
   if (!isModuleOpenable(mod)) {
-    state.last = state.current;
     state.last = state.current;
     state.current = route;
     showMessage(root, mod.title, 'This module is not available yet.', [
