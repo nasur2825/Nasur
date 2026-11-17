@@ -201,13 +201,11 @@ export function isModuleOpenable(ref) {
 export function getNavItems() {
   return getModules()
     .filter((m) => m.nav && isModuleOpenable(m))
+    .slice()
+    .sort((a, b) => (a.nav.order || 0) - (b.nav.order || 0))
     .map((m) => ({
-      id: m.id,
-      route: m.route,
-      title: m.title,
-      icon: m.icon,
-      group: m.group,
-      pdca: m.pdca,
+      ...m,
+      label: m.nav.label || m.title,
       href: hrefFor(m)
     }));
 }
@@ -285,7 +283,6 @@ export function setNavigationGuard(fn) {
   state.guard = typeof fn === 'function' ? fn : null;
   return state.guard;
 }
-
 /* ---------- module view adapter ---------- */
 
 function firstParamName(fn) {
@@ -597,6 +594,7 @@ async function renderHash(rawHash, options) {
 
   if (!isModuleOpenable(mod)) {
     state.last = state.current;
+    state.last = state.current;
     state.current = route;
     showMessage(root, mod.title, 'This module is not available yet.', [
       { label: 'Go Home', href: hrefFor(DEFAULT_ROUTE) }
@@ -703,7 +701,7 @@ export async function navigate(target, options) {
   const opts = options || {};
   let parsed;
 
-  if (typeof target === 'string' && (target[0] === '#' || target[0] === '/')) {
+  if (typeof target === 'string' && (target === '#' || target === '/')) {
     parsed = parseHash(target);
   } else {
     const p = routePath(target);
