@@ -1,0 +1,583 @@
+{
+ "version": 1,
+ "notice": "Controlled copies must be the current revision at the point of use. Printed copies are uncontrolled unless stamped.",
+ "categories": [
+  {
+   "id": "policy",
+   "label": "HSE policy",
+   "icon": "📜",
+   "review_days": 365,
+   "prefix": "POL"
+  },
+  {
+   "id": "sop",
+   "label": "Standard operating procedure",
+   "icon": "📘",
+   "review_days": 365,
+   "prefix": "SOP"
+  },
+  {
+   "id": "risk_assessment",
+   "label": "Risk assessment / JSA / HIRA",
+   "icon": "⚠️",
+   "review_days": 365,
+   "prefix": "RA"
+  },
+  {
+   "id": "sds",
+   "label": "Safety data sheet (SDS)",
+   "icon": "🧪",
+   "review_days": 1095,
+   "prefix": "SDS"
+  },
+  {
+   "id": "emergency_plan",
+   "label": "Emergency plan",
+   "icon": "🚨",
+   "review_days": 365,
+   "prefix": "EMP"
+  },
+  {
+   "id": "permit_template",
+   "label": "Permit / form template",
+   "icon": "📝",
+   "review_days": 365,
+   "prefix": "FRM"
+  },
+  {
+   "id": "training_record",
+   "label": "Training record / matrix",
+   "icon": "🎓",
+   "review_days": 365,
+   "prefix": "TRN"
+  },
+  {
+   "id": "inspection_record",
+   "label": "Inspection record",
+   "icon": "🔍",
+   "review_days": 0,
+   "prefix": "INS"
+  },
+  {
+   "id": "manual",
+   "label": "Equipment manual",
+   "icon": "📕",
+   "review_days": 0,
+   "prefix": "MAN"
+  },
+  {
+   "id": "client_requirement",
+   "label": "Client requirement",
+   "icon": "🤝",
+   "review_days": 365,
+   "prefix": "CLI"
+  },
+  {
+   "id": "other",
+   "label": "Other",
+   "icon": "📄",
+   "review_days": 365,
+   "prefix": "DOC"
+  }
+ ],
+ "statuses": [
+  {
+   "id": "draft",
+   "label": "Draft"
+  },
+  {
+   "id": "in_review",
+   "label": "In review"
+  },
+  {
+   "id": "approved",
+   "label": "Approved"
+  },
+  {
+   "id": "superseded",
+   "label": "Superseded"
+  },
+  {
+   "id": "obsolete",
+   "label": "Obsolete"
+  }
+ ],
+ "transitions": {
+  "draft": [
+   "in_review",
+   "obsolete"
+  ],
+  "in_review": [
+   "draft",
+   "approved"
+  ],
+  "approved": [
+   "superseded",
+   "obsolete"
+  ],
+  "superseded": [
+   "obsolete"
+  ],
+  "obsolete": []
+ },
+ "fields": [
+  "doc_id",
+  "title",
+  "category",
+  "rev_no",
+  "rev_date",
+  "owner",
+  "review_date",
+  "status",
+  "rev_history",
+  "superseded_state"
+ ],
+ "numbering_tip": "Use a clear scheme such as HSE-SOP-001. Change the revision letter or number on every approved change and record what changed.",
+ "certificate_types": [
+  {
+   "id": "crane",
+   "title": "Crane / lifting appliance thorough examination",
+   "icon": "🏗️",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Lifting & Cranes",
+   "legal": {
+    "india": "Factories Act 1948 s.29 and state rules: periodic examination by a competent person, commonly every 12 months (verify)",
+    "gulf": "Client and local authority rules: annual third-party thorough examination is commonly required (verify)",
+    "canada": "Provincial regulations and CSA Z150: annual inspection by a qualified person (verify)",
+    "usa": "OSHA 29 CFR 1910.179(j) for overhead cranes and 29 CFR 1926 Subpart CC for mobile cranes (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Examiner or body",
+    "Examination date",
+    "Safe working load",
+    "Next due date"
+   ],
+   "note": "Use the shortest of the law, the manufacturer and the client."
+  },
+  {
+   "id": "lifting_gear",
+   "title": "Lifting gear: slings, shackles, hooks, chains",
+   "icon": "⛓️",
+   "group": "equipment",
+   "default_days": 180,
+   "warn_days": 30,
+   "hazard_category": "Lifting & Cranes",
+   "legal": {
+    "india": "Factories Act 1948 s.29: chains, ropes and lifting tackle examined periodically, commonly every 6 months (verify)",
+    "gulf": "Client standards: six-monthly examination is common (verify)",
+    "canada": "Provincial regulations and the manufacturer (verify)",
+    "usa": "OSHA 29 CFR 1910.184 (slings): periodic inspection at intervals not exceeding 12 months (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Item ID and safe working load",
+    "Examination date",
+    "Next due date"
+   ],
+   "note": "Colour code or tag each item."
+  },
+  {
+   "id": "forklift",
+   "title": "Forklift / powered truck thorough examination",
+   "icon": "🚜",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Vehicles & Traffic",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Examiner or body",
+    "Examination date",
+    "Next due date"
+   ],
+   "note": "Daily pre-use checks are separate."
+  },
+  {
+   "id": "gas_detector",
+   "title": "Gas detector calibration",
+   "icon": "📟",
+   "group": "equipment",
+   "default_days": 180,
+   "warn_days": 14,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Manufacturer instructions and site procedure (verify)",
+    "gulf": "Manufacturer instructions and client procedure (verify)",
+    "canada": "Manufacturer instructions, provincial regulation and site procedure (verify)",
+    "usa": "Manufacturer instructions and the site procedure (verify)"
+   },
+   "evidence": [
+    "Calibration certificate",
+    "Detector ID and serial number",
+    "Calibration gas and date",
+    "Next due date"
+   ],
+   "note": "Bump test before each day of use. Full calibration at the interval set by the maker or site."
+  },
+  {
+   "id": "pressure_vessel",
+   "title": "Pressure vessel / air receiver examination",
+   "icon": "♨️",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 60,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Factories Act 1948 s.31 and pressure vessel rules (verify)",
+    "gulf": "Local authority, insurer and client inspection plan (verify)",
+    "canada": "Provincial pressure equipment regulations (TSSA, Technical Safety BC) (verify)",
+    "usa": "ASME, National Board Inspection Code and state rules (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Inspector or body",
+    "Test pressure and date",
+    "Next due date"
+   ],
+   "note": "Interval is set by law, the insurer and the inspection plan."
+  },
+  {
+   "id": "boiler",
+   "title": "Boiler statutory inspection certificate",
+   "icon": "🔥",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 60,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Indian Boilers Act 1923: certificate renewed on the interval set by the Boiler Regulations, commonly 12 months (verify)",
+    "gulf": "Local boiler inspection authority (verify)",
+    "canada": "Provincial boiler and pressure vessel safety authority (verify)",
+    "usa": "ASME CSD-1 and state boiler law (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Examiner or body",
+    "Examination date",
+    "Next due date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fire_extinguisher",
+   "title": "Fire extinguisher annual service",
+   "icon": "🧯",
+   "group": "system",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Fire & Explosion",
+   "legal": {
+    "india": "IS 2190 maintenance and the local Fire Service requirement (verify)",
+    "gulf": "Civil Defence requirements and NFPA 10 (verify)",
+    "canada": "Fire code and CAN/ULC maintenance practice (verify)",
+    "usa": "OSHA 29 CFR 1910.157(e) and NFPA 10 (verify)"
+   },
+   "evidence": [
+    "Service tag",
+    "Service company",
+    "Date of service",
+    "Next due date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fire_alarm",
+   "title": "Fire alarm and suppression system test",
+   "icon": "🚨",
+   "group": "system",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Fire & Explosion",
+   "legal": {
+    "india": "NBC 2016 Part 4 and the local Fire Service (verify)",
+    "gulf": "UAE Fire and Life Safety Code and Civil Defence certificate (verify)",
+    "canada": "National Fire Code of Canada and provincial fire code (verify)",
+    "usa": "NFPA 72 and NFPA 25 (verify)"
+   },
+   "evidence": [
+    "Test report",
+    "Service company",
+    "Test date",
+    "Next due date"
+   ],
+   "note": "Weekly alarm tests are recorded under the emergency checklists."
+  },
+  {
+   "id": "electrical",
+   "title": "Fixed electrical installation periodic inspection",
+   "icon": "⚡",
+   "group": "system",
+   "default_days": 1095,
+   "warn_days": 90,
+   "hazard_category": "Electrical",
+   "legal": {
+    "india": "CEA Safety and Electric Supply Regulations and the Chief Electrical Inspector (verify)",
+    "gulf": "Local utility and Civil Defence requirements, IEC 60364 (verify)",
+    "canada": "Provincial electrical safety authority and CSA C22.1 (verify)",
+    "usa": "NFPA 70E and NFPA 70B maintenance practice (verify)"
+   },
+   "evidence": [
+    "Report number",
+    "Electrical inspector",
+    "Inspection date",
+    "Next due date"
+   ],
+   "note": "Interval is often 1 to 5 years: set it from your local rule."
+  },
+  {
+   "id": "earthing",
+   "title": "Earthing and lightning protection test",
+   "icon": "🌩️",
+   "group": "system",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Electrical",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Test report",
+    "Resistance readings",
+    "Test date",
+    "Next due date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fall_protection",
+   "title": "Fall protection equipment inspection",
+   "icon": "🪢",
+   "group": "equipment",
+   "default_days": 180,
+   "warn_days": 30,
+   "hazard_category": "Fall from Height",
+   "legal": {
+    "india": "BOCW Central Rules 1998 and the manufacturer (verify)",
+    "gulf": "Client standards and the manufacturer; EN 365 formal inspection at least every 12 months (verify)",
+    "canada": "CSA Z259 series and the manufacturer (verify)",
+    "usa": "ANSI/ASSP Z359.2 and the manufacturer; OSHA 29 CFR 1926.502 (verify)"
+   },
+   "evidence": [
+    "Inspection record",
+    "Equipment ID",
+    "Inspection date",
+    "Next due date"
+   ],
+   "note": "Competent person inspection at the interval the maker or site sets."
+  },
+  {
+   "id": "instrument_cal",
+   "title": "Measuring instrument calibration (noise, light, wind, pressure)",
+   "icon": "📏",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Calibration certificate",
+    "Instrument ID",
+    "Calibration date",
+    "Next due date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "medical_fitness",
+   "title": "Worker medical fitness certificate",
+   "icon": "🩺",
+   "group": "personnel",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Doctor or clinic",
+    "Date",
+    "Next due date"
+   ],
+   "note": "Keep personal medical details private. Record only the fitness result and the due date."
+  },
+  {
+   "id": "first_aider",
+   "title": "First aider certificate",
+   "icon": "🩹",
+   "group": "personnel",
+   "default_days": 1095,
+   "warn_days": 60,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Training provider",
+    "Course date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "operator_licence",
+   "title": "Crane operator, rigger or forklift operator licence",
+   "icon": "🪪",
+   "group": "personnel",
+   "default_days": 1095,
+   "warn_days": 60,
+   "hazard_category": "Lifting & Cranes",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Licence number",
+    "Issuing body",
+    "Issue date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "site_licence",
+   "title": "Factory licence / site registration / trade licence",
+   "icon": "📜",
+   "group": "site",
+   "default_days": 365,
+   "warn_days": 60,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Licence number",
+    "Issuing authority",
+    "Issue date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "insurance",
+   "title": "Insurance certificate (liability, workers compensation)",
+   "icon": "🛡️",
+   "group": "site",
+   "default_days": 365,
+   "warn_days": 60,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Policy number",
+    "Insurer",
+    "Start date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "environment",
+   "title": "Environmental permit / consent",
+   "icon": "🌿",
+   "group": "site",
+   "default_days": 365,
+   "warn_days": 60,
+   "hazard_category": "Environmental",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Permit number",
+    "Issuing authority",
+    "Issue date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "vehicle",
+   "title": "Vehicle fitness and insurance",
+   "icon": "🚚",
+   "group": "equipment",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Vehicles & Traffic",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Registration number",
+    "Issuing authority",
+    "Issue date",
+    "Expiry date"
+   ],
+   "note": ""
+  },
+  {
+   "id": "other",
+   "title": "Other certificate or calibration",
+   "icon": "📄",
+   "group": "site",
+   "default_days": 365,
+   "warn_days": 30,
+   "hazard_category": "Other",
+   "legal": {
+    "india": "Check the Factories Act 1948, state rules and the OSH Code 2020 for the required interval (verify)",
+    "gulf": "Check the local authority, client standard and the manufacturer for the required interval (verify)",
+    "canada": "Check the provincial OHS regulation, CSA standard and the manufacturer for the required interval (verify)",
+    "usa": "Check the OSHA standard, the manufacturer and state rules for the required interval (verify)"
+   },
+   "evidence": [
+    "Certificate number",
+    "Issued by",
+    "Issue date",
+    "Expiry date"
+   ],
+   "note": ""
+  }
+ ],
+ "alerts": {
+  "default_warn_days": 30,
+  "note": "Certificates turn amber inside the warning period and red when overdue."
+ }
+}
