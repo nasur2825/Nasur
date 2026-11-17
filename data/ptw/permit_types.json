@@ -1,0 +1,1258 @@
+{
+ "version": 1,
+ "verifyNote": "Reference templates. Use the site and client permit procedure where it differs. Verify laws before audit use.",
+ "common": {
+  "statuses": [
+   {
+    "id": "draft",
+    "label": "Draft"
+   },
+   {
+    "id": "submitted",
+    "label": "Waiting for issuer"
+   },
+   {
+    "id": "active",
+    "label": "Active"
+   },
+   {
+    "id": "suspended",
+    "label": "Suspended"
+   },
+   {
+    "id": "closed",
+    "label": "Closed"
+   },
+   {
+    "id": "expired",
+    "label": "Expired"
+   },
+   {
+    "id": "cancelled",
+    "label": "Cancelled"
+   }
+  ],
+  "transitions": {
+   "draft": [
+    "submitted",
+    "cancelled"
+   ],
+   "submitted": [
+    "active",
+    "draft",
+    "cancelled"
+   ],
+   "active": [
+    "suspended",
+    "closed",
+    "expired",
+    "cancelled"
+   ],
+   "suspended": [
+    "active",
+    "closed",
+    "cancelled"
+   ],
+   "expired": [
+    "active",
+    "closed"
+   ],
+   "closed": [],
+   "cancelled": []
+  },
+  "general_conditions": [
+   "The permit must be displayed at the work site",
+   "Work only within the scope, place and time written on the permit",
+   "Stop work and hand in the permit if conditions change or an alarm sounds",
+   "The permit ends at the expiry time or the end of the shift, whichever is first",
+   "Re-validate with a new check at shift change and after any long break",
+   "Contractors follow the site permit procedure and the client rules"
+  ],
+  "revalidation": [
+   "Check the area, isolations and gas test again before restart",
+   "Both receiver and issuer sign the revalidation with date and time",
+   "Re-brief the crew on the JSA and emergency arrangements"
+  ],
+  "roles": [
+   {
+    "id": "receiver",
+    "label": "Permit receiver (work leader)"
+   },
+   {
+    "id": "issuer",
+    "label": "Permit issuer (area authority)"
+   },
+   {
+    "id": "isolating_authority",
+    "label": "Isolating authority"
+   },
+   {
+    "id": "gas_tester",
+    "label": "Gas tester"
+   },
+   {
+    "id": "fire_watch",
+    "label": "Fire watch"
+   },
+   {
+    "id": "attendant",
+    "label": "Standby attendant"
+   },
+   {
+    "id": "supervisor",
+    "label": "Work supervisor"
+   },
+   {
+    "id": "competent_person",
+    "label": "Competent person"
+   }
+  ],
+  "notice": "The official site permit-to-work procedure and the client permit forms always take priority. This is a starting template."
+ },
+ "types": [
+  {
+   "id": "hot_work",
+   "title": "Hot Work Permit",
+   "icon": "🔥",
+   "color": "#dc2626",
+   "description": "Welding, cutting, grinding or any work that makes sparks, flame or heat.",
+   "default_hours": 8,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "ho1",
+     "text": "Valid hot work permit for this exact place and time",
+     "critical": true
+    },
+    {
+     "id": "ho2",
+     "text": "Combustibles removed or covered within 11 m (35 ft), including below and behind the work",
+     "critical": true
+    },
+    {
+     "id": "ho3",
+     "text": "Floor and wall openings covered, sprinklers in service",
+     "critical": false
+    },
+    {
+     "id": "ho4",
+     "text": "Gas test done and recorded where flammable vapour or gas may be present",
+     "critical": true
+    },
+    {
+     "id": "ho5",
+     "text": "Fire extinguisher of the right type within reach",
+     "critical": true
+    },
+    {
+     "id": "ho6",
+     "text": "Trained fire watch assigned for the work and for at least 30 minutes after it ends",
+     "critical": true
+    },
+    {
+     "id": "ho7",
+     "text": "Ventilation or fume extraction in place",
+     "critical": false
+    },
+    {
+     "id": "ho8",
+     "text": "Gas cylinders upright and secured, hoses and regulators checked, flashback arrestors fitted",
+     "critical": false
+    },
+    {
+     "id": "ho9",
+     "text": "Electrical welding equipment inspected, earth return close to the work",
+     "critical": false
+    },
+    {
+     "id": "ho10",
+     "text": "Workers briefed on the JSA and the emergency alarm",
+     "critical": false
+    }
+   ],
+   "isolation_required": false,
+   "gas_test": {
+    "required": "if_flammables",
+    "parameters": [
+     "LEL",
+     "O2",
+     "H2S"
+    ],
+    "limits": {
+     "o2_min": 19.5,
+     "o2_max": 23.5,
+     "lel_max": 0,
+     "h2s_max": 10,
+     "co_max": 25
+    },
+    "note": "Typical values. Use your site standard. Retest after any break or change."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver (work leader)",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer (area authority)",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "gas_tester",
+     "label": "Gas tester",
+     "stage": "issue",
+     "required": false
+    },
+    {
+     "role": "fire_watch",
+     "label": "Fire watch",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "fire_watch",
+     "label": "Fire watch (post-work watch complete)",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "process",
+     "label": "Process",
+     "type": "select",
+     "options": [
+      "Arc welding",
+      "Gas cutting",
+      "Grinding / cutting disc",
+      "Brazing / soldering",
+      "Other"
+     ]
+    },
+    {
+     "id": "equipment",
+     "label": "Equipment IDs",
+     "type": "text"
+    },
+    {
+     "id": "fire_watch_name",
+     "label": "Fire watch name",
+     "type": "text"
+    },
+    {
+     "id": "post_watch_minutes",
+     "label": "Post-work fire watch (minutes)",
+     "type": "number",
+     "default": 30
+    }
+   ],
+   "handback": [
+    "Work finished and area left tidy",
+    "Hot materials cooled or marked",
+    "Cylinders and equipment removed or secured",
+    "Fire watch completed the full post-work watch with a final check",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Welding helmet with correct shade (EN 175 / EN 379, ANSI Z87.1)",
+    "Flame-resistant welding clothing and apron (EN ISO 11611)",
+    "Welding gloves (EN 12477)",
+    "Respirator for the fume (EN 149 FFP3 or P100) or PAPR",
+    "Safety boots (EN ISO 20345 / ASTM F2413)",
+    "Safety glasses under the helmet (EN 166)"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 and state rules; IS 818 (safety in electric and gas welding and cutting); BOCW Central Rules 1998 on construction sites (verify current OSH Code status)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; UAE Fire and Life Safety Code of Practice; client hot work procedures such as ADNOC and Aramco (verify)",
+    "canada": "CSA W117.2 (safety in welding, cutting and allied processes); provincial OHS regulations (verify province)",
+    "usa": "OSHA 29 CFR 1910 Subpart Q (1910.251-.255); 29 CFR 1926 Subpart J (1926.350-.354); NFPA 51B"
+   },
+   "bridge": {
+    "hazard_category": "Hot Work",
+    "activity": "Hot work permit",
+    "risk_rating": "High"
+   },
+   "jsa_template": "welding_hot_work",
+   "encyclopedia_id": "welding_hot_work"
+  },
+  {
+   "id": "confined_space",
+   "title": "Confined Space Entry Permit",
+   "icon": "🕳️",
+   "color": "#7c3aed",
+   "description": "Entry into tanks, vessels, pits, manholes and other confined or enclosed spaces.",
+   "default_hours": 8,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "co1",
+     "text": "Valid entry permit displayed at the entrance",
+     "critical": true
+    },
+    {
+     "id": "co2",
+     "text": "Pipes, power and moving parts isolated and locked",
+     "critical": true
+    },
+    {
+     "id": "co3",
+     "text": "Atmosphere tested at all levels for oxygen, flammable and toxic gas and recorded",
+     "critical": true
+    },
+    {
+     "id": "co4",
+     "text": "Ventilation running",
+     "critical": false
+    },
+    {
+     "id": "co5",
+     "text": "Trained attendant stationed at the entrance at all times, entrants logged",
+     "critical": true
+    },
+    {
+     "id": "co6",
+     "text": "Communication between entrants and attendant tested",
+     "critical": false
+    },
+    {
+     "id": "co7",
+     "text": "Rescue plan, equipment and trained rescuers ready and not dependent on entry",
+     "critical": true
+    },
+    {
+     "id": "co8",
+     "text": "Entrants trained, authorised and fit",
+     "critical": false
+    },
+    {
+     "id": "co9",
+     "text": "Lighting and equipment suitable for the atmosphere",
+     "critical": false
+    },
+    {
+     "id": "co10",
+     "text": "No hot work inside unless a separate hot work permit is also issued",
+     "critical": false
+    }
+   ],
+   "isolation_required": true,
+   "gas_test": {
+    "required": "always",
+    "parameters": [
+     "O2",
+     "LEL",
+     "H2S",
+     "CO"
+    ],
+    "limits": {
+     "o2_min": 19.5,
+     "o2_max": 23.5,
+     "lel_max": 10,
+     "h2s_max": 10,
+     "co_max": 25
+    },
+    "note": "Typical values. Test top, middle and bottom. Monitor continuously or retest as the site procedure requires."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "isolating_authority",
+     "label": "Isolating authority",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "gas_tester",
+     "label": "Gas tester",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "attendant",
+     "label": "Standby attendant",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "space_id",
+     "label": "Space ID / description",
+     "type": "text"
+    },
+    {
+     "id": "entrants",
+     "label": "Entrants (names)",
+     "type": "text"
+    },
+    {
+     "id": "attendant",
+     "label": "Attendant name",
+     "type": "text"
+    },
+    {
+     "id": "max_entrants",
+     "label": "Maximum people inside",
+     "type": "number",
+     "default": 2
+    },
+    {
+     "id": "rescue_plan",
+     "label": "Rescue plan (who and how)",
+     "type": "text"
+    }
+   ],
+   "handback": [
+    "Everyone is out and counted",
+    "Tools and materials removed",
+    "Space closed and secured against entry",
+    "Isolations restored only by the isolating authority",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Personal multi-gas detector, calibrated and bump tested",
+    "Harness with retrieval line (EN 361, EN 1496 rescue lifting device)",
+    "Breathing apparatus or airline where required (EN 137, EN 14594)",
+    "Helmet, safety boots and coverall suited to the residues",
+    "Intrinsically safe torch and radio"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 s.36 (dangerous fumes) and state rules; BOCW Central Rules 1998 (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; ADNOC and Aramco confined space procedures; for ships IMO Resolution A.1050(27) (verify)",
+    "canada": "Provincial confined space regulations (for example Ontario Reg. 632/05, WorkSafeBC OHS Regulation Part 9); CSA Z1006",
+    "usa": "OSHA 29 CFR 1910.146 (permit-required confined spaces); 29 CFR 1926 Subpart AA; shipyards 29 CFR 1915 Subpart B; ships SOLAS and IMO A.1050(27)"
+   },
+   "bridge": {
+    "hazard_category": "Confined Space",
+    "activity": "Confined space entry",
+    "risk_rating": "High"
+   },
+   "jsa_template": "confined_space_entry",
+   "encyclopedia_id": "confined_space_entry"
+  },
+  {
+   "id": "work_at_height",
+   "title": "Work at Height Permit",
+   "icon": "🪜",
+   "color": "#2563eb",
+   "description": "Work where a person could fall: roofs, edges, platforms, ladders and openings.",
+   "default_hours": 12,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "wo1",
+     "text": "Ground-level or platform alternative considered first",
+     "critical": false
+    },
+    {
+     "id": "wo2",
+     "text": "Guardrails, covers or nets in place where possible",
+     "critical": true
+    },
+    {
+     "id": "wo3",
+     "text": "Anchor points rated and checked, harness and lanyard inspected and fitted",
+     "critical": true
+    },
+    {
+     "id": "wo4",
+     "text": "Rescue plan and trained rescuers ready",
+     "critical": true
+    },
+    {
+     "id": "wo5",
+     "text": "Fragile surfaces identified, marked and covered",
+     "critical": true
+    },
+    {
+     "id": "wo6",
+     "text": "Weather acceptable: no high wind, rain, lightning or ice",
+     "critical": false
+    },
+    {
+     "id": "wo7",
+     "text": "Area below barricaded and signed",
+     "critical": false
+    },
+    {
+     "id": "wo8",
+     "text": "Tools and materials secured against dropping",
+     "critical": false
+    },
+    {
+     "id": "wo9",
+     "text": "Scaffold or MEWP tagged and inspected, ladders sound",
+     "critical": false
+    },
+    {
+     "id": "wo10",
+     "text": "Workers trained and fit to work at height",
+     "critical": false
+    }
+   ],
+   "isolation_required": false,
+   "gas_test": {
+    "required": "never",
+    "parameters": [],
+    "note": "No gas test required unless the work area changes."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "supervisor",
+     "label": "Work supervisor",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "height_m",
+     "label": "Working height (m)",
+     "type": "number"
+    },
+    {
+     "id": "access",
+     "label": "Access method",
+     "type": "select",
+     "options": [
+      "Scaffold",
+      "MEWP / scissor lift",
+      "Ladder",
+      "Roof",
+      "Rope access",
+      "Other"
+     ]
+    },
+    {
+     "id": "anchor",
+     "label": "Anchor points used",
+     "type": "text"
+    },
+    {
+     "id": "rescue_plan",
+     "label": "Rescue plan",
+     "type": "text"
+    }
+   ],
+   "handback": [
+    "Work complete and area tidy",
+    "Temporary edge protection or covers left safe or removed by authorised people",
+    "Equipment removed or secured",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Full body harness (EN 361) with energy absorber (EN 355)",
+    "Rated anchor device (EN 795)",
+    "Helmet with chin strap (EN 397)",
+    "Safety boots with grip (EN ISO 20345)",
+    "Gloves (EN 388)"
+   ],
+   "legal": {
+    "india": "BOCW Central Rules 1998; Factories Act 1948 and state rules; IS 3521 (industrial safety belts and harnesses) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client standards; EN 363 fall protection systems commonly specified (verify)",
+    "canada": "CSA Z259 series (fall protection) and provincial OHS regulations, which set the height trigger",
+    "usa": "OSHA 29 CFR 1926 Subpart M (1926.501); 29 CFR 1910 Subpart D (1910.28)"
+   },
+   "bridge": {
+    "hazard_category": "Fall from Height",
+    "activity": "Work at height",
+    "risk_rating": "High"
+   },
+   "jsa_template": "work_at_height",
+   "encyclopedia_id": "work_at_height"
+  },
+  {
+   "id": "excavation",
+   "title": "Excavation Permit",
+   "icon": "⛏️",
+   "color": "#a16207",
+   "description": "Digging trenches, pits and foundations and any ground disturbance.",
+   "default_hours": 12,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "ex1",
+     "text": "Utilities located, scanned and marked before digging",
+     "critical": true
+    },
+    {
+     "id": "ex2",
+     "text": "Protective system (shoring, box or sloping) in place for trenches 1.5 m (5 ft) or deeper unless in stable rock",
+     "critical": true
+    },
+    {
+     "id": "ex3",
+     "text": "Ladder or ramp so no one has more than 7.5 m (25 ft) to travel to exit",
+     "critical": false
+    },
+    {
+     "id": "ex4",
+     "text": "Edge barriers in place and spoil and equipment set back at least 0.6 m (2 ft)",
+     "critical": false
+    },
+    {
+     "id": "ex5",
+     "text": "Atmosphere tested if deep, near contamination or fuel",
+     "critical": false
+    },
+    {
+     "id": "ex6",
+     "text": "Water controlled and pumped if present",
+     "critical": false
+    },
+    {
+     "id": "ex7",
+     "text": "Competent person inspected the excavation today and after rain",
+     "critical": true
+    },
+    {
+     "id": "ex8",
+     "text": "Vehicles and plant segregated from the edge",
+     "critical": false
+    },
+    {
+     "id": "ex9",
+     "text": "Overhead lines and services above ground considered",
+     "critical": false
+    },
+    {
+     "id": "ex10",
+     "text": "Emergency rescue arrangements known",
+     "critical": false
+    }
+   ],
+   "isolation_required": false,
+   "gas_test": {
+    "required": "if_flammables",
+    "parameters": [
+     "O2",
+     "LEL",
+     "H2S",
+     "CO"
+    ],
+    "limits": {
+     "o2_min": 19.5,
+     "o2_max": 23.5,
+     "lel_max": 10,
+     "h2s_max": 10,
+     "co_max": 25
+    },
+    "note": "Required if the trench is deep or near contamination. Use your site standard."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "competent_person",
+     "label": "Competent person (inspection)",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "depth_m",
+     "label": "Depth (m)",
+     "type": "number"
+    },
+    {
+     "id": "length_m",
+     "label": "Length (m)",
+     "type": "number"
+    },
+    {
+     "id": "soil",
+     "label": "Soil type",
+     "type": "select",
+     "options": [
+      "Stable rock",
+      "Type A clay",
+      "Type B",
+      "Type C sandy or wet",
+      "Unknown"
+     ]
+    },
+    {
+     "id": "scan_ref",
+     "label": "Utility scan reference",
+     "type": "text"
+    },
+    {
+     "id": "protection",
+     "label": "Protective system",
+     "type": "select",
+     "options": [
+      "Sloping",
+      "Shoring",
+      "Trench box",
+      "None (shallow)"
+     ]
+    }
+   ],
+   "handback": [
+    "Backfilled or secured with barriers and signs",
+    "Utilities left undamaged",
+    "Equipment removed",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Helmet (EN 397)",
+    "Safety boots (EN ISO 20345)",
+    "High-visibility clothing (EN ISO 20471)",
+    "Gloves (EN 388)",
+    "Gas detector for deep or suspect trenches"
+   ],
+   "legal": {
+    "india": "BOCW Central Rules 1998; IS 3764 (excavation work code of safety) (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; utility authority approvals and client permit to dig (verify)",
+    "canada": "Provincial construction regulations (for example WorkSafeBC OHS Regulation Part 20, Ontario Reg. 213/91)",
+    "usa": "OSHA 29 CFR 1926 Subpart P (1926.650-.652)"
+   },
+   "bridge": {
+    "hazard_category": "Excavation",
+    "activity": "Excavation / trenching",
+    "risk_rating": "High"
+   },
+   "jsa_template": "excavation_trenching",
+   "encyclopedia_id": "excavation_trenching"
+  },
+  {
+   "id": "electrical_loto",
+   "title": "Electrical Isolation (LOTO) Permit",
+   "icon": "⚡",
+   "color": "#ca8a04",
+   "description": "Work on electrical equipment that must be isolated, locked and proven dead.",
+   "default_hours": 12,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "el1",
+     "text": "Worker qualified and authorised for this equipment",
+     "critical": true
+    },
+    {
+     "id": "el2",
+     "text": "All energy sources identified and isolation points listed",
+     "critical": true
+    },
+    {
+     "id": "el3",
+     "text": "Personal lock and tag fitted at every isolation point",
+     "critical": true
+    },
+    {
+     "id": "el4",
+     "text": "Stored energy released (capacitors, springs, pressure)",
+     "critical": false
+    },
+    {
+     "id": "el5",
+     "text": "Tested dead with a proven tester: test, prove, test",
+     "critical": true
+    },
+    {
+     "id": "el6",
+     "text": "Barriers and warning signs set",
+     "critical": false
+    },
+    {
+     "id": "el7",
+     "text": "Arc flash boundary and PPE category confirmed",
+     "critical": false
+    },
+    {
+     "id": "el8",
+     "text": "Live work only if justified and separately authorised",
+     "critical": false
+    },
+    {
+     "id": "el9",
+     "text": "Insulated tools and rated PPE available",
+     "critical": false
+    },
+    {
+     "id": "el10",
+     "text": "Temporary earths fitted where required",
+     "critical": false
+    }
+   ],
+   "isolation_required": true,
+   "gas_test": {
+    "required": "never",
+    "parameters": [],
+    "note": "No gas test required unless the work area changes."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Authorised person (issuer)",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "isolating_authority",
+     "label": "Isolating authority",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Authorised person (issuer)",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "isolating_authority",
+     "label": "Isolating authority (lock removal)",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "equipment_tag",
+     "label": "Equipment tag / name",
+     "type": "text"
+    },
+    {
+     "id": "voltage",
+     "label": "Voltage level",
+     "type": "select",
+     "options": [
+      "Low voltage",
+      "Medium voltage",
+      "High voltage",
+      "DC / battery"
+     ]
+    },
+    {
+     "id": "isolation_points",
+     "label": "Isolation points",
+     "type": "text"
+    },
+    {
+     "id": "lock_ids",
+     "label": "Lock IDs / names",
+     "type": "text"
+    }
+   ],
+   "handback": [
+    "Work complete, tools and materials removed",
+    "Guards and covers refitted",
+    "Everyone clear of the equipment",
+    "Each lock removed by the person who fitted it",
+    "Equipment re-energised and tested",
+    "Permit closed"
+   ],
+   "ppe": [
+    "Arc-rated clothing and face shield (IEC 61482-2, NFPA 70E)",
+    "Insulating gloves with leather protectors (IEC 60903, ASTM D120)",
+    "Insulated tools (IEC 60900)",
+    "Dielectric safety boots (EN ISO 20345 or ASTM F2413 EH)",
+    "Safety glasses (EN 166)"
+   ],
+   "legal": {
+    "india": "CEA (Measures relating to Safety and Electric Supply) Regulations; Indian Electricity Rules 1956 where applicable (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; local utility regulations (DEWA, SEWA, Kahramaa, SEC) and client LOTO standards (verify)",
+    "canada": "CSA Z460 (control of hazardous energy) and CSA Z462 (workplace electrical safety); provincial regulations",
+    "usa": "OSHA 29 CFR 1910.147 (LOTO), 1910.333 (work practices), 1910 Subpart S; 1926 Subpart K; NFPA 70E"
+   },
+   "bridge": {
+    "hazard_category": "Electrical",
+    "activity": "Electrical isolation / LOTO",
+    "risk_rating": "High"
+   },
+   "jsa_template": "electrical_loto",
+   "encyclopedia_id": "electrical_loto"
+  },
+  {
+   "id": "cold_work",
+   "title": "Cold Work Permit",
+   "icon": "🧰",
+   "color": "#0891b2",
+   "description": "Maintenance and other hazardous work with no heat or ignition source.",
+   "default_hours": 12,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "co1",
+     "text": "Job described and JSA completed",
+     "critical": true
+    },
+    {
+     "id": "co2",
+     "text": "Area barricaded and signed",
+     "critical": false
+    },
+    {
+     "id": "co3",
+     "text": "Other work nearby (SIMOPS) checked and compatible",
+     "critical": false
+    },
+    {
+     "id": "co4",
+     "text": "Housekeeping acceptable, escape routes clear",
+     "critical": false
+    },
+    {
+     "id": "co5",
+     "text": "Tools and equipment inspected",
+     "critical": false
+    },
+    {
+     "id": "co6",
+     "text": "Lifting and manual handling controls in place",
+     "critical": false
+    },
+    {
+     "id": "co7",
+     "text": "PPE for the task identified and available",
+     "critical": false
+    },
+    {
+     "id": "co8",
+     "text": "Emergency arrangements and alarm briefed",
+     "critical": false
+    }
+   ],
+   "isolation_required": false,
+   "gas_test": {
+    "required": "never",
+    "parameters": [],
+    "note": "No gas test required unless the work area changes."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "equipment",
+     "label": "Equipment / system",
+     "type": "text"
+    },
+    {
+     "id": "crew",
+     "label": "Crew size",
+     "type": "number"
+    }
+   ],
+   "handback": [
+    "Work complete and area tidy",
+    "Tools removed",
+    "Equipment left in a safe state",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Helmet (EN 397)",
+    "Safety boots (EN ISO 20345)",
+    "Gloves (EN 388)",
+    "Safety glasses (EN 166)",
+    "High-visibility clothing (EN ISO 20471)"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 and state rules; site permit-to-work procedure (verify)",
+    "gulf": "UAE Cabinet Decision No. 33 of 2020; client permit-to-work procedures (verify)",
+    "canada": "Provincial OHS regulations; employer permit-to-work procedure",
+    "usa": "OSHA General Duty Clause; site permit procedure; 29 CFR 1910.147 where energy control applies"
+   },
+   "bridge": {
+    "hazard_category": "Other",
+    "activity": "Cold work",
+    "risk_rating": "High"
+   },
+   "jsa_template": "lifting_operations",
+   "encyclopedia_id": null
+  },
+  {
+   "id": "line_breaking",
+   "title": "Line Breaking / Intrusive Work Permit",
+   "icon": "🛢️",
+   "color": "#be123c",
+   "description": "Opening pipes, flanges or equipment that may contain hazardous fluids.",
+   "default_hours": 8,
+   "max_hours": 12,
+   "precautions": [
+    {
+     "id": "li1",
+     "text": "Positive isolation (double block and bleed or blinds) verified by a second competent person",
+     "critical": true
+    },
+    {
+     "id": "li2",
+     "text": "Line depressurised, drained and purged as planned",
+     "critical": true
+    },
+    {
+     "id": "li3",
+     "text": "Contents and SDS known, right line confirmed against the isolation list",
+     "critical": true
+    },
+    {
+     "id": "li4",
+     "text": "Gas test done and recorded",
+     "critical": true
+    },
+    {
+     "id": "li5",
+     "text": "Ignition sources controlled",
+     "critical": true
+    },
+    {
+     "id": "li6",
+     "text": "Spill containment and drip trays in place",
+     "critical": false
+    },
+    {
+     "id": "li7",
+     "text": "Bolt loosening sequence controlled, stand clear of the first release",
+     "critical": false
+    },
+    {
+     "id": "li8",
+     "text": "Wind direction and escape route known",
+     "critical": false
+    },
+    {
+     "id": "li9",
+     "text": "Emergency response and fire fighting arrangements ready",
+     "critical": false
+    },
+    {
+     "id": "li10",
+     "text": "PPE chosen from the SDS",
+     "critical": false
+    }
+   ],
+   "isolation_required": true,
+   "gas_test": {
+    "required": "always",
+    "parameters": [
+     "LEL",
+     "H2S",
+     "O2"
+    ],
+    "limits": {
+     "o2_min": 19.5,
+     "o2_max": 23.5,
+     "lel_max": 10,
+     "h2s_max": 10,
+     "co_max": 25
+    },
+    "note": "Typical values. Use your site standard. Retest if conditions change."
+   },
+   "signoffs": [
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "isolating_authority",
+     "label": "Isolating authority",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "gas_tester",
+     "label": "Gas tester",
+     "stage": "issue",
+     "required": true
+    },
+    {
+     "role": "receiver",
+     "label": "Permit receiver",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "issuer",
+     "label": "Permit issuer",
+     "stage": "closure",
+     "required": true
+    },
+    {
+     "role": "isolating_authority",
+     "label": "Isolating authority",
+     "stage": "closure",
+     "required": true
+    }
+   ],
+   "extra_fields": [
+    {
+     "id": "line_id",
+     "label": "Line / equipment ID",
+     "type": "text"
+    },
+    {
+     "id": "contents",
+     "label": "Contents",
+     "type": "text"
+    },
+    {
+     "id": "isolation_cert",
+     "label": "Isolation certificate no.",
+     "type": "text"
+    },
+    {
+     "id": "blinds",
+     "label": "Blinds fitted (list)",
+     "type": "text"
+    }
+   ],
+   "handback": [
+    "Joint remade, tightened and leak tested",
+    "Blinds removed and recorded",
+    "Isolations restored only by the isolating authority",
+    "Area cleaned, spills cleared",
+    "Permit closed by receiver, then issuer"
+   ],
+   "ppe": [
+    "Flame-resistant coveralls (EN ISO 11612)",
+    "Chemical gloves (EN 374)",
+    "Face shield and goggles (EN 166)",
+    "Personal gas detector (H2S and LEL)",
+    "Escape breathing apparatus where H2S is possible (EN 13794)",
+    "Safety boots (EN ISO 20345)"
+   ],
+   "legal": {
+    "india": "Factories Act 1948 Chapter IVA; MSIHC Rules 1989 (verify)",
+    "gulf": "ADNOC and Aramco process isolation and permit standards (client documents) and UAE Cabinet Decision No. 33 of 2020 (verify)",
+    "canada": "Provincial regulations and CSA Z767 (process safety management)",
+    "usa": "OSHA 29 CFR 1910.119 (PSM), 1910.147 (energy control); API standards"
+   },
+   "bridge": {
+    "hazard_category": "Fire & Explosion",
+    "activity": "Line breaking / intrusive work",
+    "risk_rating": "High"
+   },
+   "jsa_template": "line_breaking",
+   "encyclopedia_id": "hydrocarbon_line_breaking"
+  }
+ ]
+}
