@@ -1,0 +1,1361 @@
+{
+ "version": 1,
+ "notice": "Ready-to-run starting checklists. Adapt them to your site, your client and your local law. References show where each requirement comes from.",
+ "answers": [
+  {
+   "id": "yes",
+   "label": "Yes"
+  },
+  {
+   "id": "no",
+   "label": "No"
+  },
+  {
+   "id": "na",
+   "label": "N/A"
+  }
+ ],
+ "scoring": {
+  "normal_weight": 1,
+  "critical_weight": 3,
+  "formula": "Score = weighted Yes answers divided by weighted applicable answers (Yes plus No). N/A is left out.",
+  "ratings": [
+   {
+    "id": "excellent",
+    "min": 90,
+    "label": "Excellent",
+    "color": "#16a34a"
+   },
+   {
+    "id": "good",
+    "min": 75,
+    "label": "Good",
+    "color": "#65a30d"
+   },
+   {
+    "id": "improve",
+    "min": 60,
+    "label": "Needs improvement",
+    "color": "#f59e0b"
+   },
+   {
+    "id": "poor",
+    "min": 0,
+    "label": "Unsatisfactory",
+    "color": "#dc2626"
+   }
+  ],
+  "critical_rule": "Any failed critical item caps the rating at Needs improvement and must be corrected first."
+ },
+ "checklists": [
+  {
+   "id": "iso45001",
+   "title": "ISO 45001:2018 workplace audit",
+   "icon": "📘",
+   "description": "Clause-by-clause audit against ISO 45001 requirements.",
+   "standard": "ISO 45001:2018",
+   "areas": [
+    {
+     "id": "ctx",
+     "title": "4 Context of the organisation",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "lead",
+     "title": "5 Leadership and worker participation",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "plan",
+     "title": "6 Planning",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "supp",
+     "title": "7 Support",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "oper",
+     "title": "8 Operation",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "perf",
+     "title": "9 Performance evaluation",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "impr",
+     "title": "10 Improvement",
+     "hazard_category": "Other"
+    }
+   ],
+   "questions": [
+    {
+     "area": "ctx",
+     "text": "The organisation has defined the issues and context that affect its OH&S management system",
+     "ref": "ISO 45001 cl. 4.1",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso1"
+    },
+    {
+     "area": "ctx",
+     "text": "The needs and expectations of workers and other interested parties are understood",
+     "ref": "ISO 45001 cl. 4.2",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso2"
+    },
+    {
+     "area": "ctx",
+     "text": "The scope of the OH&S management system is defined and documented",
+     "ref": "ISO 45001 cl. 4.3",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso3"
+    },
+    {
+     "area": "ctx",
+     "text": "The OH&S management system is established, implemented and maintained",
+     "ref": "ISO 45001 cl. 4.4",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso4"
+    },
+    {
+     "area": "lead",
+     "text": "Top management shows leadership and commitment to OH&S",
+     "ref": "ISO 45001 cl. 5.1",
+     "critical": true,
+     "evidence": "interview",
+     "id": "iso5"
+    },
+    {
+     "area": "lead",
+     "text": "A documented OH&S policy exists and is communicated to workers",
+     "ref": "ISO 45001 cl. 5.2",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso6"
+    },
+    {
+     "area": "lead",
+     "text": "OH&S roles, responsibilities and authorities are assigned and understood",
+     "ref": "ISO 45001 cl. 5.3",
+     "critical": false,
+     "evidence": "interview",
+     "id": "iso7"
+    },
+    {
+     "area": "lead",
+     "text": "Workers are consulted and take part, for example through a safety committee",
+     "ref": "ISO 45001 cl. 5.4",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso8"
+    },
+    {
+     "area": "plan",
+     "text": "OH&S risks and opportunities have been determined",
+     "ref": "ISO 45001 cl. 6.1.1",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso9"
+    },
+    {
+     "area": "plan",
+     "text": "Hazards are identified on an ongoing basis, including routine and non-routine work",
+     "ref": "ISO 45001 cl. 6.1.2",
+     "critical": true,
+     "evidence": "document",
+     "id": "iso10"
+    },
+    {
+     "area": "plan",
+     "text": "Legal and other requirements are identified and kept up to date",
+     "ref": "ISO 45001 cl. 6.1.3",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso11"
+    },
+    {
+     "area": "plan",
+     "text": "Actions to address risks and legal requirements are planned",
+     "ref": "ISO 45001 cl. 6.1.4",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso12"
+    },
+    {
+     "area": "plan",
+     "text": "Measurable OH&S objectives exist with plans to achieve them",
+     "ref": "ISO 45001 cl. 6.2",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso13"
+    },
+    {
+     "area": "supp",
+     "text": "Resources for the OH&S system are provided",
+     "ref": "ISO 45001 cl. 7.1",
+     "critical": false,
+     "evidence": "interview",
+     "id": "iso14"
+    },
+    {
+     "area": "supp",
+     "text": "Workers are competent for their tasks and training records are kept",
+     "ref": "ISO 45001 cl. 7.2",
+     "critical": true,
+     "evidence": "record",
+     "id": "iso15"
+    },
+    {
+     "area": "supp",
+     "text": "Workers are aware of the policy, hazards and their right to stop work",
+     "ref": "ISO 45001 cl. 7.3",
+     "critical": false,
+     "evidence": "interview",
+     "id": "iso16"
+    },
+    {
+     "area": "supp",
+     "text": "Internal and external communication on OH&S is planned and works",
+     "ref": "ISO 45001 cl. 7.4",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso17"
+    },
+    {
+     "area": "supp",
+     "text": "Documented information is controlled, current and available",
+     "ref": "ISO 45001 cl. 7.5",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso18"
+    },
+    {
+     "area": "oper",
+     "text": "Operational controls are in place for the main hazards",
+     "ref": "ISO 45001 cl. 8.1.1",
+     "critical": true,
+     "evidence": "photo",
+     "id": "iso19"
+    },
+    {
+     "area": "oper",
+     "text": "The hierarchy of controls is applied: elimination and substitution before PPE",
+     "ref": "ISO 45001 cl. 8.1.2",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso20"
+    },
+    {
+     "area": "oper",
+     "text": "Changes are managed so new hazards are assessed before the change",
+     "ref": "ISO 45001 cl. 8.1.3",
+     "critical": false,
+     "evidence": "document",
+     "id": "iso21"
+    },
+    {
+     "area": "oper",
+     "text": "Procurement, contractors and outsourced work are controlled for OH&S",
+     "ref": "ISO 45001 cl. 8.1.4",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso22"
+    },
+    {
+     "area": "oper",
+     "text": "Emergency preparedness is planned, tested and drills are recorded",
+     "ref": "ISO 45001 cl. 8.2",
+     "critical": true,
+     "evidence": "record",
+     "id": "iso23"
+    },
+    {
+     "area": "perf",
+     "text": "Monitoring and measurement of OH&S performance is done and recorded",
+     "ref": "ISO 45001 cl. 9.1.1",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso24"
+    },
+    {
+     "area": "perf",
+     "text": "Compliance with legal requirements is evaluated at planned intervals",
+     "ref": "ISO 45001 cl. 9.1.2",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso25"
+    },
+    {
+     "area": "perf",
+     "text": "Internal audits are done at planned intervals and results reported",
+     "ref": "ISO 45001 cl. 9.2",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso26"
+    },
+    {
+     "area": "perf",
+     "text": "Management reviews the OH&S system and records decisions",
+     "ref": "ISO 45001 cl. 9.3",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso27"
+    },
+    {
+     "area": "impr",
+     "text": "Incidents are investigated, root causes found and corrective actions closed on time",
+     "ref": "ISO 45001 cl. 10.2",
+     "critical": true,
+     "evidence": "record",
+     "id": "iso28"
+    },
+    {
+     "area": "impr",
+     "text": "The OH&S system is continually improved",
+     "ref": "ISO 45001 cl. 10.3",
+     "critical": false,
+     "evidence": "record",
+     "id": "iso29"
+    }
+   ]
+  },
+  {
+   "id": "osha_general",
+   "title": "OSHA general industry walkdown",
+   "icon": "🇺🇸",
+   "description": "Practical walkdown of the most cited general industry requirements.",
+   "standard": "OSHA 29 CFR 1910",
+   "areas": [
+    {
+     "id": "surf",
+     "title": "Walking-working surfaces and exits",
+     "hazard_category": "Housekeeping & Slips"
+    },
+    {
+     "id": "fire",
+     "title": "Fire protection",
+     "hazard_category": "Fire & Explosion"
+    },
+    {
+     "id": "elec",
+     "title": "Electrical",
+     "hazard_category": "Electrical"
+    },
+    {
+     "id": "mach",
+     "title": "Machine guarding and LOTO",
+     "hazard_category": "Machinery & Guarding"
+    },
+    {
+     "id": "hazcom",
+     "title": "Hazard communication and chemicals",
+     "hazard_category": "Chemical & Hazardous Substances"
+    },
+    {
+     "id": "ppe",
+     "title": "PPE, respiratory and hearing",
+     "hazard_category": "PPE"
+    },
+    {
+     "id": "conf",
+     "title": "Confined spaces",
+     "hazard_category": "Confined Space"
+    },
+    {
+     "id": "veh",
+     "title": "Powered industrial trucks and cylinders",
+     "hazard_category": "Vehicles & Traffic"
+    },
+    {
+     "id": "rec",
+     "title": "Recordkeeping and training",
+     "hazard_category": "Other"
+    }
+   ],
+   "questions": [
+    {
+     "area": "surf",
+     "text": "Floors and aisles are clean, dry and free of obstructions",
+     "ref": "29 CFR 1910.22",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh1"
+    },
+    {
+     "area": "surf",
+     "text": "Exit routes are clear, unlocked, lit and marked",
+     "ref": "29 CFR 1910.36 to .37",
+     "critical": true,
+     "evidence": "photo",
+     "id": "osh2"
+    },
+    {
+     "area": "surf",
+     "text": "An emergency action plan exists and workers know it",
+     "ref": "29 CFR 1910.38",
+     "critical": false,
+     "evidence": "document",
+     "id": "osh3"
+    },
+    {
+     "area": "surf",
+     "text": "Guardrails or covers protect floor holes and open edges",
+     "ref": "29 CFR 1910.28 and .29",
+     "critical": true,
+     "evidence": "photo",
+     "id": "osh4"
+    },
+    {
+     "area": "fire",
+     "text": "Portable extinguishers are in place, charged, and inspected monthly",
+     "ref": "29 CFR 1910.157",
+     "critical": true,
+     "evidence": "photo",
+     "id": "osh5"
+    },
+    {
+     "area": "fire",
+     "text": "Workers who may use extinguishers are trained",
+     "ref": "29 CFR 1910.157(g)",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh6"
+    },
+    {
+     "area": "fire",
+     "text": "Flammable liquids are stored in approved containers and cabinets",
+     "ref": "29 CFR 1910.106",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh7"
+    },
+    {
+     "area": "elec",
+     "text": "Electrical panels are covered, labelled and clear in front",
+     "ref": "29 CFR 1910.303",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh8"
+    },
+    {
+     "area": "elec",
+     "text": "Cords and plugs are undamaged and GFCI protection is used in wet areas",
+     "ref": "29 CFR 1910.304",
+     "critical": true,
+     "evidence": "photo",
+     "id": "osh9"
+    },
+    {
+     "area": "elec",
+     "text": "Only qualified persons work on electrical equipment",
+     "ref": "29 CFR 1910.332",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh10"
+    },
+    {
+     "area": "mach",
+     "text": "Machine guards are fitted and not bypassed",
+     "ref": "29 CFR 1910.212",
+     "critical": true,
+     "evidence": "photo",
+     "id": "osh11"
+    },
+    {
+     "area": "mach",
+     "text": "Written lockout/tagout procedures exist and are used",
+     "ref": "29 CFR 1910.147",
+     "critical": true,
+     "evidence": "document",
+     "id": "osh12"
+    },
+    {
+     "area": "mach",
+     "text": "Periodic inspection of the LOTO procedures is recorded",
+     "ref": "29 CFR 1910.147(c)(6)",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh13"
+    },
+    {
+     "area": "mach",
+     "text": "Abrasive wheel machines have guards and correct tool rest settings",
+     "ref": "29 CFR 1910.215",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh14"
+    },
+    {
+     "area": "hazcom",
+     "text": "A written hazard communication program and chemical inventory exist",
+     "ref": "29 CFR 1910.1200",
+     "critical": false,
+     "evidence": "document",
+     "id": "osh15"
+    },
+    {
+     "area": "hazcom",
+     "text": "Safety data sheets are available for every chemical",
+     "ref": "29 CFR 1910.1200(g)",
+     "critical": true,
+     "evidence": "document",
+     "id": "osh16"
+    },
+    {
+     "area": "hazcom",
+     "text": "Containers are labelled including decanted ones",
+     "ref": "29 CFR 1910.1200(f)",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh17"
+    },
+    {
+     "area": "ppe",
+     "text": "A PPE hazard assessment is documented and PPE is provided",
+     "ref": "29 CFR 1910.132(d)",
+     "critical": false,
+     "evidence": "document",
+     "id": "osh18"
+    },
+    {
+     "area": "ppe",
+     "text": "Respirator users are medically cleared, trained and fit tested",
+     "ref": "29 CFR 1910.134",
+     "critical": true,
+     "evidence": "record",
+     "id": "osh19"
+    },
+    {
+     "area": "ppe",
+     "text": "Hearing protection is provided and a program exists where noise is at or above 85 dBA",
+     "ref": "29 CFR 1910.95",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh20"
+    },
+    {
+     "area": "conf",
+     "text": "Permit-required confined spaces are identified, signed and controlled by permit",
+     "ref": "29 CFR 1910.146",
+     "critical": true,
+     "evidence": "document",
+     "id": "osh21"
+    },
+    {
+     "area": "conf",
+     "text": "Attendants and rescue arrangements are in place for entries",
+     "ref": "29 CFR 1910.146(k)",
+     "critical": true,
+     "evidence": "record",
+     "id": "osh22"
+    },
+    {
+     "area": "veh",
+     "text": "Forklift operators are trained and evaluated and daily checks are done",
+     "ref": "29 CFR 1910.178(l) and (q)",
+     "critical": true,
+     "evidence": "record",
+     "id": "osh23"
+    },
+    {
+     "area": "veh",
+     "text": "Compressed gas cylinders are secured, capped and stored properly",
+     "ref": "29 CFR 1910.101",
+     "critical": false,
+     "evidence": "photo",
+     "id": "osh24"
+    },
+    {
+     "area": "rec",
+     "text": "OSHA injury and illness logs are kept and the annual summary posted",
+     "ref": "29 CFR 1904",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh25"
+    },
+    {
+     "area": "rec",
+     "text": "Safety training records are kept for each worker",
+     "ref": "OSHA training requirements",
+     "critical": false,
+     "evidence": "record",
+     "id": "osh26"
+    }
+   ]
+  },
+  {
+   "id": "factory_walkdown",
+   "title": "Factory / plant safety walkdown",
+   "icon": "🏭",
+   "description": "Weekly or monthly walkdown for a manufacturing site.",
+   "standard": "Site standard / Factories Act",
+   "areas": [
+    {
+     "id": "house",
+     "title": "Housekeeping and storage",
+     "hazard_category": "Housekeeping & Slips"
+    },
+    {
+     "id": "mach",
+     "title": "Machine guarding and lockout",
+     "hazard_category": "Machinery & Guarding"
+    },
+    {
+     "id": "elec",
+     "title": "Electrical safety",
+     "hazard_category": "Electrical"
+    },
+    {
+     "id": "fire",
+     "title": "Fire and emergency",
+     "hazard_category": "Fire & Explosion"
+    },
+    {
+     "id": "ppe",
+     "title": "PPE and noise",
+     "hazard_category": "PPE"
+    },
+    {
+     "id": "chem",
+     "title": "Chemicals",
+     "hazard_category": "Chemical & Hazardous Substances"
+    },
+    {
+     "id": "mhe",
+     "title": "Material handling and forklifts",
+     "hazard_category": "Vehicles & Traffic"
+    },
+    {
+     "id": "height",
+     "title": "Work at height and permits",
+     "hazard_category": "Fall from Height"
+    },
+    {
+     "id": "welfare",
+     "title": "Welfare and hygiene",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "contr",
+     "title": "Contractors and documents",
+     "hazard_category": "Other"
+    }
+   ],
+   "questions": [
+    {
+     "area": "house",
+     "text": "Walkways and exits are clear and marked",
+     "ref": "Site standard",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac1"
+    },
+    {
+     "area": "house",
+     "text": "Floors are dry and free from oil and trip hazards",
+     "ref": "Site standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac2"
+    },
+    {
+     "area": "house",
+     "text": "Materials are stored stable and at safe heights",
+     "ref": "Site standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac3"
+    },
+    {
+     "area": "house",
+     "text": "Waste is segregated and bins are not overflowing",
+     "ref": "Site standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac4"
+    },
+    {
+     "area": "mach",
+     "text": "All machine guards are in place and undamaged",
+     "ref": "Factories Act s.21 / OSHA 1910.212",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac5"
+    },
+    {
+     "area": "mach",
+     "text": "Emergency stops are within reach and tested",
+     "ref": "Machine standard",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac6"
+    },
+    {
+     "area": "mach",
+     "text": "Lockout/tagout is used for maintenance and cleaning",
+     "ref": "LOTO procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "fac7"
+    },
+    {
+     "area": "mach",
+     "text": "Operators are trained and authorised for their machines",
+     "ref": "Training records",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac8"
+    },
+    {
+     "area": "elec",
+     "text": "Panels and boards are closed, labelled and unobstructed",
+     "ref": "Electrical rules",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac9"
+    },
+    {
+     "area": "elec",
+     "text": "Cables and extension leads are undamaged and not overloaded",
+     "ref": "Electrical rules",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac10"
+    },
+    {
+     "area": "elec",
+     "text": "RCD or GFCI protection is working and tested",
+     "ref": "Electrical rules",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac11"
+    },
+    {
+     "area": "fire",
+     "text": "Extinguishers are the right type, charged and inspected",
+     "ref": "Fire plan",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac12"
+    },
+    {
+     "area": "fire",
+     "text": "Fire exits and assembly points are signed and clear",
+     "ref": "Fire plan",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac13"
+    },
+    {
+     "area": "fire",
+     "text": "Alarm and emergency lighting are tested and recorded",
+     "ref": "Fire plan",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac14"
+    },
+    {
+     "area": "fire",
+     "text": "Hot work permits and fire watch are in place where hot work is done",
+     "ref": "Permit procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "fac15"
+    },
+    {
+     "area": "ppe",
+     "text": "Workers wear the PPE required for the area",
+     "ref": "PPE standard",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac16"
+    },
+    {
+     "area": "ppe",
+     "text": "PPE is in good condition and the right type",
+     "ref": "PPE standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac17"
+    },
+    {
+     "area": "ppe",
+     "text": "Hearing protection is worn in noise zones and zones are signed",
+     "ref": "Noise standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac18"
+    },
+    {
+     "area": "chem",
+     "text": "Chemicals are labelled and stored segregated with bunding",
+     "ref": "Chemical standard",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac19"
+    },
+    {
+     "area": "chem",
+     "text": "SDS are available at the point of use",
+     "ref": "Chemical standard",
+     "critical": false,
+     "evidence": "document",
+     "id": "fac20"
+    },
+    {
+     "area": "chem",
+     "text": "Eyewash and shower are accessible and tested",
+     "ref": "Emergency standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac21"
+    },
+    {
+     "area": "chem",
+     "text": "Spill kits are available and complete",
+     "ref": "Emergency standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac22"
+    },
+    {
+     "area": "mhe",
+     "text": "Forklift routes are separated from pedestrians",
+     "ref": "Traffic plan",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac23"
+    },
+    {
+     "area": "mhe",
+     "text": "Forklift daily checks are done and recorded",
+     "ref": "MHE standard",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac24"
+    },
+    {
+     "area": "mhe",
+     "text": "Racking is undamaged and load notices are displayed",
+     "ref": "Storage standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac25"
+    },
+    {
+     "area": "mhe",
+     "text": "Lifting gear is tagged, in date and undamaged",
+     "ref": "Lifting standard",
+     "critical": true,
+     "evidence": "record",
+     "id": "fac26"
+    },
+    {
+     "area": "height",
+     "text": "Edges, openings and platforms are protected",
+     "ref": "Work at height standard",
+     "critical": true,
+     "evidence": "photo",
+     "id": "fac27"
+    },
+    {
+     "area": "height",
+     "text": "Ladders and scaffolds are inspected and tagged",
+     "ref": "Work at height standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac28"
+    },
+    {
+     "area": "height",
+     "text": "Permits are displayed and match the work being done",
+     "ref": "Permit procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "fac29"
+    },
+    {
+     "area": "welfare",
+     "text": "Drinking water, toilets and rest areas are clean and available",
+     "ref": "Welfare standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac30"
+    },
+    {
+     "area": "welfare",
+     "text": "First aid kits and first aiders are available and current",
+     "ref": "First aid standard",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac31"
+    },
+    {
+     "area": "contr",
+     "text": "Contractors are inducted and their documents are on file",
+     "ref": "Contractor procedure",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac32"
+    },
+    {
+     "area": "contr",
+     "text": "Safety notice boards and emergency numbers are displayed",
+     "ref": "Site standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "fac33"
+    },
+    {
+     "area": "contr",
+     "text": "Last month's inspection actions have been closed",
+     "ref": "Action tracker",
+     "critical": false,
+     "evidence": "record",
+     "id": "fac34"
+    }
+   ]
+  },
+  {
+   "id": "construction_site",
+   "title": "Construction site safety walkdown",
+   "icon": "🏗️",
+   "description": "Weekly walkdown for construction projects.",
+   "standard": "OSHA 29 CFR 1926 / site rules",
+   "areas": [
+    {
+     "id": "setup",
+     "title": "Site setup and access",
+     "hazard_category": "Housekeeping & Slips"
+    },
+    {
+     "id": "scaf",
+     "title": "Scaffolding",
+     "hazard_category": "Scaffolding"
+    },
+    {
+     "id": "height",
+     "title": "Work at height and edges",
+     "hazard_category": "Fall from Height"
+    },
+    {
+     "id": "exc",
+     "title": "Excavation and trenching",
+     "hazard_category": "Excavation"
+    },
+    {
+     "id": "lift",
+     "title": "Lifting and cranes",
+     "hazard_category": "Lifting & Cranes"
+    },
+    {
+     "id": "elec",
+     "title": "Temporary electrical",
+     "hazard_category": "Electrical"
+    },
+    {
+     "id": "hot",
+     "title": "Hot work and fire",
+     "hazard_category": "Hot Work"
+    },
+    {
+     "id": "plant",
+     "title": "Plant and traffic",
+     "hazard_category": "Vehicles & Traffic"
+    },
+    {
+     "id": "ppe",
+     "title": "PPE and welfare",
+     "hazard_category": "PPE"
+    },
+    {
+     "id": "perm",
+     "title": "Permits, JSA and emergency",
+     "hazard_category": "Other"
+    }
+   ],
+   "questions": [
+    {
+     "area": "setup",
+     "text": "Site is fenced, signed and access is controlled",
+     "ref": "29 CFR 1926.20 / site rules",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con1"
+    },
+    {
+     "area": "setup",
+     "text": "Walkways are clear, lit and free of trip hazards",
+     "ref": "29 CFR 1926.25",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con2"
+    },
+    {
+     "area": "setup",
+     "text": "Materials are stacked safely and waste is cleared",
+     "ref": "29 CFR 1926.250",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con3"
+    },
+    {
+     "area": "scaf",
+     "text": "Scaffolds are tagged and inspected by a competent person",
+     "ref": "29 CFR 1926.451",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con4"
+    },
+    {
+     "area": "scaf",
+     "text": "Bases, ties and bracing are complete",
+     "ref": "29 CFR 1926.451",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con5"
+    },
+    {
+     "area": "scaf",
+     "text": "Platforms are fully boarded with guardrails and toe boards",
+     "ref": "29 CFR 1926.451(g)",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con6"
+    },
+    {
+     "area": "scaf",
+     "text": "Safe access (ladder or stair) is provided",
+     "ref": "29 CFR 1926.451(e)",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con7"
+    },
+    {
+     "area": "height",
+     "text": "Edges, openings and roof work are protected by guardrails, covers or fall arrest",
+     "ref": "29 CFR 1926.501",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con8"
+    },
+    {
+     "area": "height",
+     "text": "Harnesses and anchors are inspected and used correctly",
+     "ref": "29 CFR 1926.502",
+     "critical": true,
+     "evidence": "record",
+     "id": "con9"
+    },
+    {
+     "area": "height",
+     "text": "Fragile surfaces are marked and covered",
+     "ref": "29 CFR 1926.501(b)(10)",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con10"
+    },
+    {
+     "area": "exc",
+     "text": "Utilities are located and marked before digging",
+     "ref": "29 CFR 1926.651(b)",
+     "critical": true,
+     "evidence": "record",
+     "id": "con11"
+    },
+    {
+     "area": "exc",
+     "text": "Trenches 1.5 m (5 ft) or deeper have a protective system",
+     "ref": "29 CFR 1926.652",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con12"
+    },
+    {
+     "area": "exc",
+     "text": "Ladders or ramps are within reach and spoil is set back",
+     "ref": "29 CFR 1926.651(c) and (j)",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con13"
+    },
+    {
+     "area": "exc",
+     "text": "A competent person inspects excavations daily and after rain",
+     "ref": "29 CFR 1926.651(k)",
+     "critical": true,
+     "evidence": "record",
+     "id": "con14"
+    },
+    {
+     "area": "lift",
+     "text": "Lift plans exist and cranes have current certificates",
+     "ref": "29 CFR 1926 Subpart CC",
+     "critical": true,
+     "evidence": "record",
+     "id": "con15"
+    },
+    {
+     "area": "lift",
+     "text": "Slings and shackles are tagged and undamaged",
+     "ref": "29 CFR 1926.251",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con16"
+    },
+    {
+     "area": "lift",
+     "text": "The lift zone is barricaded and a signaller is used",
+     "ref": "29 CFR 1926 Subpart CC",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con17"
+    },
+    {
+     "area": "elec",
+     "text": "Temporary power uses GFCI or an assured grounding program",
+     "ref": "29 CFR 1926.404",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con18"
+    },
+    {
+     "area": "elec",
+     "text": "Cables are protected and off the ground in wet areas",
+     "ref": "29 CFR 1926.405",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con19"
+    },
+    {
+     "area": "elec",
+     "text": "Distribution boards are closed and labelled",
+     "ref": "29 CFR 1926 Subpart K",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con20"
+    },
+    {
+     "area": "hot",
+     "text": "Hot work permits and fire watch are in place",
+     "ref": "29 CFR 1926.352",
+     "critical": true,
+     "evidence": "record",
+     "id": "con21"
+    },
+    {
+     "area": "hot",
+     "text": "Gas cylinders are secured and flashback arrestors are fitted",
+     "ref": "29 CFR 1926.350",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con22"
+    },
+    {
+     "area": "hot",
+     "text": "Extinguishers are placed and inspected",
+     "ref": "29 CFR 1926.150",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con23"
+    },
+    {
+     "area": "plant",
+     "text": "Traffic management plan, banksmen and reversing alarms are in place",
+     "ref": "29 CFR 1926 Subpart O",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con24"
+    },
+    {
+     "area": "plant",
+     "text": "Plant operators are trained and plant is inspected daily",
+     "ref": "29 CFR 1926.600",
+     "critical": false,
+     "evidence": "record",
+     "id": "con25"
+    },
+    {
+     "area": "ppe",
+     "text": "Helmets, boots, hi-vis and eye protection are worn",
+     "ref": "29 CFR 1926 Subpart E",
+     "critical": true,
+     "evidence": "photo",
+     "id": "con26"
+    },
+    {
+     "area": "ppe",
+     "text": "Drinking water, toilets, shade and rest areas are provided",
+     "ref": "29 CFR 1926.51",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con27"
+    },
+    {
+     "area": "ppe",
+     "text": "First aid and a trained first aider are available",
+     "ref": "29 CFR 1926.50",
+     "critical": false,
+     "evidence": "record",
+     "id": "con28"
+    },
+    {
+     "area": "perm",
+     "text": "JSAs are completed and crews are briefed",
+     "ref": "Site procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "con29"
+    },
+    {
+     "area": "perm",
+     "text": "Emergency plan, muster points and numbers are displayed",
+     "ref": "29 CFR 1926.35",
+     "critical": false,
+     "evidence": "document",
+     "id": "con30"
+    },
+    {
+     "area": "perm",
+     "text": "Incident and near-miss reports are logged and closed",
+     "ref": "Site procedure",
+     "critical": false,
+     "evidence": "record",
+     "id": "con31"
+    }
+   ]
+  },
+  {
+   "id": "contractor_hse",
+   "title": "Contractor HSE audit",
+   "icon": "🤝",
+   "description": "Check a contractor's controls and paperwork.",
+   "standard": "Contract HSE requirements",
+   "areas": [
+    {
+     "id": "pre",
+     "title": "Prequalification and competence",
+     "hazard_category": "Other"
+    },
+    {
+     "id": "work",
+     "title": "Controls at the work place",
+     "hazard_category": "Other"
+    }
+   ],
+   "questions": [
+    {
+     "area": "pre",
+     "text": "The contractor passed HSE prequalification",
+     "ref": "Contractor procedure",
+     "critical": false,
+     "evidence": "record",
+     "id": "con1"
+    },
+    {
+     "area": "pre",
+     "text": "Workers completed site induction",
+     "ref": "Contractor procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "con2"
+    },
+    {
+     "area": "pre",
+     "text": "Workers hold the required licences and training",
+     "ref": "Training records",
+     "critical": true,
+     "evidence": "record",
+     "id": "con3"
+    },
+    {
+     "area": "pre",
+     "text": "The contractor's insurance and registrations are current",
+     "ref": "Contract",
+     "critical": false,
+     "evidence": "document",
+     "id": "con4"
+    },
+    {
+     "area": "pre",
+     "text": "A named competent supervisor is on site",
+     "ref": "Contract",
+     "critical": false,
+     "evidence": "interview",
+     "id": "con5"
+    },
+    {
+     "area": "work",
+     "text": "JSA and method statement are approved and briefed",
+     "ref": "Site procedure",
+     "critical": true,
+     "evidence": "document",
+     "id": "con6"
+    },
+    {
+     "area": "work",
+     "text": "Permits are in place for the work being done",
+     "ref": "Permit procedure",
+     "critical": true,
+     "evidence": "record",
+     "id": "con7"
+    },
+    {
+     "area": "work",
+     "text": "Equipment has current certificates and inspection tags",
+     "ref": "Certificates",
+     "critical": true,
+     "evidence": "record",
+     "id": "con8"
+    },
+    {
+     "area": "work",
+     "text": "PPE is correct and in good condition",
+     "ref": "PPE standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con9"
+    },
+    {
+     "area": "work",
+     "text": "Housekeeping and waste are managed",
+     "ref": "Site standard",
+     "critical": false,
+     "evidence": "photo",
+     "id": "con10"
+    },
+    {
+     "area": "work",
+     "text": "Incidents and near misses are reported on time",
+     "ref": "Contract",
+     "critical": false,
+     "evidence": "record",
+     "id": "con11"
+    },
+    {
+     "area": "work",
+     "text": "Toolbox talks are held and recorded",
+     "ref": "Site procedure",
+     "critical": false,
+     "evidence": "record",
+     "id": "con12"
+    },
+    {
+     "area": "work",
+     "text": "The contractor follows the emergency arrangements",
+     "ref": "Emergency plan",
+     "critical": false,
+     "evidence": "interview",
+     "id": "con13"
+    }
+   ]
+  }
+ ]
+}
