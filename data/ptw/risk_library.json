@@ -1,0 +1,1004 @@
+{
+ "version": 1,
+ "matrix": {
+  "likelihood": [
+   {
+    "n": 1,
+    "label": "Rare",
+    "desc": "Not expected. Could happen once in 10 or more years"
+   },
+   {
+    "n": 2,
+    "label": "Unlikely",
+    "desc": "Could happen once in 5 to 10 years"
+   },
+   {
+    "n": 3,
+    "label": "Possible",
+    "desc": "Could happen once in 1 to 5 years"
+   },
+   {
+    "n": 4,
+    "label": "Likely",
+    "desc": "Could happen once a year or more"
+   },
+   {
+    "n": 5,
+    "label": "Almost certain",
+    "desc": "Expected monthly or more often"
+   }
+  ],
+  "severity": [
+   {
+    "n": 1,
+    "label": "Insignificant",
+    "injury": "No injury",
+    "property": "Negligible damage",
+    "environment": "No effect"
+   },
+   {
+    "n": 2,
+    "label": "Minor",
+    "injury": "First aid case",
+    "property": "Minor damage",
+    "environment": "Minor and contained"
+   },
+   {
+    "n": 3,
+    "label": "Moderate",
+    "injury": "Medical treatment or restricted work",
+    "property": "Moderate damage, short stoppage",
+    "environment": "Release contained on site"
+   },
+   {
+    "n": 4,
+    "label": "Major",
+    "injury": "Lost time injury or serious injury",
+    "property": "Major damage, long stoppage",
+    "environment": "Release off site, regulator notified"
+   },
+   {
+    "n": 5,
+    "label": "Catastrophic",
+    "injury": "Fatality, permanent disability or multiple casualties",
+    "property": "Total loss of plant",
+    "environment": "Major environmental harm"
+   }
+  ],
+  "formula": "Risk score = likelihood x severity (1 to 25)",
+  "note": "Rate the risk before controls (initial) and again with controls in place (residual). Residual risk must never be higher than initial risk."
+ },
+ "bands": [
+  {
+   "id": "low",
+   "label": "Low",
+   "min": 1,
+   "max": 4,
+   "color": "#16a34a",
+   "rank": 1,
+   "approver": "Supervisor",
+   "action": "Acceptable. Control with routine procedures."
+  },
+  {
+   "id": "medium",
+   "label": "Medium",
+   "min": 5,
+   "max": 9,
+   "color": "#eab308",
+   "rank": 1,
+   "approver": "Supervisor",
+   "action": "Reduce as far as reasonably practicable. Controls must be in place before work."
+  },
+  {
+   "id": "high",
+   "label": "High",
+   "min": 10,
+   "max": 16,
+   "color": "#f97316",
+   "rank": 2,
+   "approver": "Site / HSE Manager",
+   "action": "Do not start until controls reduce the risk. Manager approval needed."
+  },
+  {
+   "id": "critical",
+   "label": "Critical",
+   "min": 17,
+   "max": 25,
+   "color": "#dc2626",
+   "rank": 3,
+   "approver": "Senior Management",
+   "action": "Stop. Redesign the job or add controls. Only senior management can accept this risk."
+  }
+ ],
+ "approvers": [
+  {
+   "rank": 1,
+   "id": "supervisor",
+   "label": "Supervisor"
+  },
+  {
+   "rank": 2,
+   "id": "manager",
+   "label": "Site / HSE Manager"
+  },
+  {
+   "rank": 3,
+   "id": "senior",
+   "label": "Senior Management"
+  }
+ ],
+ "hierarchy": [
+  "Elimination",
+  "Substitution",
+  "Engineering",
+  "Administrative",
+  "PPE"
+ ],
+ "jsa_rules": [
+  "Break the job into 4 to 10 clear steps in the order they happen",
+  "List the hazards of each step: what could hurt someone and how",
+  "Rate the initial risk before controls",
+  "Choose controls from the top of the hierarchy first, and PPE last",
+  "Rate the residual risk with the controls in place",
+  "Residual risk must not be higher than initial risk",
+  "Every High or Critical step needs at least one real control",
+  "Brief the crew and have each worker sign",
+  "Review the JSA when the job, place, people or equipment changes"
+ ],
+ "briefing": [
+  "The job and each step in order",
+  "The main hazards and what controls are in place",
+  "Who does what, and who is in charge",
+  "Permit conditions and limits",
+  "Emergency alarm, muster point and nearest first aid",
+  "Stop-work authority: anyone can stop the job",
+  "Questions: does everyone understand?"
+ ],
+ "templates": [
+  {
+   "id": "welding_hot_work",
+   "title": "Welding / hot work",
+   "steps": [
+    {
+     "step": "Prepare the area and equipment",
+     "hazards": [
+      "Combustibles near the work",
+      "Damaged leads, hoses or regulators"
+     ],
+     "controls": [
+      "Remove or cover combustibles within 11 m (35 ft)",
+      "Inspect equipment before use",
+      "Cover floor and wall openings"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Set up fire watch and extinguisher",
+     "hazards": [
+      "Fire spreads unnoticed"
+     ],
+     "controls": [
+      "Trained fire watch with no other duties",
+      "Right extinguisher within reach",
+      "Fire blanket under the work"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Carry out welding or cutting",
+     "hazards": [
+      "Sparks and spatter",
+      "Welding fume",
+      "Arc eye and burns",
+      "Electric shock"
+     ],
+     "controls": [
+      "Fume extraction or ventilation",
+      "Welding screens",
+      "Correct PPE: shade helmet, FR clothing, gloves",
+      "Dry gloves and inspected equipment"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 4,
+      "s": 3
+     },
+     "residual": {
+      "l": 2,
+      "s": 3
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Cool down and post-work fire watch",
+     "hazards": [
+      "Smouldering fire after work stops"
+     ],
+     "controls": [
+      "Fire watch for at least 30 minutes",
+      "Final check of hidden areas"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "confined_space_entry",
+   "title": "Confined space entry",
+   "steps": [
+    {
+     "step": "Isolate and prepare the space",
+     "hazards": [
+      "Release of energy or fluids",
+      "Residues"
+     ],
+     "controls": [
+      "Isolate and lock pipes and power",
+      "Drain, clean and purge as planned"
+     ],
+     "hierarchy": "Elimination",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Test the atmosphere and ventilate",
+     "hazards": [
+      "Low oxygen",
+      "Toxic or flammable gas"
+     ],
+     "controls": [
+      "Test at top, middle and bottom",
+      "Mechanical ventilation",
+      "Continuous gas monitoring"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 4,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Enter and work with an attendant",
+     "hazards": [
+      "Collapse",
+      "Heat stress",
+      "Entrapment"
+     ],
+     "controls": [
+      "Trained attendant at the entrance",
+      "Entry log and communication",
+      "Time limits and rest breaks"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 2,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Emergency rescue",
+     "hazards": [
+      "Rescuers become casualties",
+      "Delayed rescue"
+     ],
+     "controls": [
+      "Rescue plan and equipment ready outside",
+      "Trained rescue team",
+      "Never enter to rescue without breathing apparatus"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Exit, count and close the space",
+     "hazards": [
+      "Person left inside",
+      "Re-entry without a permit"
+     ],
+     "controls": [
+      "Count everyone out",
+      "Close and secure the space",
+      "Close the permit"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 2,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "work_at_height",
+   "title": "Work at height",
+   "steps": [
+    {
+     "step": "Plan and set up access",
+     "hazards": [
+      "Unstable scaffold, MEWP or ladder"
+     ],
+     "controls": [
+      "Use tagged and inspected access equipment",
+      "Level, firm base",
+      "Competent erector"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Fit and clip on fall protection",
+     "hazards": [
+      "Harness misuse",
+      "Weak or wrong anchor"
+     ],
+     "controls": [
+      "Inspect and fit the harness",
+      "Use a rated anchor above the work",
+      "Two points of attachment when moving"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 4,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Do the work at height",
+     "hazards": [
+      "Fall from an edge",
+      "Fragile surface",
+      "Dropped objects"
+     ],
+     "controls": [
+      "Guardrails or covers",
+      "Mark and cover fragile surfaces",
+      "Tool lanyards and barricade below"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 4,
+      "s": 5
+     },
+     "residual": {
+      "l": 2,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Rescue and descent",
+     "hazards": [
+      "Suspension trauma"
+     ],
+     "controls": [
+      "Rescue plan and trained rescuers",
+      "Rescue kit at the work site"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 2,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "excavation_trenching",
+   "title": "Excavation and trenching",
+   "steps": [
+    {
+     "step": "Locate utilities",
+     "hazards": [
+      "Strike on buried cable, gas or water"
+     ],
+     "controls": [
+      "Scan and mark utilities",
+      "Permit to dig",
+      "Hand dig near services"
+     ],
+     "hierarchy": "Elimination",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Dig with protection",
+     "hazards": [
+      "Trench collapse"
+     ],
+     "controls": [
+      "Shoring, trench box or sloping",
+      "Competent person inspection"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Work in the trench",
+     "hazards": [
+      "Engulfment",
+      "Poor air",
+      "Water"
+     ],
+     "controls": [
+      "Atmosphere test if deep or contaminated",
+      "Pump water out",
+      "Keep workers within the protected area"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Control access and the edge",
+     "hazards": [
+      "Fall into the trench",
+      "Vehicles near the edge"
+     ],
+     "controls": [
+      "Ladder or ramp within 7.5 m",
+      "Edge barriers",
+      "Spoil and plant set back"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Backfill and reinstate",
+     "hazards": [
+      "Collapse during backfill",
+      "Services damaged"
+     ],
+     "controls": [
+      "Backfill in layers",
+      "Remove people before backfilling",
+      "Mark services"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 2,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "electrical_loto",
+   "title": "Electrical isolation and work",
+   "steps": [
+    {
+     "step": "Plan and identify energy sources",
+     "hazards": [
+      "Missed energy source"
+     ],
+     "controls": [
+      "Use the machine-specific procedure",
+      "List every isolation point"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Shut down and isolate",
+     "hazards": [
+      "Unexpected energy release"
+     ],
+     "controls": [
+      "Normal stop first",
+      "Operate the isolators"
+     ],
+     "hierarchy": "Elimination",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Lock, tag and release stored energy",
+     "hazards": [
+      "Stored energy",
+      "Someone else restarts it"
+     ],
+     "controls": [
+      "Personal lock and tag on each point",
+      "Release or block stored energy"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Test dead: test, prove, test",
+     "hazards": [
+      "Contact with live parts"
+     ],
+     "controls": [
+      "Proven tester",
+      "Test before and after on a known source"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Carry out the work",
+     "hazards": [
+      "Arc flash",
+      "Shock"
+     ],
+     "controls": [
+      "Insulated tools",
+      "Arc-rated PPE",
+      "Barriers and signs"
+     ],
+     "hierarchy": "PPE",
+     "initial": {
+      "l": 2,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Restore",
+     "hazards": [
+      "Energising with people inside"
+     ],
+     "controls": [
+      "Clear all people and tools",
+      "Each lock removed by its owner",
+      "Controlled re-energising"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 2,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "lifting_operations",
+   "title": "Crane and lifting operation",
+   "steps": [
+    {
+     "step": "Plan the lift and check the ground",
+     "hazards": [
+      "Crane overturn",
+      "Poor ground"
+     ],
+     "controls": [
+      "Lift plan by a competent person",
+      "Outrigger pads on firm ground"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Inspect gear and rig the load",
+     "hazards": [
+      "Gear failure",
+      "Load slips"
+     ],
+     "controls": [
+      "Inspect slings, shackles and hooks",
+      "Check load weight and centre of gravity"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Lift, swing and land",
+     "hazards": [
+      "Dropped load",
+      "Crush",
+      "Contact with power lines"
+     ],
+     "controls": [
+      "Exclusion zone",
+      "Safe distance from lines",
+      "Tag lines"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 2,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Signal and control the zone",
+     "hazards": [
+      "Poor communication",
+      "People under the load"
+     ],
+     "controls": [
+      "One signaller",
+      "Barricade the zone",
+      "Stop work signal known"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "chemical_transfer",
+   "title": "Chemical transfer and handling",
+   "steps": [
+    {
+     "step": "Check the SDS and containers",
+     "hazards": [
+      "Wrong chemical",
+      "Unlabelled container"
+     ],
+     "controls": [
+      "Read the SDS",
+      "Check labels"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 3
+     },
+     "residual": {
+      "l": 1,
+      "s": 3
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Set up the transfer area and spill control",
+     "hazards": [
+      "Spill spreads",
+      "No eyewash nearby"
+     ],
+     "controls": [
+      "Bunded area and spill kit",
+      "Eyewash tested and within reach"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 3,
+      "s": 3
+     },
+     "residual": {
+      "l": 1,
+      "s": 3
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Transfer the chemical",
+     "hazards": [
+      "Splash",
+      "Vapour inhalation",
+      "Spill"
+     ],
+     "controls": [
+      "Closed transfer system",
+      "Ventilation",
+      "Gloves, goggles and apron from the SDS"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 4,
+      "s": 3
+     },
+     "residual": {
+      "l": 2,
+      "s": 3
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Clean up and store",
+     "hazards": [
+      "Incompatible storage",
+      "Residue exposure"
+     ],
+     "controls": [
+      "Segregated storage",
+      "Wash hands and clean equipment"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 3
+     },
+     "residual": {
+      "l": 1,
+      "s": 3
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  },
+  {
+   "id": "line_breaking",
+   "title": "Line breaking / intrusive maintenance",
+   "steps": [
+    {
+     "step": "Plan and verify isolation",
+     "hazards": [
+      "Wrong line isolated",
+      "Trapped pressure"
+     ],
+     "controls": [
+      "Isolation list and second person check",
+      "Double block and bleed or blinds"
+     ],
+     "hierarchy": "Elimination",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Depressurise, drain and purge",
+     "hazards": [
+      "Hydrocarbon release",
+      "H2S"
+     ],
+     "controls": [
+      "Controlled depressurising with gauges",
+      "Purge as planned",
+      "Personal gas detectors"
+     ],
+     "hierarchy": "Engineering",
+     "initial": {
+      "l": 4,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Gas test and control ignition",
+     "hazards": [
+      "Fire and explosion"
+     ],
+     "controls": [
+      "Gas test",
+      "Remove ignition sources",
+      "Fire watch and extinguishers"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 5
+     },
+     "residual": {
+      "l": 1,
+      "s": 5
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Break the joint",
+     "hazards": [
+      "First release of fluid",
+      "Chemical contact"
+     ],
+     "controls": [
+      "Controlled bolt loosening",
+      "Drip trays",
+      "Stand clear and upwind",
+      "PPE from the SDS"
+     ],
+     "hierarchy": "PPE",
+     "initial": {
+      "l": 4,
+      "s": 4
+     },
+     "residual": {
+      "l": 2,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    },
+    {
+     "step": "Remake the joint and leak test",
+     "hazards": [
+      "Leak on restart"
+     ],
+     "controls": [
+      "Tighten in sequence",
+      "Leak test",
+      "Remove blinds and record"
+     ],
+     "hierarchy": "Administrative",
+     "initial": {
+      "l": 3,
+      "s": 4
+     },
+     "residual": {
+      "l": 1,
+      "s": 4
+     },
+     "responsible": "Supervisor"
+    }
+   ]
+  }
+ ]
+}
