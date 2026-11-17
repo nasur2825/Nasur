@@ -1,263 +1,735 @@
-import { APP, EVENTS, LS_KEYS } from './config.js';
-import { emit } from './eventbus.js';
-import { html, renderHtml } from '../services/sanitize.js';
+/* NASUR router — permanent loader fix.
+   - Phase 1-3 modules: render(ctx) with ctx.root = container element.
+   - Phase 4-6 modules: mount(el, ctx) / render(el, ctx) with el = container element.
+   - Hash routing (#/route?query), lazy module loading, navigation guard. */
+
+import * as CONFIG from './config.js';
+import * as BUS from './eventbus.js';
 
 export const DEFAULT_ROUTE = '/home';
-const MODULES_URL = new URL('../../data/modules.json', import.meta.url).href;
-const MODULE_BASE_URL = new URL('../../', import.meta.url).href;
+export const FILE_PATTERN = /^js\/modules\/[a-z0-9]+([_-][a-z0-9]+)*\.js$/;
+export const ID_PATTERN = /^[a-z][a-z0-9]*(_[a-z0-9]+)*$/;
+export const ROUTE_PATTERN = /^\/[a-z0-9]+(-[a-z0-9]+)*$/;
 
-const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
-const ROUTE_PATTERN = /^\/[a-z0-9]+(-[a-z0-9]+)*$/;
-const FILE_PATTERN = /^js\/modules\/[a-z0-9]+([_-][a-z0-9]+)*\.js$/;
-const STATUSES = Object.freeze(['active', 'planned']);
+const REGISTRY_URL = 'data/modules.json';
+const BLOCKED_STATUS = ['planned', 'disabled', 'hidden', 'retired'];
+const ROUTE_EVENT = (CONFIG.EVENTS && CONFIG.EVENTS.ROUTE_CHANGED) || 'route:changed';
 
-let registry = null;
-let registryPromise = null;
-let modulesById = new Map();
-let modulesByRoute = new Map();
-const builtins = new Map();
-const moduleCache = new Map();
+const state = {
+  registry: null,
+  byId: new Map(),
+  byRoute: new Map(),
+  builtins: new Map(),
+  imports: new Map(),
+  guard: null,
+  running: false,
+  opts: {},
+  root: null,
+  listener: null,
+  current: null,
+  last: null,
+  view: null,
+  rendered: null,
+  token: 0
+};
 
-let running = false;
-let rootEl = null;
-let focusEl = null;
-let guard = null;
-let navToken = 0;
-let currentHash = '';
-let currentRoute = null;
-let currentView = null;
-let currentCleanup = null;
-let currentController = null;
-let firstRender = true;
+/* ---------- helpers ---------- */
 
-function isPlainObject(v) { return v !== null && typeof v === 'object' && !Array.isArray(v); }
-function isStr(v) { return typeof v === 'string' && v.trim() !== ''; }
-
-export function validateRegistry(data) {
-  if (!isPlainObject(data)) throw new Error('NASUR modules.json: invalid object');
-  const stageIds = new Set((data.pdca_stages || []).map((s) => s.id));
-  const groupIds = new Set((data.groups || []).map((g) => g.id));
-  for (const mod of data.modules || []) {
-    if (!ID_PATTERN.test(mod.id)) throw new Error('NASUR modules.json: invalid id ' + mod.id);
-    const expectedRoute = '/' + mod.id.replace(/_/g, '-');
-    if (mod.route !== expectedRoute || !ROUTE_PATTERN.test(mod.route)) {
-      throw new Error('NASUR modules.json: module "' + mod.id + '" must have route "' + expectedRoute + '"');
-    }
-    if (!groupIds.has(mod.group)) throw new Error('NASUR modules.json: unknown group in ' + mod.id);
-    if (mod.pdca !== null && !stageIds.has(mod.pdca)) throw new Error('NASUR modules.json: unknown pdca in ' + mod.id);
-    if (!STATUSES.includes(mod.status)) throw new Error('NASUR modules.json: bad status in ' + mod.id);
-    if (mod.file !== null && !FILE_PATTERN.test(mod.file)) {
-      throw new Error('NASUR modules.json: invalid file path in ' + mod.id);
-    }
+function emit(name, payload) {
+  try {
+    if (typeof BUS.emit === 'function') BUS.emit(name, payload);
+    else if (BUS.default && typeof BUS.default.emit === 'function') BUS.default.emit(name, payload);
+  } catch (err) {
+    console.warn('[router] emit failed', err);
   }
-  return true;
 }
 
-export function setModuleRegistry(data) {
-  validateRegistry(data);
-  registry = JSON.parse(JSON.stringify(data));
-  modulesById = new Map(registry.modules.map((m) => [m.id, m]));
-  modulesByRoute = new Map(registry.modules.map((m) => [m.route, m]));
-  return registry;
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizePath(p) {
+  let s = String(p == null ? '' : p).trim();
+  s = s.replace(/^#/, '').split('?')[0];
+  try {
+    s = decodeURIComponent(s);
+  } catch (e) {
+    /* keep raw */
+  }
+  if (!s.startsWith('/')) s = '/' + s;
+  s = s.replace(/\/{2,}/g, '/').replace(/\/+$/, '').toLowerCase();
+  return s === '' || s === '/' ? DEFAULT_ROUTE : s;
+}
+
+function toQuery(obj) {
+  if (!obj || typeof obj !== 'object') return '';
+  const sp = new URLSearchParams();
+  Object.keys(obj).forEach((k) => {
+    if (obj[k] !== undefined && obj[k] !== null) sp.set(k, String(obj[k]));
+  });
+  return sp.toString();
+}
+
+function idsOf(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((x) => (typeof x === 'string' ? x : x && x.id))
+    .filter(Boolean);
+}
+
+function resolveModule(ref) {
+  if (!ref) return null;
+  if (typeof ref === 'object') {
+    if (ref.id && state.byId.has(ref.id)) return state.byId.get(ref.id);
+    if (ref.route) return state.byRoute.get(normalizePath(ref.route)) || null;
+    return null;
+  }
+  const s = String(ref);
+  if (state.byId.has(s)) return state.byId.get(s);
+  if (s[0] === '/' || s[0] === '#') return state.byRoute.get(normalizePath(s)) || null;
+  return null;
+}
+
+function indexRegistry(reg) {
+  state.byId = new Map();
+  state.byRoute = new Map();
+  reg.modules.forEach((m) => {
+    state.byId.set(m.id, m);
+    state.byRoute.set(m.route, m);
+  });
+}
+
+/* ---------- registry ---------- */
+
+export function validateRegistry(reg) {
+  const errors = [];
+  const finish = () => ({ valid: errors.length === 0, ok: errors.length === 0, errors });
+
+  if (!reg || typeof reg !== 'object' || Array.isArray(reg)) {
+    errors.push('registry must be an object');
+    return finish();
+  }
+  if (!Array.isArray(reg.modules)) {
+    errors.push('modules must be an array');
+    return finish();
+  }
+
+  const stages = idsOf(reg.pdca_stages);
+  const groups = idsOf(reg.groups);
+  const seenIds = new Set();
+  const seenRoutes = new Set();
+
+  reg.modules.forEach((m, i) => {
+    const label = m && m.id ? m.id : '#' + i;
+    if (!m || typeof m !== 'object') {
+      errors.push('module ' + label + ' must be an object');
+      return;
+    }
+    if (typeof m.id !== 'string' || !ID_PATTERN.test(m.id)) errors.push('module ' + label + ': bad id');
+    else if (seenIds.has(m.id)) errors.push('module ' + label + ': duplicate id');
+    else seenIds.add(m.id);
+
+    if (typeof m.route !== 'string' || !ROUTE_PATTERN.test(m.route)) errors.push('module ' + label + ': bad route');
+    else if (seenRoutes.has(m.route)) errors.push('module ' + label + ': duplicate route');
+    else seenRoutes.add(m.route);
+
+    if (m.builtin === true) {
+      if (m.file !== null && m.file !== undefined) errors.push('module ' + label + ': builtin must have file null');
+    } else if (typeof m.file !== 'string' || !FILE_PATTERN.test(m.file)) {
+      errors.push('module ' + label + ': bad file path');
+    }
+
+    if (groups.length && m.group !== undefined && groups.indexOf(m.group) === -1) {
+      errors.push('module ' + label + ': unknown group ' + m.group);
+    }
+    if (stages.length && m.pdca !== undefined && m.pdca !== null && stages.indexOf(m.pdca) === -1) {
+      errors.push('module ' + label + ': unknown pdca ' + m.pdca);
+    }
+    if (m.id === 'home' && m.route !== DEFAULT_ROUTE) errors.push('home route must be ' + DEFAULT_ROUTE);
+  });
+
+  return finish();
+}
+
+export function setModuleRegistry(reg) {
+  const result = validateRegistry(reg);
+  if (!result.valid) throw new Error('Invalid module registry: ' + result.errors.join('; '));
+  state.registry = clone(reg);
+  indexRegistry(state.registry);
+  return state.registry;
 }
 
 export function clearModuleRegistry() {
-  registry = null; registryPromise = null;
-  modulesById = new Map(); modulesByRoute = new Map();
+  state.registry = null;
+  state.byId = new Map();
+  state.byRoute = new Map();
+  state.imports = new Map();
 }
 
-export function loadModuleRegistry(options = {}) {
-  if (registry && !options.force) return Promise.resolve(registry);
-  if (registryPromise && !options.force) return registryPromise;
-  registryPromise = fetch(MODULES_URL)
-    .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then((d) => setModuleRegistry(d))
-    .finally(() => { registryPromise = null; });
-  return registryPromise;
+export async function loadModuleRegistry(url) {
+  const res = await fetch(url || REGISTRY_URL, { cache: 'no-cache' });
+  if (!res.ok) throw new Error('Could not load module registry (HTTP ' + res.status + ')');
+  const data = await res.json();
+  return setModuleRegistry(data);
 }
 
-export function getRegistry() { return registry; }
-export function getModules() { return registry ? registry.modules : []; }
-export function getModule(id) { return modulesById.get(id) || null; }
-export function getModuleByRoute(route) { return modulesByRoute.get(route) || null; }
-export function isModuleOpenable(mod) { return Boolean(mod) && mod.status === 'active'; }
+export function getRegistry() {
+  return state.registry;
+}
+
+export function getModules() {
+  return state.registry ? state.registry.modules.slice() : [];
+}
+
+export function getModule(id) {
+  return state.byId.get(String(id)) || null;
+}
+
+export function getModuleByRoute(route) {
+  if (route === undefined || route === null) return null;
+  return state.byRoute.get(normalizePath(route)) || null;
+}
+
+export function isModuleOpenable(ref) {
+  const m = resolveModule(ref);
+  if (!m) return false;
+  if (BLOCKED_STATUS.indexOf(m.status) !== -1) return false;
+  if (m.builtin) return state.builtins.has(m.id) || m.id === 'more';
+  return typeof m.file === 'string' && FILE_PATTERN.test(m.file);
+}
 
 export function getNavItems() {
-  return getModules().filter((m) => m.nav !== null && m.status === 'active').sort((a, b) => a.nav.order - b.nav.order);
+  return getModules()
+    .filter((m) => m.nav && isModuleOpenable(m))
+    .map((m) => ({
+      id: m.id,
+      route: m.route,
+      title: m.title,
+      icon: m.icon,
+      group: m.group,
+      pdca: m.pdca,
+      href: hrefFor(m)
+    }));
 }
 
-export function getModulesByGroup() {
-  if (!registry) return [];
-  return registry.groups.slice().sort((a, b) => a.order - b.order)
-    .map((group) => ({ group, modules: registry.modules.filter((m) => m.group === group.id) }))
-    .filter((e) => e.modules.length > 0);
+export function getModulesByGroup(group) {
+  const list = getModules();
+  if (group === undefined) {
+    const out = {};
+    list.forEach((m) => {
+      (out[m.group] = out[m.group] || []).push(m);
+    });
+    return out;
+  }
+  return list.filter((m) => m.group === group);
 }
 
-export function getModulesByPdca() {
-  if (!registry) return [];
-  return registry.pdca_stages.slice().sort((a, b) => a.order - b.order)
-    .map((stage) => ({ stage, modules: registry.modules.filter((m) => m.pdca === stage.id) }))
-    .filter((e) => e.modules.length > 0);
+export function getModulesByPdca(stage) {
+  const list = getModules();
+  if (stage === undefined) {
+    const out = {};
+    list.forEach((m) => {
+      const key = m.pdca || 'none';
+      (out[key] = out[key] || []).push(m);
+    });
+    return out;
+  }
+  return list.filter((m) => m.pdca === stage);
 }
+
+/* ---------- hash helpers ---------- */
 
 export function parseHash(hash) {
-  let text = typeof hash === 'string' ? hash : '';
-  if (text.startsWith('#')) text = text.slice(1);
-  let queryText = '';
-  const mark = text.indexOf('?');
-  if (mark !== -1) { queryText = text.slice(mark + 1); text = text.slice(0, mark); }
-  const raw = text.split('/').filter(Boolean);
-  const segments = raw.map((p) => { try { return decodeURIComponent(p); } catch { return p; } });
-  return { valid: true, path: '/' + raw.join('/'), segments, query: new URLSearchParams(queryText) };
+  const input = hash === undefined ? (typeof location !== 'undefined' ? location.hash : '') : hash;
+  let raw = String(input || '').replace(/^#/, '');
+  const qi = raw.indexOf('?');
+  const pathPart = qi >= 0 ? raw.slice(0, qi) : raw;
+  const qs = qi >= 0 ? raw.slice(qi + 1) : '';
+  const path = normalizePath(pathPart);
+  const query = {};
+  new URLSearchParams(qs).forEach((v, k) => {
+    query[k] = v;
+  });
+  return {
+    path,
+    query,
+    segments: path.split('/').filter(Boolean),
+    hash: '#' + path + (qs ? '?' + qs : '')
+  };
 }
 
-export function routePath(moduleId, segments = [], query = {}) {
-  let path = '/' + moduleId.replace(/_/g, '-');
-  for (const s of segments) path += '/' + encodeURIComponent(String(s));
-  const params = new URLSearchParams();
-  for (const k of Object.keys(query || {})) {
-    if (query[k] !== undefined && query[k] !== null) params.set(k, String(query[k]));
+export function routePath(ref) {
+  const m = resolveModule(ref);
+  if (m) return m.route;
+  if (typeof ref === 'string' && (ref[0] === '/' || ref[0] === '#')) return normalizePath(ref);
+  return null;
+}
+
+export function hrefFor(ref, query) {
+  const p = routePath(ref) || DEFAULT_ROUTE;
+  const qs = toQuery(query);
+  return '#' + p + (qs ? '?' + qs : '');
+}
+
+/* ---------- builtins and guard ---------- */
+
+export function registerBuiltin(id, handler) {
+  if (typeof id !== 'string' || !id) throw new Error('registerBuiltin needs a module id');
+  if (typeof handler === 'function') handler = { render: handler };
+  if (!handler || typeof handler !== 'object') throw new Error('registerBuiltin needs a handler');
+  state.builtins.set(id, handler);
+  return true;
+}
+
+export function setNavigationGuard(fn) {
+  state.guard = typeof fn === 'function' ? fn : null;
+  return state.guard;
+}
+
+/* ---------- module view adapter ---------- */
+
+function firstParamName(fn) {
+  let src = '';
+  try {
+    src = Function.prototype.toString.call(fn);
+  } catch (e) {
+    return null;
   }
-  const q = params.toString();
-  return q ? path + '?' + q : path;
+  let m = src.match(/^\s*(?:async\s+)?(?:function\s*\*?\s*)?[A-Za-z_$][\w$]*\s*\(\s*([^),=\s]*)/);
+  if (!m) m = src.match(/^\s*(?:async\s*)?\(\s*([^),=\s]*)/);
+  if (!m) m = src.match(/^\s*(?:async\s+)?([A-Za-z_$][\w$]*)\s*=>/);
+  return m ? m[1] : null;
 }
 
-export function hrefFor(moduleId, segments, query) { return '#' + routePath(moduleId, segments, query); }
-
-export function registerBuiltin(moduleId, renderFn) { builtins.set(moduleId, renderFn); }
-export function setNavigationGuard(fn) { guard = fn; return () => { if (guard === fn) guard = null; }; }
-
-function teardown() {
-  if (currentController) { currentController.abort(); currentController = null; }
-  if (typeof currentCleanup === 'function') { try { currentCleanup(); } catch {} }
-  currentCleanup = null;
-  currentView = null;
-  if (rootEl) rootEl.replaceChildren();
-}
-
-function mountView() {
-  const el = document.createElement('div');
-  el.className = 'view';
-  rootEl.replaceChildren(el);
-  currentView = el;
-  return el;
-}
-
-function commit(token, info, title) {
-  if (token !== navToken || !rootEl) return;
-  currentRoute = info;
-  document.title = isStr(title) ? title + ' – ' + APP.NAME : APP.NAME;
-  rootEl.removeAttribute('aria-busy');
-  if (info.state === 'ok') {
-    try { localStorage.setItem(LS_KEYS.LAST_ROUTE, info.query_string ? info.path + '?' + info.query_string : info.path); } catch {}
+function detectStyle(entryName, fn) {
+  const p = firstParamName(fn);
+  if (p) {
+    if (/^(_?ctx|context|appctx|\$ctx|\{)/i.test(p)) return 'ctx';
+    if (/^(_?el|_?root|container|host|node|mount|view|target|outlet|element|parent)$/i.test(p)) return 'el';
   }
-  if (!firstRender) { window.scrollTo(0, 0); if (focusEl) focusEl.focus({ preventScroll: true }); }
-  firstRender = false;
-  emit(EVENTS.ROUTE_CHANGED, { ...info, segments: info.segments.slice() });
+  if (fn.length >= 2) return 'el';
+  return entryName === 'mount' ? 'el' : 'ctx';
 }
 
-async function loadRenderer(mod) {
-  if (mod.builtin) return builtins.get(mod.id);
-  let loaded = moduleCache.get(mod.file);
-  if (!loaded) {
-    loaded = await import(MODULE_BASE_URL + mod.file);
-    moduleCache.set(mod.file, loaded);
+function pickEntry(mod) {
+  if (!mod) return null;
+  if (typeof mod.mount === 'function') return { name: 'mount', fn: mod.mount, owner: mod };
+  if (typeof mod.render === 'function') return { name: 'render', fn: mod.render, owner: mod };
+  const d = mod.default;
+  if (d) {
+    if (typeof d.mount === 'function') return { name: 'mount', fn: d.mount, owner: d };
+    if (typeof d.render === 'function') return { name: 'render', fn: d.render, owner: d };
+    if (typeof d === 'function') return { name: 'render', fn: d, owner: null };
   }
-  return loaded.render;
+  return null;
 }
 
-async function resolveRoute(token) {
-  teardown();
-  let parsed = parseHash(window.location.hash);
-  if (parsed.segments.length === 0) {
-    window.history.replaceState(null, '', '#' + DEFAULT_ROUTE);
-    parsed = parseHash(window.location.hash);
+function findTeardown(mod) {
+  const holders = [mod, mod && mod.default].filter(Boolean);
+  const names = ['unmount', 'destroy', 'teardown', 'cleanup'];
+  for (const h of holders) {
+    for (const n of names) {
+      if (typeof h[n] === 'function') return h[n];
+    }
   }
-  currentHash = window.location.hash;
-  const info = { hash: currentHash, path: parsed.path, route: null, module_id: null, segments: [], previous_path: currentRoute ? currentRoute.path : null, state: 'ok', query_string: parsed.query.toString() };
-  const firstSeg = parsed.segments.length > 0 ? parsed.segments[0] : '';
-  const mod = firstSeg ? modulesByRoute.get('/' + firstSeg.toLowerCase()) : undefined;
+  return null;
+}
+
+export async function mountModuleView(mod, el, ctx) {
+  const entry = pickEntry(mod);
+  if (!entry) throw new Error('Module exports neither mount() nor render()');
+
+  const context = ctx && typeof ctx === 'object' ? ctx : {};
+  if (!context.root) context.root = el;
+  try {
+    if (!el.root) Object.defineProperty(el, 'root', { value: el, configurable: true, writable: true });
+  } catch (e) {
+    /* element property is a convenience only */
+  }
+
+  const first = detectStyle(entry.name, entry.fn);
+  const attempts = first === 'ctx' ? ['ctx', 'el'] : ['el', 'ctx'];
+  let result;
+  let lastError = null;
+
+  for (let i = 0; i < attempts.length; i += 1) {
+    try {
+      result = attempts[i] === 'el'
+        ? await entry.fn.call(entry.owner, el, context)
+        : await entry.fn.call(entry.owner, context);
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err;
+      const retryable = i === 0 && err instanceof TypeError && !el.firstChild;
+      if (!retryable) throw err;
+    }
+  }
+  if (lastError) throw lastError;
+
+  const teardown = findTeardown(mod);
+  return {
+    async cleanup() {
+      try {
+        if (typeof result === 'function') await result();
+        else if (result && typeof result.destroy === 'function') await result.destroy();
+        else if (result && typeof result.unmount === 'function') await result.unmount();
+        if (teardown) await teardown.call(null, el, context);
+      } catch (err) {
+        console.warn('[router] module cleanup failed', err);
+      }
+    }
+  };
+}
+
+/* ---------- default builtin: All Modules ---------- */
+
+function defaultMoreView(el, ctx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'more-view';
+  const h = document.createElement('h2');
+  h.textContent = 'All Modules';
+  wrap.appendChild(h);
+
+  const groups = (state.registry && state.registry.groups) || [];
+  groups
+    .slice()
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .forEach((g) => {
+      const mods = getModulesByGroup(g.id).filter((m) => m.id !== 'more' && isModuleOpenable(m));
+      if (!mods.length) return;
+      const sec = document.createElement('section');
+      const t = document.createElement('h3');
+      t.textContent = (g.icon ? g.icon + ' ' : '') + g.title;
+      sec.appendChild(t);
+      const grid = document.createElement('div');
+      grid.className = 'more-grid';
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;';
+      mods.forEach((m) => {
+        const a = document.createElement('a');
+        a.className = 'more-card card';
+        a.href = hrefFor(m);
+        a.style.cssText = 'display:block;padding:12px;border-radius:12px;text-decoration:none;color:inherit;border:1px solid var(--border, rgba(128,128,128,.3));';
+        const title = document.createElement('strong');
+        title.textContent = (m.icon ? m.icon + ' ' : '') + m.title;
+        const desc = document.createElement('div');
+        desc.style.cssText = 'font-size:.85em;opacity:.75;margin-top:4px;';
+        desc.textContent = m.description || '';
+        a.appendChild(title);
+        a.appendChild(desc);
+        grid.appendChild(a);
+      });
+      sec.appendChild(grid);
+      wrap.appendChild(sec);
+    });
+  el.replaceChildren(wrap);
+}
+
+const DEFAULT_BUILTINS = {
+  more: { render: defaultMoreView }
+};
+
+/* ---------- rendering ---------- */
+
+function resolveRoot(opts) {
+  if (opts && opts.nodeType === 1) return opts;
+  const c = opts && (opts.root || opts.container || opts.outlet || opts.el || opts.element || opts.target);
+  if (c && c.nodeType === 1) return c;
+  if (typeof c === 'string') {
+    const found = document.querySelector(c);
+    if (found) return found;
+  }
+  const selectors = ['[data-router-root]', '#app-root', '#view', '#app-view', '#router-view', '#main-view', '#app', 'main'];
+  for (const sel of selectors) {
+    const found = document.querySelector(sel);
+    if (found) return found;
+  }
+  return null;
+}
+
+function buildContext(route, el) {
+  const o = state.opts || {};
+  let base = {};
+  try {
+    if (typeof o.context === 'function') base = o.context(route) || {};
+    else if (o.context && typeof o.context === 'object') base = o.context;
+    else if (typeof o.getContext === 'function') base = o.getContext(route) || {};
+    else if (o.ctx && typeof o.ctx === 'object') base = o.ctx;
+  } catch (err) {
+    console.warn('[router] context factory failed', err);
+  }
+  return Object.assign({}, base, {
+    root: el,
+    el,
+    container: el,
+    route,
+    path: route.path,
+    params: route.params,
+    query: route.query,
+    module: route.module,
+    moduleId: route.id,
+    navigate,
+    hrefFor,
+    routePath
+  });
+}
+
+function showMessage(root, title, text, actions) {
+  const box = document.createElement('div');
+  box.className = 'router-message card';
+  box.style.cssText = 'padding:16px;margin:16px;border-radius:12px;border:1px solid var(--border, rgba(128,128,128,.3));';
+  const h = document.createElement('h3');
+  h.textContent = title;
+  const p = document.createElement('p');
+  p.textContent = text;
+  box.appendChild(h);
+  box.appendChild(p);
+  (actions || []).forEach((a) => {
+    const b = document.createElement(a.href ? 'a' : 'button');
+    b.textContent = a.label;
+    b.style.cssText = 'margin-right:8px;padding:8px 12px;';
+    if (a.href) b.href = a.href;
+    if (a.onClick) b.addEventListener('click', a.onClick);
+    box.appendChild(b);
+  });
+  root.replaceChildren(box);
+}
+
+async function teardownView() {
+  const view = state.view;
+  state.view = null;
+  if (view && view.instance && typeof view.instance.cleanup === 'function') {
+    try {
+      await view.instance.cleanup();
+    } catch (err) {
+      console.warn('[router] teardown failed', err);
+    }
+  }
+}
+
+function loadModuleCode(m) {
+  if (m.builtin) {
+    return Promise.resolve(state.builtins.get(m.id) || DEFAULT_BUILTINS[m.id] || null);
+  }
+  if (!state.imports.has(m.file)) {
+    const href = new URL(m.file, document.baseURI).href;
+    const p = import(/* @vite-ignore */ href).catch((err) => {
+      state.imports.delete(m.file);
+      throw err;
+    });
+    state.imports.set(m.file, p);
+  }
+  return state.imports.get(m.file);
+}
+
+function setHashQuiet(hash, replace) {
+  if (location.hash === hash) return;
+  if (replace) history.replaceState(null, '', hash);
+  else location.hash = hash;
+}
+
+async function renderHash(rawHash, options) {
+  const opts = options || {};
+  const root = state.root;
+  if (!root) return false;
+
+  if (!String(rawHash || '').replace(/^#/, '') || String(rawHash).replace(/^#/, '') === '/') {
+    rawHash = '#' + DEFAULT_ROUTE;
+    setHashQuiet(rawHash, true);
+  }
+
+  const parsed = parseHash(rawHash);
+  const mod = getModuleByRoute(parsed.path);
+  const route = {
+    id: mod ? mod.id : null,
+    path: parsed.path,
+    route: parsed.path,
+    hash: parsed.hash,
+    query: parsed.query,
+    params: parsed.query,
+    segments: parsed.segments,
+    module: mod
+  };
+
+  if (state.guard && state.current) {
+    let allowed = true;
+    try {
+      allowed = await state.guard(state.current, route);
+    } catch (err) {
+      console.warn('[router] navigation guard failed', err);
+    }
+    if (allowed === false) {
+      if (state.current.hash) {
+        state.rendered = state.current.hash;
+        setHashQuiet(state.current.hash, true);
+      }
+      return false;
+    }
+  }
+
+  const token = ++state.token;
+  state.rendered = parsed.hash;
+  if (opts.source === 'navigate') setHashQuiet(parsed.hash, opts.replace);
+
+  await teardownView();
+  if (token !== state.token) return false;
+
+  root.setAttribute('aria-busy', 'true');
+  const loading = document.createElement('div');
+  loading.className = 'router-loading';
+  loading.style.cssText = 'padding:16px;opacity:.7;';
+  loading.textContent = 'Loading…';
+  root.replaceChildren(loading);
+
+  const finish = (ok) => {
+    root.removeAttribute('aria-busy');
+    return ok;
+  };
 
   if (!mod) {
-    info.state = 'not_found';
-    const v = mountView();
-    renderHtml(v, html`<div class="empty-state"><h2 class="empty-state__title">Page not found</h2><a class="btn btn--primary" href="#/home">Go to Home</a></div>`);
-    commit(token, info, 'Page not found');
-    return;
+    state.last = state.current;
+    state.current = route;
+    showMessage(root, 'Page not found', 'There is no module for ' + parsed.path + '.', [
+      { label: 'Go Home', href: hrefFor(DEFAULT_ROUTE) }
+    ]);
+    return finish(false);
   }
 
-  info.route = mod.route; info.module_id = mod.id; info.segments = parsed.segments.slice(1);
-  if (mod.status !== 'active') {
-    info.state = 'planned';
-    const v = mountView();
-    renderHtml(v, html`<div class="empty-state"><div class="empty-state__icon">${mod.icon}</div><h2 class="empty-state__title">${mod.title}</h2><p class="empty-state__text">${mod.description}</p><p class="empty-state__text">Planned · Phase ${mod.phase || ''}</p><a class="btn btn--primary" href="#/home">Go to Home</a></div>`);
-    commit(token, info, mod.title);
-    return;
+  if (!isModuleOpenable(mod)) {
+    state.last = state.current;
+    state.current = route;
+    showMessage(root, mod.title, 'This module is not available yet.', [
+      { label: 'Go Home', href: hrefFor(DEFAULT_ROUTE) }
+    ]);
+    return finish(false);
   }
 
-  const renderer = await loadRenderer(mod);
-  if (token !== navToken) return;
-  const viewEl = mountView();
-  const controller = new AbortController();
-  currentController = controller;
-  let viewTitle = null;
-  const cleanup = await renderer({
-    root: viewEl, module: mod, route: mod.route, path: parsed.path, segments: info.segments.slice(),
-    query: parsed.query, signal: controller.signal, navigate,
-    setTitle(t) { viewTitle = String(t); if (token === navToken) document.title = viewTitle + ' – ' + APP.NAME; }
-  });
-  if (token !== navToken) { if (typeof cleanup === 'function') cleanup(); return; }
-  currentCleanup = typeof cleanup === 'function' ? cleanup : null;
-  commit(token, info, viewTitle || mod.title);
+  try {
+    const code = await loadModuleCode(mod);
+    if (token !== state.token) return finish(false);
+    if (!code) throw new Error('No handler registered for builtin module ' + mod.id);
+
+    const ctx = buildContext(route, root);
+    root.replaceChildren();
+    const instance = await mountModuleView(code, root, ctx);
+
+    if (token !== state.token) {
+      if (instance && instance.cleanup) await instance.cleanup();
+      return finish(false);
+    }
+
+    state.view = { id: mod.id, root, module: code, instance };
+    state.last = state.current;
+    state.current = route;
+
+    try {
+      document.documentElement.setAttribute('data-route', route.path);
+      document.title = mod.title + ' · NASUR';
+      if (typeof root.scrollTo === 'function') root.scrollTo(0, 0);
+      window.scrollTo(0, 0);
+    } catch (e) {
+      /* cosmetic only */
+    }
+
+    emit(ROUTE_EVENT, {
+      route: route.path,
+      path: route.path,
+      id: mod.id,
+      module: mod,
+      params: route.params,
+      query: route.query,
+      previous: state.last ? state.last.path : null
+    });
+    return finish(true);
+  } catch (err) {
+    console.error('[router] failed to open ' + mod.id, err);
+    state.last = state.current;
+    state.current = route;
+    showMessage(root, 'Could not open ' + mod.title, (err && err.message) || String(err), [
+      { label: 'Retry', onClick: () => renderHash(parsed.hash, { source: 'retry' }) },
+      { label: 'Go Home', href: hrefFor(DEFAULT_ROUTE) }
+    ]);
+    return finish(false);
+  }
 }
 
-async function resolveCurrent() {
-  navToken += 1;
-  const token = navToken;
-  try { await resolveRoute(token); } catch (err) {
-    console.error('Router error:', err);
-    const v = mountView();
-    renderHtml(v, html`<div class="empty-state"><h2 class="empty-state__title">Could not load module</h2><p class="empty-state__text">${err.message || ''}</p><a class="btn btn--primary" href="#/home">Go to Home</a></div>`);
-    commit(token, { hash: window.location.hash, path: '/', route: null, module_id: null, segments: [], previous_path: null, state: 'error', query_string: '' }, 'Error');
-  }
-}
+/* ---------- public control ---------- */
 
 function onHashChange() {
-  if (!running || window.location.hash === currentHash) return;
-  if (guard && guard({ from: currentHash, to: window.location.hash }) === false) {
-    window.history.replaceState(null, '', currentHash || '#' + DEFAULT_ROUTE);
-    return;
-  }
-  void resolveCurrent();
+  const raw = location.hash;
+  if (raw && parseHash(raw).hash === state.rendered) return;
+  renderHash(raw, { source: 'hashchange' });
 }
 
-export async function startRouter(options = {}) {
-  await loadModuleRegistry();
-  rootEl = options.root; focusEl = options.focusTarget || null; firstRender = true; running = true;
-  window.addEventListener('hashchange', onHashChange);
-  await resolveCurrent();
+export function startRouter(options) {
+  let opts = options;
+  if (typeof opts === 'function') opts = { context: opts };
+  opts = opts || {};
+
+  if (state.running) {
+    return renderHash(location.hash, { source: 'restart' });
+  }
+
+  const root = resolveRoot(opts);
+  if (!root) throw new Error('Router could not find a container element to render into');
+  if (!state.registry) throw new Error('Router has no module registry; call loadModuleRegistry() first');
+
+  state.opts = opts;
+  state.root = root;
+  state.running = true;
+  state.listener = onHashChange;
+  window.addEventListener('hashchange', state.listener);
+  return renderHash(location.hash, { source: 'start' });
 }
 
 export function stopRouter() {
-  running = false; window.removeEventListener('hashchange', onHashChange);
-  teardown(); rootEl = null; focusEl = null; guard = null; currentRoute = null; currentHash = '';
+  if (state.listener) window.removeEventListener('hashchange', state.listener);
+  state.listener = null;
+  state.running = false;
+  state.token += 1;
+  const done = teardownView();
+  state.current = null;
+  state.last = null;
+  state.rendered = null;
+  state.root = null;
+  return done.then(() => true);
 }
 
-export function isRouterRunning() { return running; }
-export function navigate(path, options = {}) {
-  const h = path.startsWith('#') ? path : '#' + path;
-  if (options.replace) window.history.replaceState(null, '', h);
-  else window.location.hash = h;
-  if (running) void resolveCurrent();
+export function isRouterRunning() {
+  return state.running;
 }
-export function getCurrentRoute() { return currentRoute ? { ...currentRoute, segments: currentRoute.segments.slice() } : null; }
-export function getCurrentView() { return currentView; }
+
+export async function navigate(target, options) {
+  const opts = options || {};
+  let parsed;
+
+  if (typeof target === 'string' && (target[0] === '#' || target[0] === '/')) {
+    parsed = parseHash(target);
+  } else {
+    const p = routePath(target);
+    parsed = parseHash('#' + (p || DEFAULT_ROUTE));
+  }
+
+  const merged = Object.assign({}, parsed.query, opts.query || {});
+  const qs = toQuery(merged);
+  const hash = '#' + parsed.path + (qs ? '?' + qs : '');
+
+  if (!state.running) {
+    setHashQuiet(hash, opts.replace);
+    return true;
+  }
+  if (hash === state.rendered && !opts.force) return true;
+  return renderHash(hash, { source: 'navigate', replace: !!opts.replace });
+}
+
+export function getCurrentRoute() {
+  return state.current ? Object.assign({}, state.current) : null;
+}
+
+export function getCurrentView() {
+  return state.view ? { id: state.view.id, root: state.view.root, module: state.view.module } : null;
+}
+
 export function getLastRoute() {
-  try {
-    const s = localStorage.getItem(LS_KEYS.LAST_ROUTE);
-    if (!s || !registry) return null;
-    const p = parseHash('#' + s);
-    const mod = p.segments[0] ? modulesByRoute.get('/' + p.segments[0].toLowerCase()) : null;
-    return mod && mod.status === 'active' ? s : null;
-  } catch { return null; }
+  return state.last ? Object.assign({}, state.last) : null;
 }
