@@ -4,7 +4,8 @@
  *
  * Reads, validates and saves the user's own configuration (Addendum 9):
  *   language, timezone, country, industry, role, units, date_format,
- *   week_start, privacy { ai_enabled, context_level, redact_names }
+ *   week_start, privacy { ai_enabled, context_level, redact_names },
+ *   PIN lock fields { pinEnabled, pinHash, pinSalt }
  * and the device-level colour theme.
  *
  * Not to be confused with js/core/config.js, which holds fixed app constants.
@@ -34,6 +35,10 @@
  *     hse_manager, hse_consultant. Industry ids: construction, manufacturing,
  *     industrial_maintenance, facilities_management, warehousing_logistics,
  *     food_manufacturing, consultancy.
+ *   - PIN fields: only a salted hash is ever stored, never the PIN itself.
+ *     This file checks the FORMAT of pinHash / pinSalt (printable text, no
+ *     spaces); how the hash is made and checked is the job of the Settings
+ *     screen / lock screen. pinHash null means "no PIN set".
  */
 
 import { DEFAULT_THEME, EVENTS, LS_KEYS, SETTINGS_KEYS, THEMES } from '../core/config.js';
@@ -84,6 +89,9 @@ export const USER_CONFIG_DEFAULTS = Object.freeze({
   units: 'metric',
   date_format: 'DD/MM/YYYY',
   week_start: 'monday',
+  pinEnabled: false,
+  pinHash: null,
+  pinSalt: null,
   privacy: Object.freeze({
     ai_enabled: false,
     context_level: 'page',
@@ -100,6 +108,8 @@ const STORED_CONFIG_VERSION = 1;
 const LANGUAGE_CODES = new Set(SUPPORTED_LANGUAGES.map((entry) => entry.code));
 const ID_PATTERN = /^[a-z][a-z0-9_]{1,39}$/;
 const COUNTRY_PATTERN = /^[A-Z]{2}$/;
+/** Printable ASCII without spaces: covers hex, base64 and "algo$salt$hash" styles. */
+const SECRET_TEXT_PATTERN = /^[\x21-\x7E]{8,512}$/;
 
 
 /* ==========================================================================
@@ -182,6 +192,25 @@ const ruleUnits = pickFrom(UNITS, (text) => text.toLowerCase(), 'Choose metric o
 const ruleDateFormat = pickFrom(DATE_FORMATS, (text) => text.toUpperCase(), 'Choose DD/MM/YYYY, MM/DD/YYYY or YYYY-MM-DD.');
 const ruleWeekStart = pickFrom(WEEK_STARTS, (text) => text.toLowerCase(), 'Choose Monday, Sunday or Saturday.');
 
+const rulePinEnabled = (value) => (typeof value === 'boolean' ? good(value) : bad('PIN lock must be on or off.'));
+
+/** A stored PIN hash or salt: null / empty means "none"; otherwise printable text without spaces. */
+function secretTextRule(label) {
+  return (value) => {
+    if (value === null || value === '') {
+      return good(null);
+    }
+    if (typeof value !== 'string') {
+      return bad('The PIN ' + label + ' must be text.');
+    }
+    const text = value.trim();
+    return SECRET_TEXT_PATTERN.test(text) ? good(text) : bad('The PIN ' + label + ' is not in a valid format.');
+  };
+}
+
+const rulePinHash = secretTextRule('hash');
+const rulePinSalt = secretTextRule('salt');
+
 const PRIVACY_RULES = Object.freeze({
   ai_enabled: (value) => (typeof value === 'boolean' ? good(value) : bad('AI use must be on or off.')),
   context_level: pickFrom(CONTEXT_LEVELS, (text) => text.toLowerCase(), 'Choose off, page, field or selection.'),
@@ -196,7 +225,10 @@ const TOP_RULES = Object.freeze({
   role: ruleRole,
   units: ruleUnits,
   date_format: ruleDateFormat,
-  week_start: ruleWeekStart
+  week_start: ruleWeekStart,
+  pinEnabled: rulePinEnabled,
+  pinHash: rulePinHash,
+  pinSalt: rulePinSalt
 });
 
 /** Validates the privacy object (partial or complete). */
