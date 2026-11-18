@@ -6,7 +6,8 @@
  * js/services/workspace.js (role + industry + experience + the person's own
  * layout):
  *   jarvis         greeting for the time of day and an ask bar (text or voice)
- *   quick_actions  one-tap shortcuts ("coming soon" until the module exists)
+ *   quick_actions  one-tap shortcuts (a shortcut whose module is not built yet
+ *                  asks JARVIS to build it)
  *   date_time      live date and clock in the chosen time zone
  *   weather        current weather, place chooser and general heat guidance
  *   today_summary  counts of what was saved today
@@ -26,8 +27,7 @@
  * language, time zone, units, role, industry or date format rebuilds Home.
  *
  * The ask bar opens JARVIS (js/jarvis/drawer.js) and sends the text through
- * its normal flow, so the same privacy rules apply. Until the AI layer arrives
- * (Phase 10) JARVIS answers with a plain "cannot answer yet" notice.
+ * its normal flow with getJarvis().ask(text), so the same privacy rules apply.
  */
 
 import { EVENTS, STORES } from '../core/config.js';
@@ -160,7 +160,7 @@ function quickActionHtml(action) {
   if (action.available) {
     return html`<a class="quick-action" href="${action.href}">${inner}</a>`;
   }
-  return html`<button type="button" class="quick-action" aria-disabled="true" data-qa="soon" data-label="${action.label}">${inner}<span class="quick-action__note">Coming soon</span></button>`;
+  return html`<button type="button" class="quick-action" data-qa="soon" data-label="${action.label}">${inner}<span class="quick-action__note">Build with JARVIS</span></button>`;
 }
 
 
@@ -230,23 +230,18 @@ export async function render(ctx) {
     emit(EVENTS.TOAST, { message, type: type || 'info' });
   }
 
+  /** Opens JARVIS and, when there is text, sends it through JARVIS's normal flow. */
   function askJarvis(text) {
     const jarvis = getJarvis();
-    if (jarvis === null) {
+    if (jarvis === null || jarvis === undefined) {
       toast('JARVIS is not available right now.', 'warning');
       return;
     }
-    jarvis.open();
     if (text === '') {
+      jarvis.open();
       return;
     }
-    const field = document.getElementById('jarvis-text');
-    const send = document.getElementById('jarvis-btn-send');
-    if (field && send) {
-      field.value = text;
-      field.dispatchEvent(new Event('input', { bubbles: true }));
-      send.click();
-    }
+    jarvis.ask(text);
   }
 
   /* ---- frames ------------------------------------------------------------ */
@@ -272,7 +267,7 @@ export async function render(ctx) {
   function fillJarvis(body) {
     renderHtml(body, html`
       <h2 class="jarvis-hero__greeting" data-greeting>${greetingText(new Date())}</h2>
-      <p class="jarvis-hero__sub">Your HSE safety assistant. Full answers arrive in a later update.</p>
+      <p class="jarvis-hero__sub">Your HSE safety assistant. Ask in English, Tamil, Hindi or Arabic, by typing or speaking.</p>
       <form class="ask-bar" data-ask-form>
         <input class="ask-bar__input" type="text" name="ask" maxlength="${ASK_MAX_CHARS}" autocomplete="off" placeholder="Ask JARVIS…" aria-label="Ask JARVIS">
         ${micAvailable ? html`<button type="button" class="icon-btn" data-act="mic" aria-label="Speak your question" aria-pressed="false"><span class="icon-btn__glyph" data-mic-glyph aria-hidden="true">🎤</span></button>` : ''}
@@ -366,7 +361,7 @@ export async function render(ctx) {
       if (target.getAttribute('data-qa') === 'jarvis') {
         askJarvis('');
       } else {
-        toast((target.getAttribute('data-label') || 'This') + ' is coming soon.', 'info');
+        askJarvis('Build module: ' + (target.getAttribute('data-label') || 'new module'));
       }
     });
   }
