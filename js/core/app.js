@@ -7,13 +7,21 @@
  *   2. wires the header: theme button, network status pill, skip link
  *   3. opens the database, prepares the default project, loads user settings
  *   4. loads the module list, builds the navigation, registers the built-in
- *      "All Modules" view, mounts the JARVIS button and drawer, and starts
- *      the router (Home is a normal module file: js/modules/home.js)
+ *      "All Modules" view, starts the JARVIS button and drawer (loaded lazily,
+ *      so a problem in JARVIS can never block start-up), and starts the router
+ *      (Home is a normal module file: js/modules/home.js)
  *   5. removes the boot screen, registers the service worker (offline
  *      caching) and asks the browser to protect NASUR's stored data
  * If anything fails before the first screen, the boot screen shows a clear
  * message with a Reload button instead of staying on the spinner. A failure
  * of the JARVIS assistant alone never stops the rest of the app.
+ *
+ * Layout variables (set on <html> and kept up to date by trackLayout()):
+ *   --nav-h          real height of the bottom navigation bar (0 if not at the bottom)
+ *   --kb             height covered by the on-screen keyboard
+ *   --vvh            visible viewport height
+ *   --drawer-bottom  where a floating panel (the JARVIS drawer) must stop:
+ *                    just above the navigation bar, or above the keyboard
  *
  * Messages for other files: modules never import this file. To show a toast
  * they emit an event:
@@ -49,7 +57,6 @@ import {
   setTheme
 } from '../services/config.js';
 import { cleanText, html, renderHtml } from '../services/sanitize.js';
-import { mountJarvis } from '../jarvis/drawer.js';
 
 
 /* ==========================================================================
@@ -59,6 +66,7 @@ import { mountJarvis } from '../jarvis/drawer.js';
 const PERSIST_RETRY_MS = 7 * 24 * 60 * 60 * 1000;
 const ERROR_TOAST_GAP_MS = 5000;
 const MAX_TOASTS = 3;
+const KEYBOARD_MIN_PX = 120;
 
 const THEME_COLORS = Object.freeze({ light: '#0b6e5a', dark: '#0e1513' });
 
@@ -84,6 +92,7 @@ const els = {
 
 let lastOnline = true;
 let lastErrorToastAt = 0;
+let updateAnnounced = false;
 
 function requireElement(id) {
   const element = document.getElementById(id);
@@ -269,6 +278,52 @@ function updateNavCurrent(info) {
   }
 }
 
+/**
+ * Measures the real navigation bar and the on-screen keyboard and publishes
+ * them as CSS variables (see the file header). Floating panels such as the
+ * JARVIS drawer use --drawer-bottom, so they always stop above the nav bar
+ * and above the keyboard instead of being cut off.
+ */
+function trackLayout() {
+  const root = document.documentElement;
+  const nav = els.navList.closest('nav') || els.navList;
+  let queued = false;
+
+  const measure = () => {
+    queued = false;
+    const viewport = window.visualViewport;
+    const viewHeight = viewport ? viewport.height : window.innerHeight;
+    const viewTop = viewport ? viewport.offsetTop : 0;
+    const rect = nav.getBoundingClientRect();
+    const atBottom = rect.height > 0 && rect.top > window.innerHeight / 2;
+    const navHeight = atBottom ? Math.max(0, Math.min(240, Math.round(window.innerHeight - rect.top))) : 0;
+    const keyboard = Math.max(0, Math.round(window.innerHeight - viewHeight - viewTop));
+
+    root.style.setProperty('--nav-h', navHeight + 'px');
+    root.style.setProperty('--kb', keyboard + 'px');
+    root.style.setProperty('--vvh', Math.round(viewHeight) + 'px');
+    root.style.setProperty('--drawer-bottom', (keyboard > KEYBOARD_MIN_PX ? keyboard : navHeight) + 'px');
+  };
+  const schedule = () => {
+    if (!queued) {
+      queued = true;
+      window.requestAnimationFrame(measure);
+    }
+  };
+
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', schedule);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', schedule);
+    window.visualViewport.addEventListener('scroll', schedule);
+  }
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(schedule).observe(nav);
+  }
+  on(EVENTS.ROUTE_CHANGED, schedule);
+  measure();
+}
+
 
 /* ==========================================================================
    5. BUILT-IN VIEW: ALL MODULES
@@ -412,13 +467,36 @@ function watchForErrors() {
   window.addEventListener('unhandledrejection', (event) => reportUnexpected(event.reason));
 }
 
+/** Tells the user (once) that a newer version of NASUR is ready. */
+function announceUpdate() {
+  if (updateAnnounced) {
+    return;
+  }
+  updateAnnounced = true;
+  showToast({ message: 'NASUR was updated. Reload this page to use the new version.', type: 'info', duration: 0 });
+}
+
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
     return;
   }
+  // On the very first visit there is no controller yet, so an "update" is not news.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (hadController && event.data && event.data.type === 'SW_ACTIVATED') {
+      announceUpdate();
+    }
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) {
+      announceUpdate();
+    }
+  });
+
   const register = () => {
     navigator.serviceWorker
       .register(new URL('../../sw.js', import.meta.url).href)
+      .then((registration) => registration.update().catch(() => {}))
       .catch((error) => console.warn('NASUR: offline caching is not available here.', error));
   };
   if (document.readyState === 'complete') {
@@ -465,10 +543,19 @@ async function ensurePersistence() {
   }
 }
 
-/** Mounts the JARVIS button and drawer. A failure here never stops the app. */
-function mountAssistant() {
+/**
+ * Loads and starts the JARVIS button and drawer. It is imported lazily on
+ * purpose: if js/jarvis/drawer.js is missing or broken, only JARVIS is lost;
+ * NASUR itself still starts.
+ */
+async function mountAssistant() {
   try {
-    mountJarvis();
+    const jarvis = await import('../jarvis/drawer.js');
+    const start = jarvis.mountJarvis || jarvis.initJarvisDrawer;
+    if (typeof start !== 'function') {
+      throw new Error('drawer.js has no mountJarvis export');
+    }
+    start();
   } catch (error) {
     console.error('NASUR: the JARVIS assistant could not start.', error);
     showToast({ message: 'The JARVIS assistant could not start. The rest of NASUR works normally.', type: 'warning' });
@@ -488,9 +575,10 @@ async function startApp() {
 
   await loadModuleRegistry();
   buildNav();
+  trackLayout();
   on(EVENTS.ROUTE_CHANGED, updateNavCurrent);
   registerBuiltin('more', moreView);
-  mountAssistant();
+  void mountAssistant();
   await startRouter({ root: els.viewRoot, focusTarget: els.main });
 
   if (els.boot) {
