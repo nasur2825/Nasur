@@ -5,12 +5,23 @@
  * Voice Mode · Hugging Face Auto-Coder/Deployer · Offline HSE Engine
  * Created by Nasur
  * ===================================================================== */
-import { emit } from '../core/eventbus.js';
-import { navigate } from '../core/router.js';
-import { createObservation } from '../services/observations.js';
-import { createAction } from '../services/actions.js';
-import { saveOps, KINDS, todayIso, addDaysIso } from '../services/opsstore.js';
-import { getActiveRegionId } from '../services/regions.js';
+/* BOOT-SAFE: NO static imports. Every app module is loaded lazily & defensively. */
+let _M = null;
+const lazy = async (p) => { try { return await import(p); } catch (e) { console.warn('[JARVIS] optional module unavailable:', p, e && e.message); return {}; } };
+async function mods() {
+  if (_M) return _M;
+  const [ev, ob, ac, op, rg] = await Promise.all([
+    lazy('../core/eventbus.js'), lazy('../services/observations.js'), lazy('../services/actions.js'),
+    lazy('../services/opsstore.js'), lazy('../services/regions.js')]);
+  const iso = (d) => d.toISOString().slice(0, 10);
+  _M = {
+    emit: ev.emit || (() => {}), createObservation: ob.createObservation, createAction: ac.createAction,
+    saveOps: op.saveOps, KINDS: op.KINDS || {}, getActiveRegionId: rg.getActiveRegionId,
+    todayIso: op.todayIso || (() => iso(new Date())),
+    addDaysIso: op.addDaysIso || ((d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return iso(x); }),
+  };
+  return _M;
+}
 
 /* ------------------------------ CONSTANTS ------------------------------ */
 const LS = {
@@ -150,19 +161,23 @@ const EXPERT_LABEL = { photo: '📷 Hazard Scanner', exec: '⚡ Executor', nav: 
 function goTo(text) {
   const k = Object.keys(ROUTES).find((x) => text.toLowerCase().includes(x));
   if (!k) return false;
-  try { navigate(ROUTES[k].replace('#', '')); } catch { location.hash = ROUTES[k]; }
+  location.hash = ROUTES[k];
   return ROUTES[k];
 }
 async function doCreateObservation(o) {
+  const M = await mods();
+  if (!M.createObservation) throw new Error('observations service unavailable');
   const rec = { title: o.title, description: o.description || o.title, severity: sevOf(o.severity), category: o.category || 'General',
-    status: 'open', date: todayIso(), source: 'jarvis', photo: o.photo || null, regionId: safe(() => getActiveRegionId()) };
-  const r = await createObservation(rec); emit('observation:created', r); return r;
+    status: 'open', date: M.todayIso(), source: 'jarvis', photo: o.photo || null, regionId: safe(() => M.getActiveRegionId()) };
+  const r = await M.createObservation(rec); M.emit('observation:created', r); return r;
 }
 async function doCreateAction(o) {
+  const M = await mods();
+  if (!M.createAction) throw new Error('actions service unavailable');
   const rec = { title: o.title, description: o.description || '', priority: sevOf(o.priority), status: 'open',
-    dueDate: o.dueDate || addDaysIso(todayIso(), o.days ?? (sevOf(o.priority) === 'high' ? 1 : sevOf(o.priority) === 'medium' ? 7 : 30)),
-    source: 'jarvis', regionId: safe(() => getActiveRegionId()) };
-  const r = await createAction(rec); emit('action:created', r); return r;
+    dueDate: o.dueDate || M.addDaysIso(M.todayIso(), o.days ?? (sevOf(o.priority) === 'high' ? 1 : sevOf(o.priority) === 'medium' ? 7 : 30)),
+    source: 'jarvis', regionId: safe(() => M.getActiveRegionId()) };
+  const r = await M.createAction(rec); M.emit('action:created', r); return r;
 }
 function safe(f) { try { return f(); } catch { return null; } }
 async function execCommand(text) {
@@ -170,7 +185,7 @@ async function execCommand(text) {
   const kind = m[1].toLowerCase(), body = (m[2] || '').trim() || 'Untitled (created by JARVIS)';
   if (kind === 'observation') { await doCreateObservation({ title: body.slice(0, 90), description: body }); return `✅ Observation created: **${esc(body.slice(0, 90))}**`; }
   if (kind === 'action') { await doCreateAction({ title: body.slice(0, 90), description: body, priority: 'medium' }); return `✅ Action created (due in 7 days): **${esc(body.slice(0, 90))}**`; }
-  try { await saveOps(KINDS?.PERMITS || KINDS?.PTW || 'permits', { title: body, status: 'draft', createdAt: todayIso(), source: 'jarvis' }); } catch { /* ignore */ }
+  try { const M = await mods(); await M.saveOps?.(M.KINDS?.PERMITS || M.KINDS?.PTW || 'permits', { title: body, status: 'draft', createdAt: M.todayIso(), source: 'jarvis' }); } catch { /* ignore */ }
   goTo('permit'); return `📝 Permit draft started: **${esc(body)}** — opened PTW/JSA module.`;
 }
 
@@ -555,6 +570,6 @@ export function mount(el /*, ctx */) { // full-page JARVIS Studio
 export function render(/* ctx */) { return '<div id="nj-page-host" style="height:calc(100vh - 120px)"></div><script>0</script>'; }
 export function afterRender() { const h = $('#nj-page-host'); if (h) mount(h); }
 
-export const mountJarvis = initJarvisDrawer;
+export const mountJarvis = (...args) => { try { return initJarvisDrawer(...args); } catch (e) { console.error('[JARVIS] init failed (app continues):', e); } };
 
 export default { initJarvisDrawer, mountJarvis, openJarvisDrawer, closeJarvisDrawer, toggleJarvisDrawer, mount, render, afterRender };
