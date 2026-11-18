@@ -1,0 +1,230 @@
+/* ==========================================================================
+   NASUR – JARVIS drawer, floating button and PIN lock screen
+   File: css/jarvis.css
+   Loaded by index.html (a real file, because the page's security policy
+   blocks styles injected from JavaScript). Uses only tokens from tokens.css.
+   The drawer stops above the navigation bar and the on-screen keyboard
+   through --drawer-bottom, which js/core/app.js measures.
+   ========================================================================== */
+
+.jv-fab {
+  position: fixed;
+  right: var(--space-4);
+  bottom: calc(var(--nav-h, var(--nav-height)) + var(--space-3));
+  z-index: var(--z-fab);
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand-hover));
+  color: var(--color-brand-contrast);
+  font: var(--weight-bold) var(--text-base) var(--font-sans);
+  box-shadow: 0 0 0 1px var(--color-glow), 0 6px 22px var(--color-glow);
+  cursor: pointer;
+}
+
+.jv-fab[hidden] { display: none; }
+
+.jv-drawer {
+  position: fixed;
+  top: var(--safe-top);
+  right: 0;
+  bottom: var(--drawer-bottom, var(--nav-height));
+  width: min(var(--drawer-width), 100vw);
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-left: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(105%);
+  visibility: hidden;
+  transition: transform var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
+}
+
+.jv-drawer.is-open {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.jv-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.jv-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--color-brand);
+  letter-spacing: 0.04em;
+}
+
+.jv-badge {
+  padding: 0.1rem var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.jv-badge[data-state="online"] { color: var(--color-brand); border-color: var(--color-brand); }
+.jv-badge[data-state="offline"] { color: var(--color-accent); border-color: var(--color-accent); }
+
+.jv-iconbtn,
+.jv-btn,
+.jv-chip {
+  min-height: 2.25rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.jv-btn--primary {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-brand-contrast);
+  font-weight: var(--weight-semibold);
+}
+
+.jv-btn--danger { border-color: var(--color-danger); color: var(--color-danger); }
+.jv-iconbtn.is-on { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+
+.jv-chips {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.jv-chip { white-space: nowrap; font-size: var(--text-sm); }
+
+.jv-log {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+.jv-msg {
+  max-width: 94%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  overflow-wrap: anywhere;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+}
+
+.jv-msg.jv-user { align-self: flex-end; background: var(--color-brand); color: var(--color-brand-contrast); }
+.jv-msg.jv-ai { align-self: flex-start; background: var(--color-surface-raised); border: 1px solid var(--color-border); }
+.jv-tag { margin-bottom: var(--space-1); color: var(--color-brand); font-size: var(--text-xs); }
+.jv-spacer { height: var(--space-2); }
+.jv-msg pre { margin: var(--space-2) 0; padding: var(--space-2); overflow-x: auto; border-radius: var(--radius-sm); background: var(--color-surface-sunken); font: var(--text-xs) var(--font-mono); white-space: pre; }
+.jv-msg img { display: block; max-width: 100%; margin-top: var(--space-2); border-radius: var(--radius-md); }
+
+.jv-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.jv-actions .jv-btn { min-height: 2rem; font-size: var(--text-sm); }
+
+.jv-card {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-soft);
+}
+
+.jv-card strong { display: block; color: var(--color-accent); }
+
+.jv-dots span {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin: 0 0.12rem;
+  border-radius: 50%;
+  background: var(--color-brand);
+  animation: jv-pulse 1s infinite;
+}
+
+@keyframes jv-pulse { 50% { opacity: 0.3; } }
+
+.jv-prev { display: none; padding: var(--space-1) var(--space-3); color: var(--color-brand); font-size: var(--text-sm); }
+.jv-prev.is-on { display: block; }
+.jv-prev img { height: 2.75rem; margin-right: var(--space-2); border-radius: var(--radius-sm); vertical-align: middle; }
+
+.jv-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--header-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+.jv-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 7rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  resize: none;
+}
+
+.jv-input:focus-visible,
+.jv-fab:focus-visible,
+.jv-btn:focus-visible,
+.jv-iconbtn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+.jv-panel {
+  display: none;
+  max-height: 60%;
+  padding: var(--space-3);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.jv-panel.is-open { display: block; }
+.jv-panel label { display: block; margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--text-sm); }
+.jv-panel input[type="text"], .jv-panel input[type="password"] { width: 100%; box-sizing: border-box; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font: inherit; }
+.jv-note { color: var(--color-text-faint); font-size: var(--text-xs); }
+
+/* PIN lock screen (created by js/core/app.js) */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lock);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--color-bg);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.lock-screen__logo { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: var(--radius-lg); background: var(--color-brand); color: var(--color-brand-contrast); font-size: var(--text-2xl); font-weight: var(--weight-bold); }
+.lock-screen__pin { width: 10rem; padding: var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font: var(--text-2xl) var(--font-mono); letter-spacing: 0.5em; text-align: center; }
+.lock-screen__msg { min-height: 1.5rem; color: var(--color-accent); }
+.lock-screen__help { max-width: 22rem; color: var(--color-text-muted); font-size: var(--text-sm); }
