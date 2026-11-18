@@ -28,7 +28,7 @@ const LS = {
   hist: 'nasur_jarvis_hist', lang: 'nasur_jarvis_lang', law: 'nasur_jarvis_law',
   hf: 'nasur_hf_token', hfRepo: 'nasur_hf_repo', apiUrl: 'nasur_api_url',
   apiKey: 'nasur_api_key', apiModel: 'nasur_api_model', queue: 'nasur_build_queue',
-  voiceLang: 'nasur_voice_lang',
+  voiceLang: 'nasur_voice_lang', core: 'nasur_allow_core',
 };
 const HF_DEFAULT_REPO = 'Nasurisai/Nasur';
 const POLL_TEXT = 'https://text.pollinations.ai/openai';
@@ -75,7 +75,7 @@ const S = {
   history: [], panels: [], inited: false,
 };
 try { S.history = JSON.parse(lsGet(LS.hist, '[]')); } catch { S.history = []; }
-const saveHist = () => lsSet(LS.hist, JSON.stringify(S.history.slice(-40).map((m) => ({ ...m, extra: m.extra && m.extra.persist ? m.extra : undefined }))));
+const saveHist = () => lsSet(LS.hist, JSON.stringify(S.history.slice(-40).map((m) => ({ ...m, text: String(m.text).length > 6000 ? String(m.text).slice(0, 6000) + '\n…(truncated in history)' : m.text, extra: m.extra && m.extra.persist ? m.extra : undefined }))));
 
 /* ------------------------------ OFFLINE HSE ENGINE ------------------------------ */
 const KB = [
@@ -124,19 +124,19 @@ async function fetchT(url, opt, ms = 45000) {
   const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
   try { return await fetch(url, { ...opt, signal: c.signal }); } finally { clearTimeout(t); }
 }
-async function llm(messages, { model = 'openai', temperature = 0.4 } = {}) {
+async function llm(messages, { model = 'openai', temperature = 0.4, timeout = 45000 } = {}) {
   const url = lsGet(LS.apiUrl), key = lsGet(LS.apiKey);
   if (url && key) { // optional user key (OpenAI-compatible)
     try {
       const r = await fetchT(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-        body: JSON.stringify({ model: lsGet(LS.apiModel, 'gpt-4o-mini'), messages, temperature }) });
+        body: JSON.stringify({ model: lsGet(LS.apiModel, 'gpt-4o-mini'), messages, temperature }) }, timeout);
       if (r.ok) { const j = await r.json(); const t = j.choices?.[0]?.message?.content; if (t) return t; }
     } catch { /* fall through to keyless */ }
   }
   for (const m of [model, 'openai']) { // keyless Pollinations
     try {
       const r = await fetchT(POLL_TEXT, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: m, messages, temperature, private: true }) });
+        body: JSON.stringify({ model: m, messages, temperature, private: true }) }, timeout);
       if (r.ok) { const j = await r.json(); const t = j.choices?.[0]?.message?.content; if (t) return t; }
     } catch { /* try next */ }
     if (m === 'openai') break;
@@ -145,17 +145,19 @@ async function llm(messages, { model = 'openai', temperature = 0.4 } = {}) {
 }
 
 /* ------------------------------ EXPERT ROUTER ------------------------------ */
+const AUTOBUILD_RE = /^\s*(please\s+|jarvis[, ]+)?(build|create|make|develop|implement|generate|code|add)\b[\s\S]{0,70}\b(module|feature|tool|page|screen|dashboard|calculator|tracker|builder|generator|studio|phase\s*\d+)\b|\bphase\s*(?:[7-9]|1[0-9])\b/i;
 function route(text, hasPhoto) {
   if (hasPhoto) return 'photo';
   if (/^(create|add|log|raise|new)\s+(an?\s+)?(observation|action|permit|ptw)\b/i.test(text)) return 'exec';
   if (/^(open|go to|navigate|show me|take me)\b|^(திற|போ)\b/i.test(text) && Object.keys(ROUTES).some((k) => text.toLowerCase().includes(k))) return 'nav';
+  if (AUTOBUILD_RE.test(text)) return 'autobuild';
   if (/(poster|banner|flyer|signage|safety slogan|பேனர்|போஸ்டர்)/i.test(text)) return 'poster';
   if (/(audit|review|check).{0,25}(report|dsr|daily|checklist)|daily (site )?report|\bDSR\b/i.test(text) || (text.length > 350 && /(permit|toolbox|ppe|manpower|workers|shift|site)/i.test(text) && /report|date|supervisor/i.test(text))) return 'audit';
   if (/(write|build|code|module|file|function|css|html|javascript|\.js\b|commit|deploy|hugging ?face)/i.test(text) && /(code|module|file|\.js|function|component|deploy|commit|script)/i.test(text)) return 'coder';
   if (/(iso|osha|factories act|bocw|adnoc|aramco|interview|standard|clause|regulation|study|explain|compare)/i.test(text)) return 'research';
   return 'general';
 }
-const EXPERT_LABEL = { photo: '📷 Hazard Scanner', exec: '⚡ Executor', nav: '🧭 Navigator', poster: '🎨 Poster Builder', audit: '🕵️ Report Auditor', coder: '💻 Autonomous Coder', research: '📚 Research Expert', general: '🧠 JARVIS Brain' };
+const EXPERT_LABEL = { photo: '📷 Hazard Scanner', exec: '⚡ Executor', nav: '🧭 Navigator', poster: '🎨 Poster Builder', audit: '🕵️ Report Auditor', coder: '💻 Autonomous Coder', autobuild: '🤖 Autonomous Builder', research: '📚 Research Expert', general: '🧠 JARVIS Brain' };
 
 /* ------------------------------ EXECUTOR / NAV ------------------------------ */
 function goTo(text) {
@@ -303,22 +305,105 @@ function extractCode(text) {
   }
   return out;
 }
+/* ------------------------------ AUTONOMOUS BUILDER ------------------------------ */
+const ARCH = `NASUR is a vanilla-JS offline-first PWA on a Hugging Face Static Space (no bundler, no npm, ES modules with relative imports). Core: js/core/config.js (STORES, EVENTS, APP), js/core/eventbus.js (emit,on,off), js/core/router.js (hash routes #/route; a module exports mount(el,ctx) and/or render(ctx); navigate(), getModules(), getNavItems()). Services: js/services/repo.js (IndexedDB wrapper; STORES.MEMORY_NOTES), opsstore.js (KINDS,listOps,getOps,saveOps,patchOps,removeOps,todayIso,addDaysIso,daysUntil), observations.js (createDraft,createObservation), actions.js (createAction), regions.js (getActiveRegionId,formatDate). Modules are registered in data/modules.json. RULES: ONE self-contained file per feature; export default plus named mount & render; load app services with lazy dynamic await import() inside try/catch so nothing can ever block app boot; mobile-first dark UI, bottom tab bar is 76px tall; no API keys; Tamil + English friendly; production quality, no placeholders or TODOs.`;
+const CORE_BLOCK = /^(js\/core\/|js\/jarvis\/drawer\.js$|index\.html$|sw\.js$|manifest\.json$)/i;
+async function hfRaw(path) {
+  const repo = lsGet(LS.hfRepo, HF_DEFAULT_REPO), token = lsGet(LS.hf);
+  try {
+    const r = await fetchT(`https://huggingface.co/spaces/${repo}/raw/main/${path}?t=${Date.now()}`, token ? { headers: { Authorization: 'Bearer ' + token } } : {}, 20000);
+    return r.ok ? await r.text() : null;
+  } catch { return null; }
+}
+function syntaxCheck(code, path) {
+  if (/\.json$/i.test(path)) { try { JSON.parse(code); return null; } catch (e) { return e.message; } }
+  if (!/\.m?js$/i.test(path)) return null;
+  const AF = Object.getPrototypeOf(async function () {}).constructor;
+  const src = String(code)
+    .replace(/^\s*import\s+[\s\S]*?from\s*['"][^'"]+['"]\s*;?/gm, '')
+    .replace(/^\s*import\s*['"][^'"]+['"]\s*;?/gm, '')
+    .replace(/^\s*export\s*\{[^}]*\}\s*(from\s*['"][^'"]+['"])?\s*;?/gm, '')
+    .replace(/^\s*export\s+default\s+/gm, 'void ')
+    .replace(/^\s*export\s+(?=(async\s+function|function|class|const|let|var))/gm, '');
+  try { new AF(src); return null; } catch (e) { return e instanceof EvalError ? null : e.message; }
+}
+async function genFile(path, spec, plan, log) {
+  let ref = null;
+  if (/^js\/modules\//.test(path)) for (const rp of ['js/modules/ppe_guide.js', 'js/modules/home.js']) { ref = await hfRaw(rp); if (ref) { ref = ref.slice(0, 5000); break; } }
+  let code = '', err = null;
+  for (let i = 0; i < 3; i++) {
+    const msgs = [
+      { role: 'system', content: 'You are a principal JavaScript engineer. ' + ARCH + ' Output EXACTLY one fenced code block containing the complete file, and nothing else.' },
+      { role: 'user', content: `File: ${path}\nOverall goal: ${plan.goal}\nThis file's spec: ${spec}\nAll files in this build: ${plan.files.map((f) => f.path).join(', ')}\n` +
+        (ref ? `STYLE REFERENCE (an existing module, mimic its conventions):\n${ref}\n` : '') +
+        (err ? `\nYour previous attempt had this syntax error: ${err}\nReturn the complete corrected file.\nPREVIOUS ATTEMPT:\n${code.slice(0, 9000)}` : '') }];
+    const out = await llm(msgs, { model: 'qwen-coder', temperature: 0.2, timeout: 150000 });
+    const c = extractCode(out)[0]; code = c ? c.code : String(out).trim();
+    err = syntaxCheck(code, path);
+    if (!err) return code;
+    log(`🔧 Syntax issue in ${path}: ${err} — self-repairing (${i + 1}/3)`);
+  }
+  throw new Error('could not produce syntax-valid code: ' + err);
+}
+async function planBuild(goal) {
+  const out = await llm([
+    { role: 'system', content: 'You are the NASUR chief architect. ' + ARCH + ' Return ONLY JSON.' },
+    { role: 'user', content: `Request from Nasur: "${goal}"\nPlan the minimal set of files (prefer ONE self-contained file per feature). JSON shape: {"goal":"one line","module":{"id":"snake_case","title":"","icon":"emoji"} or null,"files":[{"path":"js/modules/<id>.js","spec":"very detailed spec: UI, data, behaviour, edge cases"}]}` }], { model: 'openai', temperature: 0.2, timeout: 90000 });
+  const j = safeJSON(out);
+  if (!j?.files?.length) throw new Error('planner returned no files');
+  if (j.module && j.module.id) j.module.id = String(j.module.id).toLowerCase().replace(/[^a-z0-9_]+/g, '_');
+  return j;
+}
+async function registerModule(mod) {
+  const raw = await hfRaw('data/modules.json'); if (!raw) return null;
+  let j; try { j = JSON.parse(raw); } catch { return null; }
+  const arr = Array.isArray(j) ? j : (Array.isArray(j.modules) ? j.modules : null);
+  if (!arr || !arr.length || arr.some((m) => m && m.id === mod.id)) return null;
+  const tpl = arr.find((m) => m && m.id === 'ppe_guide') || arr[arr.length - 1];
+  let str = JSON.stringify(tpl); if (tpl.id) str = str.split(tpl.id).join(mod.id);
+  const e = JSON.parse(str);
+  for (const k of ['title', 'label', 'name']) if (k in e) e[k] = mod.title || mod.id;
+  if ('icon' in e && mod.icon) e.icon = mod.icon;
+  arr.push(e);
+  return { path: 'data/modules.json', content: JSON.stringify(j, null, 2) };
+}
+async function buildAndShip(plan, log) {
+  const allowCore = lsGet(LS.core) === '1'; const files = []; const skipped = [];
+  for (const f of plan.files.slice(0, 10)) {
+    const path = String(f.path || '').replace(/^\/+/, '');
+    if (!path || path.includes('..') || /\s/.test(path)) { skipped.push(path || '(empty path)'); continue; }
+    if (CORE_BLOCK.test(path) && !allowCore) { skipped.push(path + ' (core file — enable in ⚙)'); continue; }
+    log('🔨 Writing ' + path + ' …');
+    try { const code = await genFile(path, f.spec || plan.goal, plan, log); files.push({ path, content: code }); log(`✔ ${path} — ${code.length} chars, syntax OK`); }
+    catch (e) { log('❌ ' + path + ': ' + e.message); }
+  }
+  if (skipped.length) log('⏭ Skipped: ' + skipped.join(', '));
+  if (!files.length) return log('Nothing was generated.');
+  let reg = null;
+  if (plan.module && plan.module.id && files.some((f) => /^js\/modules\//.test(f.path))) { try { reg = await registerModule(plan.module); } catch { reg = null; } if (reg) files.push(reg); }
+  if (!lsGet(LS.hf)) {
+    files.forEach((f) => addMsg('ai', f.path + ' — add your HF token in ⚙ for automatic commit.\n```js\n// path: ' + f.path + '\n' + f.content + '\n```', null, 'autobuild'));
+    return;
+  }
+  await hfCommit(files, 'JARVIS autonomous build: ' + String(plan.goal).slice(0, 60));
+  const route = plan.module && plan.module.id ? '#/' + plan.module.id : null;
+  addMsg('ai', `🚀 **Committed ${files.length} file(s) to ${lsGet(LS.hfRepo, HF_DEFAULT_REPO)}**\n` + files.map((f) => '• ' + f.path).join('\n') + '\n' +
+    (reg ? '📌 Registered in data/modules.json' : '⚠ Not auto-registered in data/modules.json — add its entry if the module is missing from the menu.') +
+    '\nThe Space rebuilds in ~30–60 s, then tap Reload.', { type: 'built', route }, 'autobuild');
+}
+async function handleAutoBuildRequest(text) {
+  const log = (t) => addMsg('ai', t, null, 'autobuild');
+  log('🧭 Planning the build …');
+  let plan;
+  try { plan = await planBuild(text); } catch (e) { return log('❌ Planner failed: ' + e.message + '. The AI may be busy — try again in a moment.'); }
+  log('📐 Plan: ' + plan.files.map((f) => f.path).join(', '));
+  try { await buildAndShip(plan, log); } catch (e) { log('❌ ' + e.message); }
+}
 async function autoBuild(log) {
   const q = lsGet(LS.queue, '').split('\n').map((l) => l.trim()).filter(Boolean);
-  if (!q.length) return log('⚠️ Build queue empty. Open ⚙ → "Auto-build queue" and add lines like `js/modules/foo.js | what it should do`.');
-  if (!lsGet(LS.hf)) return log('⚠️ Add your Hugging Face write token in ⚙ first.');
-  for (const line of q) {
-    const [path, ...d] = line.split('|'); const desc = d.join('|').trim() || 'Complete production module';
-    log(`🔨 Building **${esc(path.trim())}** …`);
-    try {
-      const out = await llm([{ role: 'system', content: 'You are a senior JS engineer for NASUR HSE PWA (vanilla ES modules, IndexedDB via js/services/repo.js, offline-first, router mount(el,ctx)/render(ctx)). Output ONE complete self-contained file in a single code block. No explanations.' },
-        { role: 'user', content: `File: ${path.trim()}\nSpec: ${desc}` }], { model: 'qwen-coder', temperature: 0.2 });
-      const c = extractCode(out)[0]; if (!c) throw new Error('no code returned');
-      await hfCommit([{ path: path.trim(), content: c.code }], `JARVIS auto-build ${path.trim()}`);
-      log(`✅ Committed **${esc(path.trim())}** (${c.code.length} chars)`);
-    } catch (e) { log(`❌ ${esc(path.trim())}: ${esc(e.message)}`); }
-  }
-  log('🏁 Auto-build finished. Refresh the Space after it rebuilds.');
+  if (!q.length) { const g = prompt('Tell JARVIS what to build (e.g. "Phase 8: Canva-style poster studio module")'); return g ? handleAutoBuildRequest(g) : log('Cancelled.'); }
+  const plan = { goal: 'Queued build', files: q.map((l) => { const [pth, ...d] = l.split('|'); return { path: pth.trim(), spec: d.join('|').trim() || 'Complete production module' }; }) };
+  try { await buildAndShip(plan, log); } catch (e) { log('❌ ' + e.message); }
 }
 
 /* ------------------------------ VOICE ------------------------------ */
@@ -352,7 +437,7 @@ const shareMail = (t) => { location.href = 'mailto:?subject=' + encodeURICompone
 /* ------------------------------ CHAT CORE ------------------------------ */
 function addMsg(role, text, extra, expert) {
   const m = { id: uid(), role, text, extra, expert, ts: Date.now() };
-  S.history.push(m); saveHist(); S.panels.forEach((p) => p.append(m)); return m;
+  S.panels = S.panels.filter((p) => p.host && p.host.isConnected); S.history.push(m); saveHist(); S.panels.forEach((p) => p.append(m)); return m;
 }
 const setBusy = (b) => { S.busy = b; S.panels.forEach((p) => p.busy(b)); };
 
@@ -369,6 +454,7 @@ async function send(textIn) {
     else if (expert === 'nav') { const r = goTo(text); addMsg('ai', r ? `🧭 Opening **${esc(r)}** …` : 'Module not found.', null, expert); if (r) closeJarvisDrawer(); }
     else if (expert === 'poster') await handlePoster(text);
     else if (expert === 'audit') await handleAudit(text);
+    else if (expert === 'autobuild') await handleAutoBuildRequest(text);
     else await handleChat(text, expert);
   } catch (e) {
     addMsg('ai', offlineAnswer(text) + '\n\n_(offline engine)_', null, expert);
@@ -409,9 +495,9 @@ async function handlePoster(text) {
 
 /* ------------------------------ UI ------------------------------ */
 const CSS = `
-#nj-fab{position:fixed;right:16px;bottom:84px;z-index:9998;background:linear-gradient(135deg,#00e5ff,#2979ff);color:#001;border:0;border-radius:28px;padding:12px 18px;font:700 15px system-ui;box-shadow:0 6px 24px rgba(0,229,255,.45);cursor:pointer}
-#nj-drawer{position:fixed;inset:0 0 0 auto;width:min(480px,100vw);z-index:9999;background:#0b1220;color:#e8eefc;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
-#nj-drawer.open{transform:none}
+#nj-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:99999;background:linear-gradient(135deg,#00e5ff,#2979ff);color:#001;border:0;border-radius:28px;padding:12px 18px;font:700 15px system-ui;box-shadow:0 6px 24px rgba(0,229,255,.45);cursor:pointer}
+#nj-drawer{position:fixed;top:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(480px,100vw);z-index:99999;background:#0b1220;color:#e8eefc;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
+#nj-drawer.open{transform:none}#jarvis-drawer,#jarvis-fab{display:none!important}
 .nj-wrap{display:flex;flex-direction:column;height:100%;min-height:0;font:14px/1.5 system-ui,sans-serif;background:#0b1220;color:#e8eefc}
 .nj-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#101a30;border-bottom:1px solid #1d2b4d}
 .nj-head b{flex:1;font-size:16px;color:#00e5ff}.nj-head button,.nj-bar button,.nj-chips button,.nj-act button,.nj-set button{background:#18264a;color:#e8eefc;border:1px solid #27407a;border-radius:10px;padding:7px 10px;cursor:pointer;font:inherit}
@@ -429,12 +515,12 @@ const CSS = `
 .nj-set{display:none;padding:10px;overflow-y:auto;background:#0e1730;border-bottom:1px solid #1d2b4d;max-height:62%}.nj-set.show{display:block}
 .nj-set label{display:block;margin:8px 0 3px;font-size:12px;color:#9fb4e6}.nj-set input,.nj-set select,.nj-set textarea{width:100%;box-sizing:border-box;background:#0b1220;color:#fff;border:1px solid #27407a;border-radius:8px;padding:7px;font:inherit}
 .nj-dots span{display:inline-block;width:7px;height:7px;margin:0 2px;background:#00e5ff;border-radius:50%;animation:njp 1s infinite}
-#nj-toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#000c;color:#fff;padding:9px 16px;border-radius:20px;z-index:10001;opacity:0;transition:.2s;pointer-events:none}#nj-toast.show{opacity:1}`;
+#nj-toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#000c;color:#fff;padding:9px 16px;border-radius:20px;z-index:100001;opacity:0;transition:.2s;pointer-events:none}#nj-toast.show{opacity:1}`;
 
 const CHIPS = [
   ['🎨 Poster', 'Make a safety poster on work at height'], ['🕵️ Audit', 'Audit this daily report:\n'], ['🔥 Fire', 'Explain fire extinguisher classes'],
   ['📝 PTW', 'Explain permit to work steps'], ['🎤 Interview', 'HSE interview questions for a factory safety officer'], ['💻 Code', 'Write code for a new module: '],
-  ['⚖ Laws', 'Factories Act key duties for occupier'], ['🧭 Audits', 'open audits'],
+  ['⚖ Laws', 'Factories Act key duties for occupier'], ['🧭 Audits', 'open audits'], ['🤖 Build', 'Build module: '],
 ];
 
 function md(t) {
@@ -492,14 +578,15 @@ function renderSettings(el) {
   <label>Optional AI key — OpenAI-compatible URL</label><input id="nj-au" placeholder="https://api.openai.com/v1/chat/completions">
   <label>API key</label><input id="nj-ak" type="password"><label>Model</label><input id="nj-am" placeholder="gpt-4o-mini">
   <label>Auto-build queue (one per line: path | spec)</label><textarea id="nj-q" rows="4"></textarea>
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="nj-core" style="width:auto"> Allow JARVIS to edit core files (js/core, drawer.js, index.html) — risky</label>
   <div class="nj-act"><button id="nj-save">💾 Save</button><button id="nj-build">🚀 Auto-Build Remaining Phases</button><button id="nj-clear">🗑 Clear chat</button></div>
   <div style="font-size:11px;color:#7f93c9;margin-top:8px">Keys stay only in this device's localStorage. Created by Nasur.</div>`;
   const v = (id) => $('#' + id, el);
   v('nj-l').value = lsGet(LS.lang, 'auto'); v('nj-v').value = lsGet(LS.voiceLang, 'en-IN'); v('nj-law').value = lsGet(LS.law, 'IN');
   v('nj-hf').value = lsGet(LS.hf); v('nj-repo').value = lsGet(LS.hfRepo, HF_DEFAULT_REPO);
-  v('nj-au').value = lsGet(LS.apiUrl); v('nj-ak').value = lsGet(LS.apiKey); v('nj-am').value = lsGet(LS.apiModel); v('nj-q').value = lsGet(LS.queue);
+  v('nj-au').value = lsGet(LS.apiUrl); v('nj-ak').value = lsGet(LS.apiKey); v('nj-am').value = lsGet(LS.apiModel); v('nj-q').value = lsGet(LS.queue); v('nj-core').checked = lsGet(LS.core) === '1';
   const saveAll = () => { lsSet(LS.lang, v('nj-l').value); lsSet(LS.voiceLang, v('nj-v').value); lsSet(LS.law, v('nj-law').value); lsSet(LS.hf, v('nj-hf').value.trim());
-    lsSet(LS.hfRepo, v('nj-repo').value.trim() || HF_DEFAULT_REPO); lsSet(LS.apiUrl, v('nj-au').value.trim()); lsSet(LS.apiKey, v('nj-ak').value.trim()); lsSet(LS.apiModel, v('nj-am').value.trim()); lsSet(LS.queue, v('nj-q').value); };
+    lsSet(LS.hfRepo, v('nj-repo').value.trim() || HF_DEFAULT_REPO); lsSet(LS.apiUrl, v('nj-au').value.trim()); lsSet(LS.apiKey, v('nj-ak').value.trim()); lsSet(LS.apiModel, v('nj-am').value.trim()); lsSet(LS.queue, v('nj-q').value); lsSet(LS.core, v('nj-core').checked ? '1' : '0'); };
   v('nj-save').onclick = () => { saveAll(); toast('Saved ✔'); el.classList.remove('show'); };
   v('nj-clear').onclick = () => { S.history = []; saveHist(); S.panels.forEach((p) => p.host.querySelector('.nj-log').innerHTML = ''); toast('Chat cleared'); };
   v('nj-build').onclick = async () => { saveAll(); el.classList.remove('show'); setBusy(true); await autoBuild((t) => addMsg('ai', t, null, 'coder')); setBusy(false); };
@@ -528,6 +615,10 @@ function renderMsg(m) {
           toast(`${x.data.findings?.length || 0} actions created ✔`); } catch (e) { toast('Failed: ' + e.message); } }));
       act.appendChild(btn('📋 Open Actions', () => { goTo('audits'); closeJarvisDrawer(); }));
     }
+    if (x?.type === 'built') {
+      if (x.route) act.appendChild(btn('📂 Open module', () => { location.hash = x.route; closeJarvisDrawer(); }));
+      act.appendChild(btn('↻ Reload app', () => location.reload()));
+    }
     if (x?.type === 'poster') {
       const i = document.createElement('img'); i.src = x.url; d.appendChild(i);
       act.appendChild(btn('⬇ Download PNG', () => { const a = document.createElement('a'); a.href = x.url; a.download = (x.name || 'safety-poster').replace(/\W+/g, '_') + '.png'; a.click(); }));
@@ -547,29 +638,87 @@ function renderMsg(m) {
   return d;
 }
 
+/* ------------------------------ LEGACY PHASE-1 DRAWER PURGE ------------------------------ */
+const LEGACY_SEL = '#jarvis-drawer,#jarvis-fab,#jarvis-bar,#jarvis-launcher,#jarvis-toggle,.jarvis-drawer,.jarvis-fab,.jarvis-launcher,[data-jarvis-drawer],[data-legacy-jarvis]';
+function isFloating(el) { const p = getComputedStyle(el).position; return p === 'fixed' || p === 'sticky'; }
+function purgeLegacy() {
+  try {
+    document.querySelectorAll(LEGACY_SEL).forEach((el) => {
+      if (el.id === 'nj-fab' || el.closest('#nj-drawer,.nj-wrap')) return;
+      if (isFloating(el)) el.style.setProperty('display', 'none', 'important');
+    });
+    document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach((i) => {
+      if (!/tell jarvis/i.test(i.placeholder) || i.closest('.nj-wrap')) return;
+      let n = i, top = null;
+      while (n && n !== document.body) { if (isFloating(n)) top = n; n = n.parentElement; }
+      if (top) top.style.setProperty('display', 'none', 'important');
+    });
+  } catch { /* never block the app */ }
+}
+let _purgeQ = false;
+const schedPurge = () => { if (_purgeQ) return; _purgeQ = true; requestAnimationFrame(() => { _purgeQ = false; purgeLegacy(); }); };
+
 /* ------------------------------ DRAWER API & EXPORTS ------------------------------ */
 function ensureCss() { if ($('#nj-css')) return; const s = document.createElement('style'); s.id = 'nj-css'; s.textContent = CSS; document.head.appendChild(s); }
+
 export function initJarvisDrawer() {
-  if (S.inited) return; S.inited = true; ensureCss();
-  const fab = document.createElement('button'); fab.id = 'nj-fab'; fab.textContent = '✦ JARVIS'; fab.onclick = toggleJarvisDrawer; document.body.appendChild(fab);
-  const dr = document.createElement('div'); dr.id = 'nj-drawer'; document.body.appendChild(dr);
-  const p = createPanel(dr); p.host = dr; S.panels.push(p);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.open) closeJarvisDrawer(); });
-  window.addEventListener('nasur:jarvis', (e) => { openJarvisDrawer(); if (e.detail?.prompt) send(e.detail.prompt); });
-  window.JARVIS = { open: openJarvisDrawer, close: closeJarvisDrawer, ask: send };
+  if (S.inited) return;
+  const go = () => {
+    if (S.inited) return; S.inited = true;
+    ensureCss(); purgeLegacy();
+    ['nj-fab', 'nj-drawer'].forEach((id) => { const o = document.getElementById(id); if (o) o.remove(); });
+    const fab = document.createElement('button'); fab.id = 'nj-fab'; fab.textContent = '✦ JARVIS'; fab.onclick = toggleJarvisDrawer; document.body.appendChild(fab);
+    const dr = document.createElement('div'); dr.id = 'nj-drawer'; document.body.appendChild(dr);
+    const p = createPanel(dr); p.host = dr; S.panels.push(p);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.open) closeJarvisDrawer(); });
+    window.addEventListener('nasur:jarvis', (e) => { openJarvisDrawer(); if (e.detail && e.detail.prompt) send(e.detail.prompt); });
+    window.addEventListener('hashchange', schedPurge);
+    try { new MutationObserver(schedPurge).observe(document.body, { childList: true, subtree: true }); } catch { /* ignore */ }
+    window.JARVIS = jarvisApi;
+  };
+  if (document.body) go(); else document.addEventListener('DOMContentLoaded', go, { once: true });
 }
-export function openJarvisDrawer() { if (!S.inited) initJarvisDrawer(); $('#nj-drawer').classList.add('open'); S.open = true; const f = $('#nj-fab'); if (f) f.style.display = 'none'; }
+export function openJarvisDrawer() {
+  if (!S.inited) initJarvisDrawer();
+  const d = $('#nj-drawer'); if (!d) return;
+  d.classList.add('open'); S.open = true; const f = $('#nj-fab'); if (f) f.style.display = 'none';
+}
 export function closeJarvisDrawer() { const d = $('#nj-drawer'); if (d) d.classList.remove('open'); S.open = false; const f = $('#nj-fab'); if (f) f.style.display = ''; }
 export function toggleJarvisDrawer() { S.open ? closeJarvisDrawer() : openJarvisDrawer(); }
 
 export function mount(el /*, ctx */) { // full-page JARVIS Studio
-  ensureCss(); el.style.height = 'calc(100vh - 120px)'; const p = createPanel(el); p.host = el;
-  $('.nj-x', el).style.display = 'none'; S.panels.push(p);
-  return () => { S.panels = S.panels.filter((x) => x !== p); };
+  ensureCss(); purgeLegacy();
+  el.style.height = 'calc(100vh - 140px)'; el.style.minHeight = '420px';
+  const p = createPanel(el); p.host = el;
+  const x = $('.nj-x', el); if (x) x.style.display = 'none';
+  S.panels.push(p);
+  return () => { S.panels = S.panels.filter((q) => q !== p); };
 }
-export function render(/* ctx */) { return '<div id="nj-page-host" style="height:calc(100vh - 120px)"></div><script>0</script>'; }
-export function afterRender() { const h = $('#nj-page-host'); if (h) mount(h); }
+export function afterRender() { const h = document.getElementById('nj-page-host'); if (h && !h.dataset.m) { h.dataset.m = '1'; mount(h); } }
+export function render(/* ctx */) {
+  let tries = 0;
+  const t = () => { const h = document.getElementById('nj-page-host'); if (h) afterRender(); else if (tries++ < 40) setTimeout(t, 50); };
+  setTimeout(t, 0);
+  return '<div id="nj-page-host" style="height:calc(100vh - 140px);min-height:420px"></div>';
+}
 
+const jarvisApi = {
+  init: initJarvisDrawer, open: openJarvisDrawer, close: closeJarvisDrawer, toggle: toggleJarvisDrawer,
+  ask: (t) => { openJarvisDrawer(); return send(t); },
+  build: (goal) => { openJarvisDrawer(); return handleAutoBuildRequest(goal); },
+  speak, mount, render, afterRender, shareWhatsApp: shareWA, shareEmail: shareMail,
+  get isOpen() { return S.open; },
+};
+['send', 'prompt', 'say', 'chat', 'run', 'openWith'].forEach((k) => { jarvisApi[k] = jarvisApi.ask; });
+
+export function getJarvis() { try { if (!S.inited) initJarvisDrawer(); } catch (e) { console.error('[JARVIS] init failed (app continues):', e); } return jarvisApi; }
+export const getJarvisDrawer = getJarvis;
+export const jarvis = jarvisApi;
+export const openJarvis = openJarvisDrawer;
+export const closeJarvis = closeJarvisDrawer;
+export const toggleJarvis = toggleJarvisDrawer;
+export const askJarvis = (t) => jarvisApi.ask(t);
+export const sendToJarvis = askJarvis;
 export const mountJarvis = (...args) => { try { return initJarvisDrawer(...args); } catch (e) { console.error('[JARVIS] init failed (app continues):', e); } };
 
-export default { initJarvisDrawer, mountJarvis, openJarvisDrawer, closeJarvisDrawer, toggleJarvisDrawer, mount, render, afterRender };
+export default { initJarvisDrawer, mountJarvis, getJarvis, openJarvisDrawer, closeJarvisDrawer, toggleJarvisDrawer, mount, render, afterRender };
