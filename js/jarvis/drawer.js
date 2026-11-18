@@ -495,8 +495,8 @@ async function handlePoster(text) {
 
 /* ------------------------------ UI ------------------------------ */
 const CSS = `
-#nj-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:99999;background:linear-gradient(135deg,#00e5ff,#2979ff);color:#001;border:0;border-radius:28px;padding:12px 18px;font:700 15px system-ui;box-shadow:0 6px 24px rgba(0,229,255,.45);cursor:pointer}
-#nj-drawer{position:fixed;top:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:min(480px,100vw);z-index:99999;background:#0b1220;color:#e8eefc;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
+#nj-fab{position:fixed;right:16px;bottom:calc(var(--nav-h,76px) + 12px);z-index:99999;background:linear-gradient(135deg,#00e5ff,#2979ff);color:#001;border:0;border-radius:28px;padding:12px 18px;font:700 15px system-ui;box-shadow:0 6px 24px rgba(0,229,255,.45);cursor:pointer}
+#nj-drawer{position:fixed;top:0;right:0;bottom:var(--drawer-bottom,76px);width:min(480px,100vw);z-index:99999;background:#0b1220;color:#e8eefc;transform:translateX(105%);transition:transform .25s;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.5)}
 #nj-drawer.open{transform:none}#jarvis-drawer,#jarvis-fab{display:none!important}
 .nj-wrap{display:flex;flex-direction:column;height:100%;min-height:0;font:14px/1.5 system-ui,sans-serif;background:#0b1220;color:#e8eefc}
 .nj-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#101a30;border-bottom:1px solid #1d2b4d}
