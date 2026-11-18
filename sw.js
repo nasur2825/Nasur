@@ -1,8 +1,13 @@
-/* NASUR service worker — Phase 6 (v6)
-   Offline-first: precache app shell, stale-while-revalidate for same-origin GET. */
+/* NASUR service worker — Phase 7 prep (v7)
+   Strategy:
+   - App code & data (js/css/json/html): NETWORK-FIRST, so a fresh commit always wins; cache is the offline fallback.
+   - Icons / images / fonts: stale-while-revalidate.
+   - Page navigations: network-first with the cached app shell as offline fallback.
+   - Tells open pages when a new version has activated, so the app can offer a reload. */
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'nasur-' + VERSION;
+const NETWORK_TIMEOUT_MS = 4000;
 
 const PRECACHE = [
   './',
@@ -24,6 +29,8 @@ const PRECACHE = [
   'js/jarvis/drawer.js',
   'js/jarvis/brain.js',
   'js/jarvis/providers.js',
+  'js/jarvis/context.js',
+  'js/jarvis/voice.js',
   'js/services/db.js',
   'js/services/repo.js',
   'js/services/config.js',
@@ -86,8 +93,18 @@ const PRECACHE = [
   'js/modules/settings.js'
 ];
 
+const STATIC_ASSET = /\.(?:svg|png|jpe?g|gif|webp|ico|woff2?|ttf|otf)$/i;
+
 function scopeUrl(path) {
   return new URL(path, self.registration.scope).href;
+}
+
+function offlineResponse() {
+  return new Response('Offline', {
+    status: 503,
+    statusText: 'Offline',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
 }
 
 self.addEventListener('install', (event) => {
@@ -100,9 +117,7 @@ self.addEventListener('install', (event) => {
     const failed = results
       .map((r, i) => (r.status === 'rejected' ? PRECACHE[i] : null))
       .filter(Boolean);
-    if (failed.length) {
-      console.warn('[sw] precache skipped:', failed.join(', '));
-    }
+    if (failed.length) console.warn('[sw] precache skipped:', failed.join(', '));
     await self.skipWaiting();
   })());
 });
@@ -111,11 +126,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
-      keys
-        .filter((k) => k.startsWith('nasur-') && k !== CACHE)
-        .map((k) => caches.delete(k))
+      keys.filter((k) => k.startsWith('nasur-') && k !== CACHE).map((k) => caches.delete(k))
     );
     await self.clients.claim();
+    const clientList = await self.clients.matchAll({ type: 'window' });
+    clientList.forEach((c) => c.postMessage({ type: 'SW_ACTIVATED', version: VERSION, cache: CACHE }));
   })());
 });
 
@@ -125,8 +140,48 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   } else if (data && data.type === 'GET_VERSION' && event.source) {
     event.source.postMessage({ type: 'VERSION', version: VERSION, cache: CACHE });
+  } else if (data && data.type === 'CLEAR_CACHES') {
+    event.waitUntil((async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k.startsWith('nasur-')).map((k) => caches.delete(k)));
+      if (event.source) event.source.postMessage({ type: 'CACHES_CLEARED' });
+    })());
   }
 });
+
+/* Network-first for code/data: always revalidate with the server; fall back to cache offline or if slow. */
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+  const fresh = new Request(request, { cache: 'no-cache' });
+  const netPromise = fetch(fresh).then((response) => {
+    if (response && response.status === 200 && response.type === 'basic') {
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  });
+  netPromise.catch(() => {}); // avoid unhandled rejection if the cache answers first
+
+  let response = null;
+  try {
+    response = await Promise.race([
+      netPromise,
+      new Promise((resolve) => setTimeout(() => resolve(null), NETWORK_TIMEOUT_MS))
+    ]);
+  } catch (err) {
+    response = null;
+  }
+
+  if (response && response.status < 500) return response;
+
+  const cached = await cache.match(request, { ignoreSearch: true });
+  if (cached) return cached;
+  if (response) return response;
+  try {
+    return await netPromise; // slow network, nothing cached: keep waiting for it
+  } catch (err) {
+    return offlineResponse();
+  }
+}
 
 async function networkFirstNavigation(request) {
   const cache = await caches.open(CACHE);
@@ -140,19 +195,13 @@ async function networkFirstNavigation(request) {
     const cached =
       (await cache.match(scopeUrl('index.html'), { ignoreSearch: true })) ||
       (await cache.match(scopeUrl('./'), { ignoreSearch: true }));
-    if (cached) return cached;
-    return new Response('Offline', {
-      status: 503,
-      statusText: 'Offline',
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
+    return cached || offlineResponse();
   }
 }
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(request, { ignoreSearch: true });
-
   const network = fetch(request)
     .then((response) => {
       if (response && response.status === 200 && response.type === 'basic') {
@@ -161,21 +210,11 @@ async function staleWhileRevalidate(request) {
       return response;
     })
     .catch(() => null);
-
   if (cached) {
-    // Refresh in the background; serve instantly from cache.
     network.catch(() => {});
     return cached;
   }
-
-  const fresh = await network;
-  if (fresh) return fresh;
-
-  return new Response('Offline', {
-    status: 503,
-    statusText: 'Offline',
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  });
+  return (await network) || offlineResponse();
 }
 
 self.addEventListener('fetch', (event) => {
@@ -188,13 +227,16 @@ self.addEventListener('fetch', (event) => {
   } catch (e) {
     return;
   }
-  // Only same-origin requests; AI provider and weather APIs go straight to network.
+  // Only same-origin requests; AI provider and weather APIs go straight to the network.
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstNavigation(request));
     return;
   }
-
-  event.respondWith(staleWhileRevalidate(request));
+  if (STATIC_ASSET.test(url.pathname)) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+  event.respondWith(networkFirst(request));
 });
