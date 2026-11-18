@@ -39,7 +39,8 @@ const LAWS = {
 
 /* ------------------------------ UTILITIES ------------------------------ */
 const $ = (s, r = document) => r.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ESC_MAP = { 38: '&amp;', 60: '&lt;', 62: '&gt;', 34: '&quot;', 39: '&#39;' };
+const esc = (s) => String(s ?? '').replace(/[&<>\u0022\u0027]/g, (c) => ESC_MAP[c.charCodeAt(0)]);
 const lsGet = (k, d = '') => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } };
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -554,4 +555,6 @@ export function mount(el /*, ctx */) { // full-page JARVIS Studio
 export function render(/* ctx */) { return '<div id="nj-page-host" style="height:calc(100vh - 120px)"></div><script>0</script>'; }
 export function afterRender() { const h = $('#nj-page-host'); if (h) mount(h); }
 
-export default { initJarvisDrawer, openJarvisDrawer, closeJarvisDrawer, toggleJarvisDrawer, mount, render, afterRender };
+export const mountJarvis = initJarvisDrawer;
+
+export default { initJarvisDrawer, mountJarvis, openJarvisDrawer, closeJarvisDrawer, toggleJarvisDrawer, mount, render, afterRender };
