@@ -5,7 +5,7 @@
  * Reads, validates and saves the user's own configuration (Addendum 9):
  *   language, timezone, country, industry, role, units, date_format,
  *   week_start, privacy { ai_enabled, context_level, redact_names },
- *   PIN lock fields { pinEnabled, pinHash, pinSalt }
+ *   apiKeys { <provider id>: "<key>" }   (added in the Phase 1 fix)
  * and the device-level colour theme.
  *
  * Not to be confused with js/core/config.js, which holds fixed app constants.
@@ -16,6 +16,15 @@
  *     before the database opens (getCachedLanguage)
  *   - theme: LocalStorage only (a per-device preference, read before the
  *     database opens)
+ *
+ * API keys (apiKeys):
+ *   - Provider ids are lowercase words such as "openrouter", "gemini", "groq".
+ *   - Saved in the database (IndexedDB), never in the page source.
+ *   - updateUserConfig({ apiKeys: { openrouter: 'sk-or-...' } }) adds or changes
+ *     keys and leaves the other keys alone. An empty string removes that key.
+ *   - resetUserConfig() does NOT delete saved keys (they are credentials, not
+ *     preferences). Use setApiKey(id, '') to remove one.
+ *   - The JARVIS drawer reads keys from here AND from js/services/settings.js.
  *
  * Rules:
  *   - This file never touches the DOM. app.js listens for EVENTS.THEME_CHANGED
@@ -35,10 +44,6 @@
  *     hse_manager, hse_consultant. Industry ids: construction, manufacturing,
  *     industrial_maintenance, facilities_management, warehousing_logistics,
  *     food_manufacturing, consultancy.
- *   - PIN fields: only a salted hash is ever stored, never the PIN itself.
- *     This file checks the FORMAT of pinHash / pinSalt (printable text, no
- *     spaces); how the hash is made and checked is the job of the Settings
- *     screen / lock screen. pinHash null means "no PIN set".
  */
 
 import { DEFAULT_THEME, EVENTS, LS_KEYS, SETTINGS_KEYS, THEMES } from '../core/config.js';
@@ -89,14 +94,12 @@ export const USER_CONFIG_DEFAULTS = Object.freeze({
   units: 'metric',
   date_format: 'DD/MM/YYYY',
   week_start: 'monday',
-  pinEnabled: false,
-  pinHash: null,
-  pinSalt: null,
   privacy: Object.freeze({
     ai_enabled: false,
     context_level: 'page',
     redact_names: true
-  })
+  }),
+  apiKeys: Object.freeze({})
 });
 
 const TOP_KEYS = Object.freeze(Object.keys(USER_CONFIG_DEFAULTS));
@@ -108,8 +111,9 @@ const STORED_CONFIG_VERSION = 1;
 const LANGUAGE_CODES = new Set(SUPPORTED_LANGUAGES.map((entry) => entry.code));
 const ID_PATTERN = /^[a-z][a-z0-9_]{1,39}$/;
 const COUNTRY_PATTERN = /^[A-Z]{2}$/;
-/** Printable ASCII without spaces: covers hex, base64 and "algo$salt$hash" styles. */
-const SECRET_TEXT_PATTERN = /^[\x21-\x7E]{8,512}$/;
+const PROVIDER_ID_PATTERN = /^[a-z][a-z0-9_]{1,29}$/;
+const API_KEY_MAX_CHARS = 300;
+const API_KEY_MAX_COUNT = 24;
 
 
 /* ==========================================================================
@@ -192,24 +196,44 @@ const ruleUnits = pickFrom(UNITS, (text) => text.toLowerCase(), 'Choose metric o
 const ruleDateFormat = pickFrom(DATE_FORMATS, (text) => text.toUpperCase(), 'Choose DD/MM/YYYY, MM/DD/YYYY or YYYY-MM-DD.');
 const ruleWeekStart = pickFrom(WEEK_STARTS, (text) => text.toLowerCase(), 'Choose Monday, Sunday or Saturday.');
 
-const rulePinEnabled = (value) => (typeof value === 'boolean' ? good(value) : bad('PIN lock must be on or off.'));
-
-/** A stored PIN hash or salt: null / empty means "none"; otherwise printable text without spaces. */
-function secretTextRule(label) {
-  return (value) => {
-    if (value === null || value === '') {
-      return good(null);
+/**
+ * API keys: an object of { providerId: key }. A key is a string of at most
+ * 300 characters with no spaces or line breaks. An empty string is allowed
+ * and means "remove this key".
+ */
+const ruleApiKeys = (value) => {
+  if (!isPlainObject(value)) {
+    return bad('API keys must be an object of provider ids and keys.');
+  }
+  const ids = Object.keys(value);
+  if (ids.length > API_KEY_MAX_COUNT) {
+    return bad('Too many API keys.');
+  }
+  const output = {};
+  for (const id of ids) {
+    const providerId = id.toLowerCase();
+    if (!PROVIDER_ID_PATTERN.test(providerId)) {
+      return bad('The provider id "' + id + '" must use lowercase letters, digits and underscores.');
     }
-    if (typeof value !== 'string') {
-      return bad('The PIN ' + label + ' must be text.');
+    const raw = value[id];
+    if (raw === null || raw === undefined) {
+      output[providerId] = '';
+      continue;
     }
-    const text = value.trim();
-    return SECRET_TEXT_PATTERN.test(text) ? good(text) : bad('The PIN ' + label + ' is not in a valid format.');
-  };
-}
-
-const rulePinHash = secretTextRule('hash');
-const rulePinSalt = secretTextRule('salt');
+    if (typeof raw !== 'string') {
+      return bad('The key for "' + id + '" must be text.');
+    }
+    const key = raw.trim();
+    if (key.length > API_KEY_MAX_CHARS) {
+      return bad('The key for "' + id + '" is too long.');
+    }
+    if (/\s/.test(key)) {
+      return bad('The key for "' + id + '" must not contain spaces or line breaks.');
+    }
+    output[providerId] = key;
+  }
+  return good(output);
+};
 
 const PRIVACY_RULES = Object.freeze({
   ai_enabled: (value) => (typeof value === 'boolean' ? good(value) : bad('AI use must be on or off.')),
@@ -226,9 +250,7 @@ const TOP_RULES = Object.freeze({
   units: ruleUnits,
   date_format: ruleDateFormat,
   week_start: ruleWeekStart,
-  pinEnabled: rulePinEnabled,
-  pinHash: rulePinHash,
-  pinSalt: rulePinSalt
+  apiKeys: ruleApiKeys
 });
 
 /** Validates the privacy object (partial or complete). */
@@ -301,7 +323,27 @@ export function validateConfigChanges(changes) {
    ========================================================================== */
 
 function copyConfig(config) {
-  return { ...config, privacy: { ...config.privacy } };
+  return { ...config, privacy: { ...config.privacy }, apiKeys: { ...config.apiKeys } };
+}
+
+/** Returns a copy of a key map without the empty (removed) entries. */
+function withoutEmptyKeys(map) {
+  const output = {};
+  for (const id of Object.keys(map)) {
+    if (typeof map[id] === 'string' && map[id] !== '') {
+      output[id] = map[id];
+    }
+  }
+  return output;
+}
+
+function sameKeys(a, b) {
+  const left = Object.keys(a).sort();
+  const right = Object.keys(b).sort();
+  if (left.length !== right.length) {
+    return false;
+  }
+  return left.every((id, index) => id === right[index] && a[id] === b[id]);
 }
 
 /**
@@ -319,7 +361,7 @@ export function normalizeUserConfig(raw) {
     }
     const result = TOP_RULES[key](raw[key]);
     if (result.ok) {
-      output[key] = result.value;
+      output[key] = key === 'apiKeys' ? withoutEmptyKeys(result.value) : result.value;
     }
   }
   if (isPlainObject(raw.privacy)) {
@@ -341,6 +383,8 @@ function applyChanges(current, partial) {
   for (const key of Object.keys(partial)) {
     if (key === 'privacy') {
       next.privacy = { ...next.privacy, ...partial.privacy };
+    } else if (key === 'apiKeys') {
+      next.apiKeys = withoutEmptyKeys({ ...next.apiKeys, ...partial.apiKeys });
     } else {
       next[key] = partial[key];
     }
@@ -357,6 +401,10 @@ function diffConfig(before, after) {
         if (before.privacy[sub] !== after.privacy[sub]) {
           changed.push('privacy.' + sub);
         }
+      }
+    } else if (key === 'apiKeys') {
+      if (!sameKeys(before.apiKeys, after.apiKeys)) {
+        changed.push('apiKeys');
       }
     } else if (before[key] !== after[key]) {
       changed.push(key);
@@ -478,7 +526,8 @@ export function getCachedUserConfig() {
 
 /**
  * Saves changes to the configuration. Pass only the fields to change
- * (privacy may be partial: { privacy: { ai_enabled: true } }).
+ * (privacy may be partial: { privacy: { ai_enabled: true } };
+ * apiKeys may be partial: { apiKeys: { groq: 'gsk_...' } }).
  * Rejects with DbError "invalid_data" (see `error.fields`) and saves nothing
  * if any field is not valid. Emits EVENTS.CONFIG_CHANGED with
  * { config, previous, changed } when something actually changed.
@@ -508,11 +557,15 @@ export function updateUserConfig(changes) {
   });
 }
 
-/** Restores every setting to its default and saves it. Resolves with the defaults. */
+/**
+ * Restores every setting to its default and saves it. Saved API keys are kept
+ * (they are credentials, not preferences). Resolves with the new configuration.
+ */
 export function resetUserConfig() {
   return enqueue(async () => {
     const previous = await getUserConfig();
     const next = copyConfig(USER_CONFIG_DEFAULTS);
+    next.apiKeys = { ...previous.apiKeys };
     const changed = diffConfig(previous, next);
 
     await persist(next);
@@ -528,6 +581,22 @@ export function resetUserConfig() {
 /** Forgets the in-memory copy only (used by tests and after a data wipe). */
 export function resetConfigCache() {
   cachedConfig = null;
+}
+
+
+/* ==========================================================================
+   6b. API KEY HELPERS
+   ========================================================================== */
+
+/** Returns a copy of the saved API keys: { providerId: key }. */
+export async function getApiKeys() {
+  const config = await getUserConfig();
+  return { ...config.apiKeys };
+}
+
+/** Saves (or, with an empty key, removes) one provider's API key. */
+export function setApiKey(providerId, key) {
+  return updateUserConfig({ apiKeys: { [String(providerId || '').toLowerCase()]: typeof key === 'string' ? key : '' } });
 }
 
 
