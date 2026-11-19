@@ -1,10 +1,12 @@
 /* ==========================================================================
    NASUR – JARVIS drawer, floating button and PIN lock screen
    File: css/jarvis.css
-   Loaded by index.html (a real file, because the page's security policy
-   blocks styles injected from JavaScript). Uses only tokens from tokens.css.
-   The drawer stops above the navigation bar and the on-screen keyboard
-   through --drawer-bottom, which js/core/app.js measures.
+   Loaded by js/jarvis/drawer.js (a real file, because the page's security
+   policy blocks styles injected from JavaScript). Uses only tokens from
+   tokens.css. The drawer stops above the navigation bar and the on-screen
+   keyboard through --drawer-bottom, which drawer.js measures.
+   PHASE 2: clean chat bubbles + formatted markdown (headings, lists, tables,
+   code) so replies never show raw ** or ### marks.
    ========================================================================== */
 
 .jv-fab {
@@ -51,6 +53,7 @@
 
 .jv-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -64,15 +67,20 @@
   font-size: var(--text-lg);
   color: var(--color-brand);
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .jv-badge {
+  max-width: 9rem;
+  overflow: hidden;
   padding: 0.1rem var(--space-2);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-full);
   background: transparent;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -91,6 +99,8 @@
   font: inherit;
   cursor: pointer;
 }
+
+.jv-head .jv-iconbtn { min-width: 2.25rem; padding: 0 var(--space-2); }
 
 .jv-btn--primary {
   background: var(--color-brand);
@@ -131,12 +141,37 @@
   line-height: var(--leading-normal);
 }
 
-.jv-msg.jv-user { align-self: flex-end; background: var(--color-brand); color: var(--color-brand-contrast); }
-.jv-msg.jv-ai { align-self: flex-start; background: var(--color-surface-raised); border: 1px solid var(--color-border); }
+.jv-msg.jv-user { align-self: flex-end; background: var(--color-brand); color: var(--color-brand-contrast); border-bottom-right-radius: var(--radius-sm); }
+.jv-msg.jv-ai { align-self: flex-start; background: var(--color-surface-raised); border: 1px solid var(--color-border); border-bottom-left-radius: var(--radius-sm); }
 .jv-tag { margin-bottom: var(--space-1); color: var(--color-brand); font-size: var(--text-xs); }
 .jv-spacer { height: var(--space-2); }
 .jv-msg pre { margin: var(--space-2) 0; padding: var(--space-2); overflow-x: auto; border-radius: var(--radius-sm); background: var(--color-surface-sunken); font: var(--text-xs) var(--font-mono); white-space: pre; }
 .jv-msg img { display: block; max-width: 100%; margin-top: var(--space-2); border-radius: var(--radius-md); }
+
+/* ---- formatted reply text (headings, lists, tables, code) ---- */
+.jv-body > :first-child { margin-top: 0; }
+.jv-body > :last-child { margin-bottom: 0; }
+.jv-body p { margin: 0 0 var(--space-2); }
+.jv-body .jv-h { margin: var(--space-3) 0 var(--space-1); color: var(--color-brand); font-size: var(--text-base); font-weight: var(--weight-bold); line-height: 1.3; }
+.jv-body h3.jv-h { font-size: var(--text-lg); }
+.jv-body ul,
+.jv-body ol { margin: 0 0 var(--space-2); padding-left: 1.3rem; }
+.jv-body li { margin: 0 0 var(--space-1); padding-left: 0.1rem; }
+.jv-body li::marker { color: var(--color-brand); }
+.jv-body strong { font-weight: var(--weight-bold); }
+.jv-body em { font-style: italic; }
+.jv-body hr { margin: var(--space-3) 0; border: 0; border-top: 1px solid var(--color-border); }
+.jv-body blockquote { margin: 0 0 var(--space-2); padding: var(--space-1) var(--space-3); border-left: 3px solid var(--color-brand); color: var(--color-text-muted); }
+.jv-body a { color: var(--color-brand); text-decoration: underline; overflow-wrap: anywhere; }
+.jv-body code { padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); background: var(--color-surface-sunken); font: 0.9em var(--font-mono); }
+.jv-body pre code { padding: 0; background: transparent; font-size: inherit; }
+.jv-user .jv-body a { color: inherit; }
+.jv-user .jv-body code { background: rgba(0, 0, 0, 0.18); }
+.jv-tablewrap { max-width: 100%; margin: 0 0 var(--space-2); overflow-x: auto; }
+.jv-body table { border-collapse: collapse; font-size: var(--text-sm); }
+.jv-body th,
+.jv-body td { padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); text-align: left; vertical-align: top; }
+.jv-body th { background: var(--color-surface-sunken); font-weight: var(--weight-semibold); }
 
 .jv-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
 .jv-actions .jv-btn { min-height: 2rem; font-size: var(--text-sm); }
@@ -206,6 +241,9 @@
 .jv-panel.is-open { display: block; }
 .jv-panel label { display: block; margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--text-sm); }
 .jv-panel input[type="text"], .jv-panel input[type="password"] { width: 100%; box-sizing: border-box; padding: var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-text); font: inherit; }
+.jv-panel select.jv-input { width: 100%; box-sizing: border-box; }
+.jv-panel summary { margin: var(--space-3) 0 var(--space-1); color: var(--color-text-muted); font-size: var(--text-sm); cursor: pointer; }
+.jv-panel .jv-actions { margin: var(--space-3) 0; }
 .jv-note { color: var(--color-text-faint); font-size: var(--text-xs); }
 
 /* PIN lock screen (created by js/core/app.js) */
