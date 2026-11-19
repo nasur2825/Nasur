@@ -1,13 +1,11 @@
-/* NASUR service worker — Phase 7 prep (v7)
-   Strategy:
-   - App code & data (js/css/json/html): NETWORK-FIRST, so a fresh commit always wins; cache is the offline fallback.
-   - Icons / images / fonts: stale-while-revalidate.
-   - Page navigations: network-first with the cached app shell as offline fallback.
-   - Tells open pages when a new version has activated, so the app can offer a reload. */
+/* NASUR service worker — v7
+   Network-first for app code, styles, data and pages (so a new commit shows up on the
+   very next load); cache is the offline fallback. AI providers and weather (other origins)
+   always go straight to the network. */
 
 const VERSION = 'v7';
 const CACHE = 'nasur-' + VERSION;
-const NETWORK_TIMEOUT_MS = 4000;
+const NETWORK_TIMEOUT_MS = 6000;
 
 const PRECACHE = [
   './',
@@ -18,6 +16,7 @@ const PRECACHE = [
   'css/base.css',
   'css/components.css',
   'css/home.css',
+  'css/jarvis.css',
   'css/settings.css',
   'css/observations.css',
   'css/reference.css',
@@ -27,15 +26,19 @@ const PRECACHE = [
   'js/core/router.js',
   'js/core/app.js',
   'js/jarvis/drawer.js',
-  'js/jarvis/brain.js',
-  'js/jarvis/providers.js',
-  'js/jarvis/context.js',
   'js/jarvis/voice.js',
+  'js/jarvis/context.js',
   'js/services/db.js',
   'js/services/repo.js',
   'js/services/config.js',
+  'js/services/settings.js',
   'js/services/sanitize.js',
   'js/services/regions.js',
+  'js/services/calendar.js',
+  'js/services/heat.js',
+  'js/services/weather.js',
+  'js/services/workspace.js',
+  'js/services/templates.js',
   'js/services/pin.js',
   'js/services/exporter.js',
   'js/services/importer.js',
@@ -93,31 +96,23 @@ const PRECACHE = [
   'js/modules/settings.js'
 ];
 
-const STATIC_ASSET = /\.(?:svg|png|jpe?g|gif|webp|ico|woff2?|ttf|otf)$/i;
-
 function scopeUrl(path) {
   return new URL(path, self.registration.scope).href;
-}
-
-function offlineResponse() {
-  return new Response('Offline', {
-    status: 503,
-    statusText: 'Offline',
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  });
 }
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    // Cache each file individually so one missing file never blocks installation.
+    // Each file is cached on its own, so one missing file never blocks the install.
     const results = await Promise.allSettled(
       PRECACHE.map((path) => cache.add(new Request(scopeUrl(path), { cache: 'reload' })))
     );
     const failed = results
       .map((r, i) => (r.status === 'rejected' ? PRECACHE[i] : null))
       .filter(Boolean);
-    if (failed.length) console.warn('[sw] precache skipped:', failed.join(', '));
+    if (failed.length) {
+      console.warn('[sw] not cached (missing or unreachable):', failed.join(', '));
+    }
     await self.skipWaiting();
   })());
 });
@@ -126,11 +121,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
-      keys.filter((k) => k.startsWith('nasur-') && k !== CACHE).map((k) => caches.delete(k))
+      keys
+        .filter((k) => k.startsWith('nasur-') && k !== CACHE)
+        .map((k) => caches.delete(k))
     );
     await self.clients.claim();
-    const clientList = await self.clients.matchAll({ type: 'window' });
-    clientList.forEach((c) => c.postMessage({ type: 'SW_ACTIVATED', version: VERSION, cache: CACHE }));
   })());
 });
 
@@ -140,81 +135,61 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   } else if (data && data.type === 'GET_VERSION' && event.source) {
     event.source.postMessage({ type: 'VERSION', version: VERSION, cache: CACHE });
-  } else if (data && data.type === 'CLEAR_CACHES') {
-    event.waitUntil((async () => {
-      const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k.startsWith('nasur-')).map((k) => caches.delete(k)));
-      if (event.source) event.source.postMessage({ type: 'CACHES_CLEARED' });
-    })());
   }
 });
 
-/* Network-first for code/data: always revalidate with the server; fall back to cache offline or if slow. */
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE);
-  const fresh = new Request(request, { cache: 'no-cache' });
-  const netPromise = fetch(fresh).then((response) => {
-    if (response && response.status === 200 && response.type === 'basic') {
-      cache.put(request, response.clone()).catch(() => {});
-    }
-    return response;
+function offlineResponse() {
+  return new Response('Offline', {
+    status: 503,
+    statusText: 'Offline',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
   });
-  netPromise.catch(() => {}); // avoid unhandled rejection if the cache answers first
-
-  let response = null;
-  try {
-    response = await Promise.race([
-      netPromise,
-      new Promise((resolve) => setTimeout(() => resolve(null), NETWORK_TIMEOUT_MS))
-    ]);
-  } catch (err) {
-    response = null;
-  }
-
-  if (response && response.status < 500) return response;
-
-  const cached = await cache.match(request, { ignoreSearch: true });
-  if (cached) return cached;
-  if (response) return response;
-  try {
-    return await netPromise; // slow network, nothing cached: keep waiting for it
-  } catch (err) {
-    return offlineResponse();
-  }
 }
 
-async function networkFirstNavigation(request) {
+function fetchWithTimeout(request, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    fetch(request).then(
+      (response) => {
+        clearTimeout(timer);
+        resolve(response);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
+/** Network first; the cache is used only when the network fails, is too slow, or the server is down (5xx). */
+async function networkFirst(request, cacheKey, fallbackKeys) {
   const cache = await caches.open(CACHE);
+  const lookup = async () => {
+    const direct = await cache.match(cacheKey, { ignoreSearch: true });
+    if (direct) return direct;
+    for (const key of fallbackKeys) {
+      const hit = await cache.match(key, { ignoreSearch: true });
+      if (hit) return hit;
+    }
+    return null;
+  };
+
   try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(scopeUrl('index.html'), response.clone()).catch(() => {});
+    const response = await fetchWithTimeout(request, NETWORK_TIMEOUT_MS);
+    if (response && response.status === 200 && response.type === 'basic') {
+      cache.put(cacheKey, response.clone()).catch(() => {});
+      return response;
+    }
+    if (response && response.status >= 500) {
+      const cached = await lookup();
+      if (cached) return cached;
     }
     return response;
-  } catch (err) {
-    const cached =
-      (await cache.match(scopeUrl('index.html'), { ignoreSearch: true })) ||
-      (await cache.match(scopeUrl('./'), { ignoreSearch: true }));
+  } catch (error) {
+    const cached = await lookup();
     return cached || offlineResponse();
   }
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE);
-  const cached = await cache.match(request, { ignoreSearch: true });
-  const network = fetch(request)
-    .then((response) => {
-      if (response && response.status === 200 && response.type === 'basic') {
-        cache.put(request, response.clone()).catch(() => {});
-      }
-      return response;
-    })
-    .catch(() => null);
-  if (cached) {
-    network.catch(() => {});
-    return cached;
-  }
-  return (await network) || offlineResponse();
 }
 
 self.addEventListener('fetch', (event) => {
@@ -231,12 +206,9 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirstNavigation(request));
+    event.respondWith(networkFirst(request, scopeUrl('index.html'), [scopeUrl('./')]));
     return;
   }
-  if (STATIC_ASSET.test(url.pathname)) {
-    event.respondWith(staleWhileRevalidate(request));
-    return;
-  }
-  event.respondWith(networkFirst(request));
+
+  event.respondWith(networkFirst(request, request, []));
 });
