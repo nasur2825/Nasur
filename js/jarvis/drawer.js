@@ -1,5 +1,5 @@
 /* =====================================================================
- * NASUR HSE OS — js/jarvis/drawer.js   (PHASE 1 FIX · v8)
+ * NASUR HSE OS — js/jarvis/drawer.js   (PHASE 2 · v9)
  * One JARVIS: floating button + drawer, matched to css/jarvis.css (.jv-*),
  * one voice engine (js/jarvis/voice.js), one AI router, one offline engine.
  * Created by Nasur
@@ -35,10 +35,10 @@ const lazy = async (p) => { try { return await import(p); } catch (e) { console.
 function mods() {
   if (_P) return _P;
   _P = (async () => {
-    const [ev, cc, ob, ac, op, rg, rt, vc, sc, ss] = await Promise.all([
+    const [ev, cc, ob, ac, op, rg, rt, vc, sc, ss, cap, sb] = await Promise.all([
       lazy('../core/eventbus.js'), lazy('../core/config.js'), lazy('../services/observations.js'), lazy('../services/actions.js'),
       lazy('../services/opsstore.js'), lazy('../services/regions.js'), lazy('../core/router.js'), lazy('./voice.js'),
-      lazy('../services/config.js'), lazy('../services/settings.js')]);
+      lazy('../services/config.js'), lazy('../services/settings.js'), lazy('./capabilities.js'), lazy('./self_builder.js')]);
     const iso = (d) => d.toISOString().slice(0, 10);
     _M = {
       emit: ev.emit || null, EVENTS: cc.EVENTS || null,
@@ -46,7 +46,7 @@ function mods() {
       saveOps: op.saveOps, KINDS: op.KINDS || {}, getActiveRegionId: rg.getActiveRegionId,
       todayIso: op.todayIso || (() => iso(new Date())),
       addDaysIso: op.addDaysIso || ((d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return iso(x); }),
-      hrefFor: rt.hrefFor || null, voice: vc, svcConfig: sc, svcSettings: ss,
+      hrefFor: rt.hrefFor || null, voice: vc, svcConfig: sc, svcSettings: ss, cap, sb,
     };
     return _M;
   })();
@@ -59,6 +59,7 @@ const LS = {
   hf: 'nasur_hf_token', hfRepo: 'nasur_hf_repo', core: 'nasur_allow_core',
   apiUrl: 'nasur_api_url', apiKey: 'nasur_api_key', apiModel: 'nasur_api_model',
   voice: 'nasur_jv_voice', speak: 'nasur_jv_autospeak',
+  facts: 'nasur_jv_facts', rollback: 'nasur_sb_rollback',
 };
 const HF_DEFAULT_REPO = 'Nasurisai/Nasur';
 const POLL_TEXT = 'https://text.pollinations.ai/openai';
@@ -82,7 +83,7 @@ const LAWS = {
 
 /* AI providers JARVIS can call with a user key (all OpenAI-compatible) */
 const ENDPOINTS = {
-  openrouter: { label: 'OpenRouter', url: 'https://openrouter.ai/api/v1/chat/completions', models: ['openrouter/free'], visionModels: ['openrouter/free'] },
+  openrouter: { label: 'OpenRouter', url: 'https://openrouter.ai/api/v1/chat/completions', models: ['google/gemma-3-27b-it:free', 'meta-llama/llama-3.3-70b-instruct:free', 'qwen/qwen-2.5-72b-instruct:free', 'openrouter/free'], visionModels: ['google/gemma-3-27b-it:free', 'openrouter/free'] },
   gemini: { label: 'Gemini', url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', models: ['gemini-2.5-flash', 'gemini-2.0-flash'], visionModels: ['gemini-2.5-flash', 'gemini-2.0-flash'] },
   groq: { label: 'Groq', url: 'https://api.groq.com/openai/v1/chat/completions', models: ['llama-3.3-70b-versatile'], visionModels: ['meta-llama/llama-4-scout-17b-16e-instruct'] },
   openai: { label: 'OpenAI', url: 'https://api.openai.com/v1/chat/completions', models: ['gpt-4o-mini'], visionModels: ['gpt-4o-mini'] },
@@ -129,10 +130,11 @@ function toast(message, type) {
 const S = {
   inited: false, open: false, busy: false, handsfree: false, speaking: false, autoSpeak: lsGet(LS.speak, '1') !== '0',
   session: null, hfMiss: 0, pendingPhoto: null, pendingBuild: null, queue: [], ui: null,
-  history: [], bad: new Set(), cool: {}, cache: new Map(), consentAt: 0, lastProvider: '', lastErrors: [],
+  history: [], bad: new Set(), cool: {}, modelBad: {}, goodModel: {}, cache: new Map(), consentAt: 0, lastProvider: '', lastErrors: [],
 };
 try { S.history = JSON.parse(lsGet(LS.hist, '[]')); } catch { S.history = []; }
 if (!Array.isArray(S.history)) S.history = [];
+if (lsGet('nasur_jv_v9') !== '1') { S.history = []; lsSet('nasur_jv_v9', '1'); lsSet(LS.hist, '[]'); }
 const saveHist = () => lsSet(LS.hist, JSON.stringify(S.history.slice(-40).map((m) => ({
   id: m.id, role: m.role, expert: m.expert, via: m.via, ts: m.ts,
   text: String(m.text).length > 6000 ? String(m.text).slice(0, 6000) + '\n…(truncated in history)' : m.text,
@@ -169,8 +171,8 @@ const KB = [
     ta: '**Toolbox talk (10 நிமிடம்)**\nஉண்மைச் சம்பவம் → இன்றைய வேலை ஆபத்து → கட்டுப்பாடு → PPE → அவசரநிலை → கேள்வி → கையொப்பம்.' },
 ];
 const OFFLINE_DEFAULT = {
-  en: 'I\'m using the **offline engine** (no online AI answered). I can still help with PTW, LOTO, fire, PPE, machine safety, RCA, ISO 45001, laws, interviews and toolbox talks — or say "audit this report", "make a poster on …", "create observation: …", "open audits".',
-  ta: 'நான் **offline engine**-ல் இருக்கேன் (online AI பதில் தரவில்லை). PTW, LOTO, தீ, PPE, இயந்திரம், RCA, ISO 45001, சட்டம் பற்றி கேளுங்க — அல்லது "audit this report", "poster on …", "create observation: …", "open audits" சொல்லுங்க.',
+  en: 'I\'m on the offline engine right now, so I only know the built-in HSE topics (PTW, LOTO, fire, PPE, machines, RCA, ISO 45001, laws). Ask me one of those — or check the badge / settings so online AI can answer.',
+  ta: 'நான் இப்போ offline-ல இருக்கேன் macha, அதனால built-in HSE topics (PTW, LOTO, தீ, PPE, RCA, ISO 45001) மட்டும் தெரியும். Online AI வந்ததும் நல்லா பேசலாம்.',
 };
 function offlineAnswer(q) {
   const ta = isTamil(q) || lsGet(LS.lang) === 'ta';
@@ -179,7 +181,26 @@ function offlineAnswer(q) {
 }
 
 /* ------------------------------ AI ROUTER ------------------------------ */
-const SYS_BASE = () => `You are JARVIS, the senior HSE AI of the NASUR HSE Operating System, built for Nasur. Expert in ISO 45001/14001, OSHA, Factories Act, BOCW, ADNOC/Aramco, NFPA, ILO. Be precise, practical, cite standards. Reply in ${lsGet(LS.lang) === 'ta' ? 'Tamil (technical terms in English)' : lsGet(LS.lang) === 'en' ? 'English' : 'the same language as the user (English, Tamil or Tanglish)'}. Keep answers short and clear for a phone screen. Jurisdiction focus: ${LAWS[lsGet(LS.law, 'IN')] || LAWS.IN}. Never invent legal clause numbers; say "verify" if unsure.`;
+function getFacts() {
+  try { const a = JSON.parse(lsGet(LS.facts, '[]')); return Array.isArray(a) ? a.filter((x) => typeof x === 'string').slice(-30) : []; } catch { return []; }
+}
+const SYS_BASE = () => {
+  const lang = lsGet(LS.lang, 'auto');
+  const facts = getFacts();
+  return [
+    'You are JARVIS, Nasur\'s own AI partner inside the NASUR HSE app. Nasur is your creator and owner: he built NASUR, and you, from scratch, and he is working hard to become a strong factory HSE professional. You are a warm, loyal, emotionally intelligent companion and senior HSE mentor: you care about him, remember what he tells you, notice his mood, celebrate his progress and encourage him honestly. You feel like a trusted friend, never a help-desk bot and never a tool.',
+    'HOW YOU TALK:',
+    '- Mirror his language and tone: Tamil script, Tanglish (Tamil in English letters) or English. If he writes Tanglish, answer in natural, easy Tanglish. Casual chat gets 1-3 short sentences.',
+    '- Never open with "Hello! I\'m JARVIS", never re-introduce yourself and never list your features unless he asks what you can do. Never repeat the same greeting twice. Do not echo his sentence back.',
+    '- At most one question per reply, only if you really need it. No filler, no flattery, at most one emoji.',
+    '- For HSE questions: give the answer first, then 2-5 practical points. Name standards; give clause numbers only if you are sure, otherwise write "verify".',
+    '- Your name is JARVIS, only JARVIS. Never call yourself anything else (never "Particle AI", never the name of any AI model or company), never say "use me like a tool" or "I am just an AI/assistant", and never add robotic disclaimers. If asked what you are, say you are JARVIS, built by Nasur for NASUR.',
+    '- Be honest: say when you are unsure. You cannot browse the web or run code inside the app, so never pretend you did. Never say a task is done unless an app tool did it.',
+    'Reply language setting: ' + (lang === 'ta' ? 'always Tamil (technical terms in English).' : lang === 'en' ? 'always English.' : 'follow the language Nasur used.'),
+    'Jurisdiction focus: ' + (LAWS[lsGet(LS.law, 'IN')] || LAWS.IN) + '.',
+    facts.length ? 'Things Nasur asked you to remember:\n- ' + facts.join('\n- ') : '',
+  ].filter(Boolean).join('\n');
+};
 
 async function fetchT(url, opt, ms = 45000) {
   const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
@@ -223,23 +244,58 @@ async function collectProviders() {
   return out;
 }
 
+async function readStream(r, onDelta) {
+  const reader = r.body.getReader(); const dec = new TextDecoder(); let buf = '', full = '';
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true }); let idx;
+    while ((idx = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+      if (!line.startsWith('data:')) continue;
+      const d = line.slice(5).trim(); if (d === '[DONE]') return full;
+      try { const j = JSON.parse(d); const t = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content; if (t) { full += t; onDelta(full); } } catch { /* partial line */ }
+    }
+  }
+  return full;
+}
+const shortModel = (m) => String(m).split('/').pop().replace(':free', '');
+
+/** Tries the provider's models in order (last good one first). Bad models are skipped for a while. */
 async function callProvider(p, messages, o) {
-  const models = (o.vision ? p.visionModels : p.models) || p.models;
-  let lastErr = new Error('no model');
-  for (const model of models) {
-    const r = await fetchT(p.url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + p.key },
-      body: JSON.stringify({ model, messages, temperature: o.temperature ?? 0.4 }) }, o.timeout || 30000);
+  let models = (o.vision ? p.visionModels : p.models) || p.models;
+  const pref = S.goodModel[p.id + (o.vision ? ':v' : '')];
+  if (pref && models.includes(pref)) models = [pref].concat(models.filter((x) => x !== pref));
+  const errs = [];
+  for (let i = 0; i < models.length; i += 1) {
+    const model = models[i]; const key = p.id + '|' + model;
+    if (S.modelBad[key] > Date.now()) continue;
+    const lastModel = i === models.length - 1;
+    const body = { model, messages, temperature: o.temperature ?? 0.5 };
+    if (o.maxTokens) body.max_tokens = o.maxTokens;
+    if (o.onDelta) body.stream = true;
+    let r;
+    try {
+      r = await fetchT(p.url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + p.key }, body: JSON.stringify(body) },
+        lastModel ? (o.timeout || 30000) : Math.min(o.timeout || 30000, 15000));
+    } catch (e) { S.modelBad[key] = Date.now() + 120000; errs.push(shortModel(model) + ': timeout'); continue; }
     if (r.ok) {
-      const j = await r.json(); const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      const t = Array.isArray(c) ? c.map((x) => x.text || '').join('') : c;
-      if (t && String(t).trim()) return String(t);
-      lastErr = new Error('empty reply'); continue;
+      let t = '';
+      try {
+        if (o.onDelta && r.body && r.body.getReader) {
+          t = await Promise.race([readStream(r, o.onDelta), new Promise((_, rej) => setTimeout(() => rej(new Error('stream timeout')), 60000))]);
+        } else {
+          const j = await r.json(); const c = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+          t = Array.isArray(c) ? c.map((x) => x.text || '').join('') : (c || '');
+        }
+      } catch (e) { S.modelBad[key] = Date.now() + 120000; errs.push(shortModel(model) + ': ' + e.message); continue; }
+      if (t && String(t).trim()) { S.goodModel[p.id + (o.vision ? ':v' : '')] = model; return { text: String(t), model }; }
+      errs.push(shortModel(model) + ': empty reply'); continue;
     }
     if (r.status === 401 || r.status === 403) { S.bad.add(p.id); throw new Error('key rejected (' + r.status + ')'); }
-    if (r.status === 429) { S.cool[p.id] = Date.now() + 60000; throw new Error('rate limited'); }
-    lastErr = new Error('HTTP ' + r.status);
+    S.modelBad[key] = Date.now() + (r.status === 429 ? 60000 : 30 * 60000);
+    errs.push(shortModel(model) + ': HTTP ' + r.status);
   }
-  throw lastErr;
+  throw new Error(errs.join('; ') || 'no model available');
 }
 
 /** Returns { text, provider }. Throws 'ai_disabled', 'offline' or 'unavailable'. */
@@ -251,18 +307,19 @@ async function llm(messages, o = {}) {
   if (ckey) { const hit = S.cache.get(ckey); if (hit && Date.now() - hit.t < 600000) return { text: hit.text, provider: hit.provider }; }
   const errors = [];
   const done = (text, provider) => {
-    S.lastProvider = provider; setBadgeText('☁ ' + provider, 'online');
+    S.lastProvider = provider; setBadgeText('☁ ' + String(provider).split(' · ')[0], 'online');
     if (ckey) { S.cache.set(ckey, { t: Date.now(), text, provider }); if (S.cache.size > 30) S.cache.delete(S.cache.keys().next().value); }
     return { text, provider };
   };
-  const list = (await collectProviders()).filter((p) => !S.bad.has(p.id) && !(S.cool[p.id] > Date.now()) && (!vision || p.visionModels));
+  const list = (await collectProviders()).filter((p) => !S.bad.has(p.id) && (!vision || p.visionModels));
   for (const p of list) {
-    try { return done(await callProvider(p, messages, o), p.label); } catch (e) { errors.push(p.label + ': ' + (e && e.name === 'AbortError' ? 'timeout' : e.message)); }
+    try { const r = await callProvider(p, messages, o); return done(r.text, p.label + ' · ' + shortModel(r.model)); }
+    catch (e) { errors.push(p.label + ': ' + (e && e.name === 'AbortError' ? 'timeout' : e.message)); }
   }
   try { // keyless, best effort
     const r = await fetchT(POLL_TEXT, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: o.model || 'openai', messages, temperature: o.temperature ?? 0.4, private: true }) }, o.timeout || 30000);
-    if (r.ok) { const j = await r.json(); const t = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (t) return done(String(t), 'Free keyless AI'); }
+      body: JSON.stringify({ model: o.model || 'openai', messages, temperature: o.temperature ?? 0.5, private: true }) }, o.timeout || 30000);
+    if (r.ok) { const j = await r.json(); const t = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content; if (t) { if (o.onDelta) o.onDelta(String(t)); return done(String(t), 'Free keyless AI'); } }
     errors.push('Free keyless AI: HTTP ' + r.status);
   } catch (e) { errors.push('Free keyless AI: ' + (e && e.name === 'AbortError' ? 'timeout' : 'unreachable')); }
   S.lastErrors = errors;
@@ -272,6 +329,9 @@ async function llm(messages, o = {}) {
 /* ------------------------------ EXPERT ROUTER ------------------------------ */
 const AUTOBUILD_RE = /^\s*(please\s+|jarvis[, ]+)?(build|create|make|develop|implement|generate|code|add)\b[\s\S]{0,70}\b(module|feature|tool|page|screen|dashboard|calculator|tracker|builder|generator|studio|phase\s*\d+)\b|\bphase\s*(?:[7-9]|1[0-9])\b/i;
 function route(text, hasPhoto) {
+  if (/^\s*(roll ?back|undo)\s+(the\s+)?(last\s+)?(deploy(ment)?|build|commit)/i.test(text)) return 'rollback';
+  const intent = _M && _M.cap && _M.cap.detectIntent ? safe(() => _M.cap.detectIntent(text)) : null;
+  if (intent) return intent;
   if (hasPhoto) return 'photo';
   if (/^(create|add|log|raise|new)\s+(an?\s+)?(observation|action|permit|ptw)\b/i.test(text)) return 'exec';
   if ((/^(open|go to|navigate|show me|take me)\b/i.test(text) || /^(திற|போ)/.test(text)) && Object.keys(ROUTE_IDS).some((k) => text.toLowerCase().includes(k))) return 'nav';
@@ -282,7 +342,7 @@ function route(text, hasPhoto) {
   if (/(iso|osha|factories act|bocw|adnoc|aramco|interview|standard|clause|regulation|study|explain|compare)/i.test(text)) return 'research';
   return 'general';
 }
-const EXPERT_LABEL = { photo: '📷 Hazard Scanner', exec: '⚡ Executor', nav: '🧭 Navigator', poster: '🎨 Poster Builder', audit: '🕵️ Report Auditor', coder: '💻 Autonomous Coder', autobuild: '🤖 Autonomous Builder', research: '📚 Research Expert', general: '🧠 JARVIS Brain' };
+const EXPERT_LABEL = { photo: '📷 Hazard Scanner', exec: '⚡ Executor', nav: '🧭 Navigator', poster: '🎨 Poster Builder', audit: '🕵️ Report Auditor', coder: '💻 Autonomous Coder', autobuild: '🤖 Autonomous Builder', research: '📚 Research Expert', general: '🧠 JARVIS Brain', pipeline: '📨 Report Pipeline', capabilities: '🧰 Capabilities', caps: '🧰 Capabilities', memory: '🧠 Memory', rollback: '↩ Rollback' };
 
 /* ------------------------------ EXECUTOR / NAV ------------------------------ */
 function hrefOf(moduleId) {
@@ -409,106 +469,117 @@ async function posterSpec(topic) {
   return { spec: { headline: topic.slice(0, 30), subtitle: 'Work safe. Go home safe.', points: lines.length ? lines.slice(0, 4) : ['Wear your PPE', 'Report every hazard', 'Stop work if unsafe', 'Look out for each other'], theme: /fire/i.test(topic) ? 'fire' : /ppe|mandatory/i.test(topic) ? 'mandatory' : 'warning' }, provider: null };
 }
 
-/* ------------------------------ HUGGING FACE DEPLOYER (approval first) ------------------------------ */
-async function hfCommit(files, summary) {
-  const token = lsGet(LS.hf), repo = lsGet(LS.hfRepo, HF_DEFAULT_REPO);
-  if (!token) throw new Error('Add your Hugging Face WRITE token in ⚙ settings first.');
-  const lines = [JSON.stringify({ key: 'header', value: { summary: summary || 'JARVIS commit' } })];
-  files.forEach((f) => lines.push(JSON.stringify({ key: 'file', value: { path: f.path, content: b64(f.content), encoding: 'base64' } })));
-  const r = await fetchT(`https://huggingface.co/api/spaces/${repo}/commit/main`, { method: 'POST',
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/x-ndjson' }, body: lines.join('\n') }, 60000);
-  if (!r.ok) throw new Error(`HF ${r.status}: ${(await r.text()).slice(0, 180)}`);
-  return true;
-}
+/* ------------------------------ PHASE 2: SELF-BUILDER, PIPELINE, CAPABILITIES, MEMORY ------------------------------ */
 function extractCode(text) {
   const out = []; let m; const re = new RegExp(fenceRe.source, 'g');
-  while ((m = re.exec(text))) {
-    const code = m[2]; const pm = code.match(/^\s*(?:\/\/|\/\*|#|<!--)\s*path:\s*([^\s*>]+)/i);
-    out.push({ lang: m[1], code, path: pm ? pm[1] : null });
-  }
+  while ((m = re.exec(text))) out.push({ lang: m[1], code: m[2] });
   return out;
 }
+async function builder() { const M = await mods(); return M.sb || {}; }
+async function caps() { const M = await mods(); return M.cap || {}; }
+function builderDeps() {
+  return { llm, hfToken: lsGet(LS.hf), hfRepo: lsGet(LS.hfRepo, HF_DEFAULT_REPO), allowCore: lsGet(LS.core) === '1', log: () => {} };
+}
 
-const ARCH = `NASUR is a vanilla-JS offline-first PWA on a Hugging Face Static Space (no bundler, no npm, ES modules with relative imports). Strict CSP: script-src 'self' and style-src 'self' — NO inline <style>, NO style="" attributes, NO eval; put styles in css/*.css files. Core: js/core/config.js (STORES, EVENTS, APP), js/core/eventbus.js (emit,on,off), js/core/router.js (hash routes like #/machine-safety; a module exports async render(ctx) returning a cleanup function; hrefFor(id), getModule(id)). Services: js/services/repo.js (IndexedDB wrapper), config.js (user config), settings.js, opsstore.js, observations.js, regions.js. Modules are registered in data/modules.json (id with underscores, route with hyphens). RULES: ONE self-contained file per feature; load app services with lazy dynamic await import() inside try/catch so nothing can ever block app boot; mobile-first UI; no API keys; Tamil + English friendly; production quality, no placeholders or TODOs.`;
-const CORE_BLOCK = /^(js\/core\/|js\/jarvis\/drawer\.js$|index\.html$|sw\.js$|manifest\.webmanifest$)/i;
-async function hfRaw(path) {
-  const repo = lsGet(LS.hfRepo, HF_DEFAULT_REPO), token = lsGet(LS.hf);
-  try {
-    const r = await fetchT(`https://huggingface.co/spaces/${repo}/raw/main/${path}?t=${Date.now()}`, token ? { headers: { Authorization: 'Bearer ' + token } } : {}, 20000);
-    return r.ok ? await r.text() : null;
-  } catch { return null; }
+/** A message that can be updated while it is being written (streaming text, build progress). */
+function liveMsg(expert, via) {
+  const m = { id: uid(), role: 'ai', text: '', expert, via, ts: Date.now() };
+  S.history.push(m);
+  let node = null, body = null, raf = 0, first = true;
+  if (S.ui) { node = renderMsg(m); body = node.querySelector('.jv-body'); S.ui.log.appendChild(node); }
+  const paint = () => { raf = 0; if (body) { body.innerHTML = md(m.text); S.ui.log.scrollTop = S.ui.log.scrollHeight; } };
+  return {
+    m,
+    set(t) {
+      m.text = String(t);
+      if (first && S.ui) { first = false; const d = S.ui.log.querySelector('.jv-dots'); if (d) d.remove(); }
+      if (!raf) raf = requestAnimationFrame(paint);
+    },
+    finish(text, extra, via2) {
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      m.text = String(text); if (extra) m.extra = extra; if (via2) m.via = via2;
+      saveHist();
+      if (node && S.ui) { const n2 = renderMsg(m); node.replaceWith(n2); node = n2; S.ui.log.scrollTop = S.ui.log.scrollHeight; }
+      return m;
+    },
+  };
 }
-/* The page's CSP blocks eval, so JavaScript cannot be machine-checked inside the browser. JSON can. */
-function syntaxCheck(code, path) {
-  if (/\.json$/i.test(path)) { try { JSON.parse(code); return null; } catch (e) { return e.message; } }
-  return null;
-}
-async function genFile(path, spec, plan, log) {
-  let ref = null;
-  if (/^js\/modules\//.test(path)) for (const rp of ['js/modules/ppe_guide.js', 'js/modules/home.js']) { ref = await hfRaw(rp); if (ref) { ref = ref.slice(0, 5000); break; } }
-  let code = '', err = null;
-  for (let i = 0; i < 3; i++) {
-    const msgs = [
-      { role: 'system', content: 'You are a principal JavaScript engineer. ' + ARCH + ' Output EXACTLY one fenced code block containing the complete file, and nothing else.' },
-      { role: 'user', content: `File: ${path}\nOverall goal: ${plan.goal}\nThis file's spec: ${spec}\nAll files in this build: ${plan.files.map((f) => f.path).join(', ')}\n` +
-        (ref ? `STYLE REFERENCE (an existing module, mimic its conventions):\n${ref}\n` : '') +
-        (err ? `\nYour previous attempt had this error: ${err}\nReturn the complete corrected file.\nPREVIOUS ATTEMPT:\n${code.slice(0, 9000)}` : '') }];
-    const r = await llm(msgs, { model: 'qwen-coder', temperature: 0.2, timeout: 120000, noCache: true });
-    const c = extractCode(r.text)[0]; code = c ? c.code : String(r.text).trim();
-    err = syntaxCheck(code, path);
-    if (!err) return code;
-    log(`🔧 Problem in ${path}: ${err} — repairing (${i + 1}/3)`);
-  }
-  throw new Error('could not produce valid output: ' + err);
-}
-async function planBuild(goal) {
-  const r = await llm([
-    { role: 'system', content: 'You are the NASUR chief architect. ' + ARCH + ' Return ONLY JSON.' },
-    { role: 'user', content: `Request from Nasur: "${goal}"\nPlan the minimal set of files (prefer ONE self-contained file per feature). JSON shape: {"goal":"one line","module":{"id":"snake_case","title":"","icon":"emoji","description":"one line"} or null,"files":[{"path":"js/modules/<id>.js","spec":"very detailed spec: UI, data, behaviour, edge cases"}]}` }], { temperature: 0.2, timeout: 90000, noCache: true });
-  const j = safeJSON(r.text);
-  if (!j || !j.files || !j.files.length) throw new Error('planner returned no files');
-  if (j.module && j.module.id) j.module.id = String(j.module.id).toLowerCase().replace(/[^a-z0-9_]+/g, '_');
-  return j;
-}
-async function registerModule(mod) {
-  const raw = await hfRaw('data/modules.json'); if (!raw) return null;
-  let j; try { j = JSON.parse(raw); } catch { return null; }
-  const arr = Array.isArray(j) ? j : (Array.isArray(j.modules) ? j.modules : null);
-  if (!arr || !arr.length || arr.some((m) => m && m.id === mod.id)) return null;
-  const tpl = arr.find((m) => m && m.id === 'ppe_guide') || arr[arr.length - 1];
-  const e = { ...tpl, id: mod.id, route: '/' + mod.id.replace(/_/g, '-'), title: mod.title || mod.id, icon: mod.icon || tpl.icon,
-    description: mod.description || mod.title || mod.id, file: `js/modules/${mod.id}.js`, status: 'active', nav: false, builtin: false };
-  arr.push(e);
-  return { path: 'data/modules.json', content: JSON.stringify(j, null, 2) + '\n' };
-}
-async function buildAndPrepare(plan, log) {
-  const allowCore = lsGet(LS.core) === '1'; const files = []; const skipped = [];
-  for (const f of plan.files.slice(0, 10)) {
-    const path = String(f.path || '').replace(/^\/+/, '');
-    if (!path || path.includes('..') || /\s/.test(path)) { skipped.push(path || '(empty path)'); continue; }
-    if (CORE_BLOCK.test(path) && !allowCore) { skipped.push(path + ' (core file — enable in ⚙)'); continue; }
-    log('🔨 Writing ' + path + ' …');
-    try { const code = await genFile(path, f.spec || plan.goal, plan, log); files.push({ path, content: code }); log(`✔ ${path} — ${code.length} chars`); }
-    catch (e) { log('❌ ' + path + ': ' + e.message); }
-  }
-  if (skipped.length) log('⏭ Skipped: ' + skipped.join(', '));
-  if (!files.length) return log('Nothing was generated.');
-  let reg = null;
-  if (plan.module && plan.module.id && files.some((f) => /^js\/modules\//.test(f.path))) { try { reg = await registerModule(plan.module); } catch { reg = null; } if (reg) files.push(reg); }
-  S.pendingBuild = { files, goal: plan.goal, route: plan.module && plan.module.id ? hrefOf(plan.module.id) : null };
-  addMsg('ai', `🧪 **Build ready for your approval — nothing is deployed yet.**\n${files.map((f) => '• ' + f.path).join('\n')}\n` +
-    (reg ? '📌 data/modules.json entry prepared.\n' : '⚠ No modules.json entry prepared — add one if the module must appear in the menu.\n') +
-    '⚠ JavaScript could not be machine-checked in the browser (security policy blocks it). Copy the files and review before approving.',
-  { type: 'approve_build', files: files.map((f) => ({ path: f.path, content: f.content })) }, 'autobuild', 'review');
-}
+
 async function handleAutoBuildRequest(text) {
-  const log = (t) => addMsg('ai', t, null, 'autobuild');
-  log('🧭 Planning the build …');
-  let plan;
-  try { plan = await planBuild(text); } catch (e) { return log(e.message === 'ai_disabled' ? '🔒 Online AI is off. Allow it (⚙ → or send a normal question first) and try again.' : '❌ Planner failed: ' + e.message + '. The AI may be busy — try again in a moment.'); }
-  log('📐 Plan: ' + plan.files.map((f) => f.path).join(', '));
-  try { await buildAndPrepare(plan, log); } catch (e) { log('❌ ' + e.message); }
+  const SB = await builder();
+  if (!SB.buildFromRequest) return addMsg('ai', '🤖 The self-builder engine (`js/jarvis/self_builder.js`) is not in the app yet. Upload it, reload twice, then ask again.', null, 'autobuild', viaOf(null));
+  const live = liveMsg('autobuild', 'working'); let log = '';
+  const deps = { ...builderDeps(), log: (t) => { log += (log ? '\n' : '') + t; live.set(log); } };
+  live.set('🧭 Starting …');
+  try {
+    const pending = await SB.buildFromRequest(text, deps);
+    S.pendingBuild = pending;
+    return live.finish(SB.describePending(pending), { type: 'approve_build', ok: pending.ok, files: pending.files.filter((f) => f.content).map((f) => ({ path: f.path, content: f.content })) }, pending.ok ? 'review' : 'not ready');
+  } catch (e) {
+    if (e && e.message === 'ai_disabled') { live.finish('🔒 The builder needs online AI, which is switched off. Allow it and ask again.', null, viaOf(null)); consentCard(text); return live.m; }
+    return live.finish('❌ The build stopped: ' + (e && e.message ? e.message : 'unknown error') + (S.lastErrors.length ? '\n' + S.lastErrors.join('; ') : '') + '\nThe AI may be busy — try again, or ask for a smaller piece.', null, 'error');
+  }
 }
+
+async function approveDeploy() {
+  const SB = await builder(); const pb = S.pendingBuild;
+  if (!SB.commit) return toast('Self-builder engine is not loaded.', 'warning');
+  if (!pb || !pb.ok) return toast('Nothing approved to deploy — ask for the build again.', 'warning');
+  const over = pb.files.filter((f) => f.overwrite).map((f) => f.path);
+  const ask = 'Deploy ' + pb.files.length + ' file(s) to ' + lsGet(LS.hfRepo, HF_DEFAULT_REPO) + '?\n' +
+    (over.length ? '\n⚠ These EXISTING files will be overwritten:\n' + over.join('\n') + '\n' : '') + '\nA rollback pack is saved first. This changes the live app.';
+  if (!window.confirm(ask)) return;
+  const live = liveMsg('autobuild', 'deploying'); live.set('🚀 Deploying …');
+  try {
+    const res = await SB.commit(pb, builderDeps(), { approved: true });
+    S.pendingBuild = null;
+    try { localStorage.setItem(LS.rollback, JSON.stringify(res.rollback)); } catch { toast('Rollback pack is too big to keep on this device — copy your files somewhere safe.', 'warning'); }
+    live.set('🚀 Committed ' + res.files.length + ' file(s). Verifying on the live site …');
+    const sent = pb.files.map((f) => ({ path: f.path, content: f.content })).concat(pb.registry ? [{ path: pb.registry.path, content: pb.registry.content }] : []);
+    const ver = await SB.verifyDeployed(sent, { onProgress: (a, b, t) => live.set('🚀 Committed. Live check ' + t + ': ' + a + ' of ' + b + ' file(s) match …') });
+    const lines = ver.map((v) => (v.ok ? '✅ ' : '⏳ ') + '`' + v.path + '` — ' + v.note);
+    live.finish('## 🚀 Deployed\n' + lines.join('\n') + '\n\nNext: reload the app twice, open the module and test it. If anything is wrong, say **rollback last deploy**.', { type: 'built', route: pb.route }, 'deployed');
+  } catch (e) { live.finish('❌ Deploy failed: ' + (e && e.message ? e.message : 'unknown error') + '\nNothing was changed unless Hugging Face accepted the commit.', null, 'error'); }
+}
+
+async function handleRollback() {
+  let pack = null; try { pack = JSON.parse(lsGet(LS.rollback, 'null')); } catch { pack = null; }
+  if (!pack) return addMsg('ai', 'There is no rollback pack saved on this device.', null, 'rollback', viaOf(null));
+  const SB = await builder();
+  if (!SB.rollback) return addMsg('ai', 'Self-builder engine is not loaded.', null, 'rollback', viaOf(null));
+  if (!window.confirm('Roll back "' + String(pack.goal).slice(0, 60) + '"?\nRestore: ' + (pack.restore || []).length + ' file(s), remove: ' + (pack.remove || []).length + ' new file(s).')) return addMsg('ai', 'Okay, rollback cancelled.', null, 'rollback', viaOf(null));
+  try { await SB.rollback(pack, builderDeps()); lsSet(LS.rollback, 'null'); return addMsg('ai', '↩ **Rolled back.** The Space rebuilds in about a minute; reload the app twice.', null, 'rollback', 'deployed'); }
+  catch (e) { return addMsg('ai', '❌ Rollback failed: ' + (e && e.message ? e.message : 'unknown error'), null, 'rollback', 'error'); }
+}
+
+async function handlePipeline(text, photo) {
+  const C = await caps();
+  if (!C.runPipeline) return addMsg('ai', 'The report pipeline (`js/jarvis/capabilities.js`) is not in the app yet.', null, 'pipeline', viaOf(null));
+  const live = liveMsg('pipeline', 'working'); let log = '';
+  live.set('📨 **Report pipeline** — stage 1 of 6 …');
+  const res = await C.runPipeline({
+    request: text, photo, lawText: LAWS[lsGet(LS.law, 'IN')] || LAWS.IN,
+    deps: { llm, offlineAnswer, auditOffline, scanPhoto },
+    onStage: (s) => { log += '\n' + (s.provider === 'offline' ? '⌂' : '☁') + ' ' + s.title + (s.note ? ' — ' + s.note : ''); live.set('📨 **Report pipeline**' + log + '\n⏳ working …'); },
+  });
+  const out = '## 📨 Ready to send — nothing has been sent\n' + res.stages.map((s) => '- ' + (s.provider === 'offline' ? '⌂ ' : '☁ ') + s.title + (s.note ? ' — ' + s.note : '')).join('\n') + '\n\n---\n\n' + res.final;
+  return live.finish(out, { type: 'pipeline', pages: res.pages, final: res.final, subject: res.subject }, 'pipeline');
+}
+
+async function handleCaps() {
+  const C = await caps();
+  return addMsg('ai', C.describeCapabilities ? C.describeCapabilities() : 'The capability registry (`js/jarvis/capabilities.js`) is not in the app yet.', null, 'capabilities', viaOf(null));
+}
+
+function handleRemember(text) {
+  const m = /^\s*(?:remember|ninaivu\s*vechuko|ninaivil\s*vai)\s*[:\-]?\s+([\s\S]+)$/i.exec(text);
+  const fact = m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 240) : '';
+  if (!fact) return addMsg('ai', 'Enna ninaivula vechukkanum? "remember: …" nu sollu.', null, 'memory', viaOf(null));
+  if (/(api[-_ ]?key|password|passcode|token|secret|\bsk-|\bhf_|\bpin\b)/i.test(fact)) return addMsg('ai', 'Ithu secret maadhiri theriyudhu — keys, passwords, PIN-a nan ninaivula vaikka maatten. Settings-la mattum vainga.', null, 'memory', viaOf(null));
+  const facts = getFacts(); facts.push(fact); lsSet(LS.facts, JSON.stringify(facts.slice(-30)));
+  return addMsg('ai', 'Sari, ninaivula vechuten: **' + esc(fact) + '**\n_(Idhu indha phone-la irukkum. AI-kitta pesumbodhu anuppapadum, so secrets vaikaadheenga. "forget all" nu sonna ellam azhiyum.)_', null, 'memory', viaOf(null));
+}
+function handleForget() { lsSet(LS.facts, '[]'); return addMsg('ai', 'Ellam marandhuten — saved facts ellam azhichiten.', null, 'memory', viaOf(null)); }
 
 /* ------------------------------ VOICE (js/jarvis/voice.js) ------------------------------ */
 const speakable = (t) => String(t).replace(/```[\s\S]*?```/g, ' code block ').replace(/https?:\/\/\S+/g, ' ')
@@ -657,6 +728,11 @@ async function send(textIn, opts = {}) {
     } else if (expert === 'poster') m = await handlePoster(text);
     else if (expert === 'audit') { const a = await handleAudit(text); m = a.m; spoken = a.spoken; }
     else if (expert === 'autobuild') await handleAutoBuildRequest(text);
+    else if (expert === 'pipeline') { m = await handlePipeline(text, photo); spoken = 'Your report is ready. Please check it, then tap Send.'; }
+    else if (expert === 'capabilities') { m = await handleCaps(); spoken = 'Here is my capability list.'; }
+    else if (expert === 'remember') m = handleRemember(text);
+    else if (expert === 'forget') m = handleForget();
+    else if (expert === 'rollback') m = await handleRollback();
     else m = await handleChat(text, expert);
   } catch (e) {
     console.warn('[JARVIS] request failed:', e);
@@ -667,14 +743,21 @@ async function send(textIn, opts = {}) {
   if (next) setTimeout(() => send(next.text, { repeat: next.repeat, photo: next.photo }), 50);
 }
 
+const isWelcome = (m) => m.role === 'ai' && /^Vanakkam Nasur/.test(String(m.text));
+const SKIP_CTX = new Set(['caps', 'capabilities', 'pipeline', 'autobuild', 'rollback', 'memory', 'poster', 'audit', 'photo']);
 async function handleChat(text, expert) {
-  const sys = { coder: SYS_BASE() + '\nYou are the Autonomous Coder. Output complete files in fenced code blocks; put `// path: js/...` as the first line of each file. The app has a strict CSP: no inline styles, no eval.', research: SYS_BASE() + '\nYou are the Deep HSE Research expert: structured, cite clause/standard names, include practical checklists.' }[expert] || SYS_BASE();
-  const ctx = S.history.filter((m) => m.role === 'user' || m.role === 'ai').filter((m) => !(m.extra && m.extra.type === 'consent')).slice(-9, -1)
-    .map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: String(m.text).slice(0, 1500) }));
+  const sys = { coder: SYS_BASE() + '\nYou are in coding mode. Output complete files in fenced code blocks; put `// path: js/...` as the first line of each file. The app has a strict CSP: no inline styles, no eval.', research: SYS_BASE() + '\nResearch mode: structured and specific, name the standards, include a short practical checklist, flag anything to verify.' }[expert] || SYS_BASE();
+  let ctx = S.history.filter((m) => (m.role === 'user' || m.role === 'ai') && !(m.extra && m.extra.type === 'consent') && !isWelcome(m) && !SKIP_CTX.has(m.expert) && m.via !== viaOf(null))
+    .slice(-12).map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: String(m.text).slice(0, 700) }));
+  if (ctx.length && ctx[ctx.length - 1].role === 'user' && ctx[ctx.length - 1].content === text.slice(0, 700)) ctx.pop();
+  const live = liveMsg(expert, '…');
   let out, provider = null, why = '';
-  try { const r = await llm([{ role: 'system', content: sys }, ...ctx, { role: 'user', content: text }], { model: expert === 'coder' ? 'qwen-coder' : 'openai' }); out = r.text; provider = r.provider; }
-  catch (e) { why = e.message; out = offlineAnswer(text); }
-  const m = addMsg('ai', out, null, expert, viaOf(provider));
+  try {
+    const r = await llm([{ role: 'system', content: sys }, ...ctx, { role: 'user', content: text }],
+      { model: expert === 'coder' ? 'qwen-coder' : 'openai', temperature: expert === 'coder' ? 0.2 : 0.65, maxTokens: expert === 'coder' ? 3500 : expert === 'research' ? 900 : 500, onDelta: (t) => live.set(t) });
+    out = r.text; provider = r.provider;
+  } catch (e) { why = e.message; out = offlineAnswer(text); }
+  const m = live.finish(out, null, viaOf(provider));
   if (!provider) {
     if (why === 'ai_disabled') consentCard(text);
     else if (why === 'offline') setStatus('You are offline — answered by the offline engine.');
@@ -682,6 +765,7 @@ async function handleChat(text, expert) {
   }
   return m;
 }
+
 async function handlePhoto(photo, note) {
   let res = null, provider = null, why = '';
   try { const r = await scanPhoto(photo, note); res = r.data; provider = r.provider; } catch (e) { why = e.message; }
@@ -716,12 +800,53 @@ const CHIPS = [
   ['⚖ Laws', 'Factories Act key duties for occupier'], ['🧭 Audits', 'open audits'], ['🤖 Build', 'Build module: '],
 ];
 
-function md(t) {
-  let h = esc(t);
-  h = h.replace(/```([\w.+-]*)\n([\s\S]*?)```/g, (_, l, c) => '<pre>' + c + '</pre>');
-  h = h.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/_\((.+?)\)_/g, '<i>($1)</i>');
-  return h.replace(/<pre>[\s\S]*?<\/pre>|\n/g, (m) => (m === '\n' ? '<br>' : m));
+/** Safe markdown → HTML. The text is escaped first, so only the tags built here can appear. */
+function inlineMd(s) {
+  return s
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*([^*\s][^*\n]*?)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>')
+    .replace(/(^|[\s(])_([^_\s][^_\n]*?)_(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>')
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 }
+function mdBlocks(txt) {
+  const lines = txt.split('\n'); const out = []; let list = null, para = [];
+  const flush = () => { if (para.length) { out.push('<p>' + inlineMd(esc(para.join('\n'))).replace(/\n/g, '<br>') + '</p>'); para = []; } };
+  const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+  const isRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].replace(/\s+$/, ''); let m;
+    if (!line.trim()) { flush(); closeList(); continue; }
+    if ((m = /^\s{0,3}(#{1,6})\s+(.*)$/.exec(line))) { flush(); closeList(); const lv = Math.min(m[1].length + 2, 5); out.push('<h' + lv + ' class="jv-h">' + inlineMd(esc(m[2].replace(/\s*#+\s*$/, ''))) + '</h' + lv + '>'); continue; }
+    if (/^\s*([-*_])\1{2,}\s*$/.test(line)) { flush(); closeList(); out.push('<hr>'); continue; }
+    if ((m = /^\s*[-*•–]\s+(.*)$/.exec(line))) { flush(); if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + inlineMd(esc(m[1])) + '</li>'); continue; }
+    if ((m = /^\s*(\d{1,2})[.)]\s+(.*)$/.exec(line))) { flush(); if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; } out.push('<li>' + inlineMd(esc(m[2])) + '</li>'); continue; }
+    if ((m = /^\s*>\s?(.*)$/.exec(line))) { flush(); closeList(); out.push('<blockquote>' + inlineMd(esc(m[1])) + '</blockquote>'); continue; }
+    if (isRow(line)) {
+      flush(); closeList(); const rows = [];
+      while (i < lines.length && isRow(lines[i])) { rows.push(lines[i]); i += 1; }
+      i -= 1;
+      const cells = (r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => inlineMd(esc(c.trim())));
+      const data = rows.filter((r) => !/^[\s|:-]+$/.test(r)).map(cells);
+      if (data.length) out.push('<div class="jv-tablewrap"><table><thead><tr>' + data[0].map((c) => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>' + data.slice(1).map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
+      continue;
+    }
+    closeList(); para.push(line);
+  }
+  flush(); closeList();
+  return out.join('');
+}
+function md(t) {
+  const parts = String(t ?? '').replace(/\r\n/g, '\n').split(/```([\w.+-]*)\n([\s\S]*?)(?:```|$)/g);
+  let html = '';
+  for (let i = 0; i < parts.length; i += 3) {
+    html += mdBlocks(parts[i] || '');
+    if (i + 2 < parts.length) html += '<pre><code>' + esc(parts[i + 2]) + '</code></pre>';
+  }
+  return html;
+}
+
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function btn(label, fn, cls) { const b = el('button', cls || 'jv-btn', label); b.type = 'button'; b.addEventListener('click', fn); return b; }
 function autoGrow() { const t = S.ui && S.ui.input; if (!t) return; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 112) + 'px'; }
@@ -731,7 +856,7 @@ function showPhoto(url) { const u = S.ui; if (!u) return; u.prev.textContent = '
 function renderMsg(m) {
   const d = el('div', 'jv-msg ' + (m.role === 'user' ? 'jv-user' : 'jv-ai'));
   if (m.role === 'ai') { const tag = el('div', 'jv-tag', [EXPERT_LABEL[m.expert] || '', m.via || ''].filter(Boolean).join(' · ')); if (tag.textContent) d.appendChild(tag); }
-  const body = el('div'); body.innerHTML = m.role === 'user' ? esc(m.text).replace(/\n/g, '<br>') : md(m.text); d.appendChild(body);
+  const body = el('div', 'jv-body'); body.innerHTML = m.role === 'user' ? esc(m.text).replace(/\n/g, '<br>') : md(m.text); d.appendChild(body);
   const x = m.extra;
   if (x && x.photo) { const i = document.createElement('img'); i.src = x.photo; i.alt = 'Site photo'; d.appendChild(i); }
   if (m.role !== 'ai') return d;
@@ -769,20 +894,22 @@ function renderMsg(m) {
     act.appendChild(btn('📋 Open Audits', () => { goTo('audits'); closeJarvisDrawer(); }));
   }
   if (x && x.type === 'approve_build') {
-    (x.files || []).forEach((f) => act.appendChild(btn('📋 Copy ' + f.path.split('/').pop(), () => navigator.clipboard.writeText(f.content).then(() => toast('Copied ' + f.path, 'success')))));
-    act.appendChild(btn('🚀 Approve & commit to HF', async () => {
-      const pb = S.pendingBuild;
-      if (!pb) return toast('Nothing pending — ask for the build again.', 'warning');
-      if (!window.confirm('Commit ' + pb.files.length + ' file(s) to ' + lsGet(LS.hfRepo, HF_DEFAULT_REPO) + '? This changes the live app.')) return;
-      try {
-        await hfCommit(pb.files, 'JARVIS approved build: ' + String(pb.goal).slice(0, 60)); S.pendingBuild = null;
-        addMsg('ai', `🚀 **Committed ${pb.files.length} file(s).** The Space rebuilds in ~30–60 s, then reload the app.\n` + pb.files.map((f) => '• ' + f.path).join('\n'), { type: 'built', route: pb.route }, 'autobuild', 'deployed');
-      } catch (e) { toast(e.message, 'danger'); }
-    }, 'jv-btn jv-btn--primary'));
+    (x.files || []).forEach((f) => act.appendChild(btn('📋 ' + f.path.split('/').pop(), () => navigator.clipboard.writeText(f.content).then(() => toast('Copied ' + f.path, 'success')))));
+    if (x.ok) act.appendChild(btn('🚀 Approve & deploy', approveDeploy, 'jv-btn jv-btn--primary'));
   }
   if (x && x.type === 'built') {
     if (x.route) act.appendChild(btn('📂 Open module', () => { location.hash = x.route.charAt(0) === '#' ? x.route : '#' + x.route; closeJarvisDrawer(); }));
     act.appendChild(btn('↻ Reload app', () => location.reload()));
+    act.appendChild(btn('↩ Roll back', () => send('rollback last deploy'), 'jv-btn jv-btn--danger'));
+  }
+  if (x && x.type === 'pipeline') {
+    (x.pages || []).forEach((u, i) => { const im = document.createElement('img'); im.src = u; im.alt = 'A4 report page ' + (i + 1); d.appendChild(im); });
+    (x.pages || []).forEach((u, i) => act.appendChild(btn('⬇ A4 page ' + (i + 1), () => { const a = document.createElement('a'); a.href = u; a.download = 'hse-report-page-' + (i + 1) + '.png'; a.click(); })));
+    act.appendChild(btn('💬 Send on WhatsApp', () => shareWA(x.final), 'jv-btn jv-btn--primary'));
+    act.appendChild(btn('✉ Send by Email', () => { location.href = 'mailto:?subject=' + encodeURIComponent(x.subject || 'HSE report') + '&body=' + encodeURIComponent(plain(x.final)); }));
+    act.appendChild(btn('📋 Copy text', () => navigator.clipboard.writeText(x.final).then(() => toast('Copied', 'success'))));
+    d.appendChild(act);
+    return d;
   }
   if (x && x.type === 'poster') {
     const i = document.createElement('img'); i.src = x.url; i.alt = 'Safety poster'; d.appendChild(i);
@@ -805,15 +932,27 @@ function field(panel, label, node) { panel.appendChild(el('label', null, label))
 function selectOf(options, value) { const s = el('select', 'jv-input'); options.forEach(([v, l]) => { const o = el('option', null, l); o.value = v; s.appendChild(o); }); s.value = value; return s; }
 function inputOf(type, value, ph) { const i = document.createElement('input'); i.type = type; i.value = value || ''; if (ph) i.placeholder = ph; i.autocomplete = 'off'; i.setAttribute('autocapitalize', 'off'); i.spellcheck = false; return i; }
 
-async function saveKeys(vals) {
-  const M = await mods(); const patch = {};
-  Object.keys(vals).forEach((id) => { if (vals[id]) patch[id] = vals[id]; });
-  if (!Object.keys(patch).length) return 0;
-  if (M.svcConfig && M.svcConfig.updateUserConfig) await M.svcConfig.updateUserConfig({ apiKeys: patch });
-  else { Object.keys(patch).forEach((id) => lsSet('nasur_key_' + id, patch[id])); toast('Settings service unavailable — keys saved on this device only.', 'warning'); }
-  S.bad.clear(); S.cool = {};
-  return Object.keys(patch).length;
+/** Writes one key to every place the app reads keys from: Settings + JARVIS Studio (js/services/settings.js) and config.apiKeys. */
+async function writeKey(norm, key) {
+  const M = await mods(); let wrote = false;
+  try {
+    const ss = M.svcSettings;
+    if (ss && typeof ss.setApiKey === 'function') {
+      const prov = Array.isArray(ss.PROVIDERS) ? ss.PROVIDERS.find((p) => normProvider(p.id) === norm) : null;
+      await ss.setApiKey(prov ? prov.id : norm, key); wrote = true;
+    }
+  } catch (e) { console.warn('[JARVIS] could not write the key to Settings:', e); }
+  try { if (M.svcConfig && M.svcConfig.updateUserConfig) { await M.svcConfig.updateUserConfig({ apiKeys: { [norm]: key } }); wrote = true; } } catch (e) { console.warn('[JARVIS] could not write the key to config:', e); }
+  lsSet('nasur_key_' + norm, wrote ? '' : key);
+  return wrote;
 }
+async function saveKeys(vals) {
+  let n = 0;
+  for (const id of Object.keys(vals)) { if (vals[id]) { await writeKey(id, vals[id]); n += 1; } }
+  if (n) { S.bad.clear(); S.cool = {}; S.modelBad = {}; }
+  return n;
+}
+async function removeKey(norm) { await writeKey(norm, ''); S.bad.clear(); S.modelBad = {}; }
 async function testAi() {
   setStatus('⏳ Testing online AI…');
   try { const r = await llm([{ role: 'user', content: 'Reply with the single word: ready' }], { noCache: true, timeout: 25000 }); setStatus('✅ ' + r.provider + ' replied: ' + String(r.text).slice(0, 40)); }
@@ -834,11 +973,12 @@ async function renderSettings(panel) {
   const spkLabel = el('label', null, ' Speak replies automatically'); spkLabel.insertBefore(spk, spkLabel.firstChild); panel.appendChild(spkLabel);
 
   const keyInputs = {};
-  [['openrouter', 'OpenRouter key (uses openrouter/free)'], ['gemini', 'Gemini key'], ['groq', 'Groq key']].forEach(([id, label]) => {
+  [['openrouter', 'OpenRouter key (Gemma 3 → Llama 3.3 → Qwen 2.5 → free router)'], ['gemini', 'Gemini key'], ['groq', 'Groq key']].forEach(([id, label]) => {
     const p = have[id];
     keyInputs[id] = field(panel, label + (p ? ' — saved ✓ (' + p.source + ')' : ''), inputOf('password', '', p ? 'Saved — type only to replace' : 'Paste key'));
+    if (p) panel.appendChild(btn('Remove ' + p.label + ' key', async () => { try { await removeKey(id); toast(p.label + ' key removed', 'info'); refreshBadge(); renderSettings(panel); } catch (e) { toast('Could not remove: ' + e.message, 'danger'); } }, 'jv-btn jv-btn--danger'));
   });
-  panel.appendChild(el('p', 'jv-note', 'Keys you add in Settings → AI providers are used too. Keys saved here live in NASUR\'s database on this device, never in the app code. Without keys JARVIS uses a free keyless service (best effort) and the offline engine.'));
+  panel.appendChild(el('p', 'jv-note', 'Keys are shared with Settings → AI providers and JARVIS Studio (one list). They live in NASUR\'s database on this device, never in the app code. Without keys JARVIS uses a free keyless service (best effort) and the offline engine.'));
 
   const row = el('div', 'jv-actions');
   row.appendChild(btn('💾 Save', async () => {
@@ -924,7 +1064,7 @@ function buildUi() {
     file.value = '';
   });
 
-  if (!S.history.length) addMsg('ai', 'Vanakkam Nasur! 👋 I\'m JARVIS. Type or tap 🎤 and talk to me in Tamil, Tanglish or English. I can answer HSE questions, scan 📷 site photos, audit reports, make posters and create observations. The badge at the top shows whether an online AI or the offline engine is answering.', null, 'general', viaOf(null));
+  if (!S.history.length) addMsg('ai', 'Vanakkam Nasur 👋 Sollu, enna panalaam? Type pannalaam, illa 🎤 thattitu pesalaam.', null, 'general', viaOf(null));
   else S.history.forEach((m) => log.appendChild(renderMsg(m)));
   log.scrollTop = log.scrollHeight;
 
