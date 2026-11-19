@@ -1,700 +1,762 @@
 {
-  "schema_version": 1,
-  "id": "machine_safety",
-  "title": "Machine Safety",
-  "updated": "2026-11",
-  "disclaimer": "General guidance. The guarding and lockout needed for a particular machine comes from its risk assessment, the maker's manual and your site procedure. Standards and legal references marked verify must be checked against the current text.",
-  "hazard_types": [
-    {
-      "id": "in_running_nip",
-      "label": "In-running nip",
-      "text": "Two parts moving towards each other (a belt and a roller, or two rollers) can draw in a hand or clothing."
-    },
-    {
-      "id": "entanglement",
-      "label": "Entanglement",
-      "text": "Rotating shafts, chucks and tools can catch hair, gloves, sleeves or jewellery."
-    },
-    {
-      "id": "shear",
-      "label": "Shearing",
-      "text": "Parts moving past each other like scissors (blade and table, ram and bed)."
-    },
-    {
-      "id": "crush",
-      "label": "Crushing",
-      "text": "A part moving toward a fixed part or another moving part, trapping the body."
-    },
-    {
-      "id": "cut",
-      "label": "Cutting or severing",
-      "text": "Sharp edges, blades, saw teeth and abrasive wheels."
-    },
-    {
-      "id": "ejection",
-      "label": "Ejection",
-      "text": "Chips, broken tools, abrasive wheel fragments or workpieces thrown out of the machine."
-    },
-    {
-      "id": "stored_energy",
-      "label": "Stored energy",
-      "text": "Pressure, springs, gravity, flywheels or capacitors that can move parts after power is off."
-    }
-  ],
-  "guard_types": [
-    {
-      "id": "fixed",
-      "label": "Fixed guard",
-      "text": "Fixed with screws or bolts: removable only with tools. Use where access is rarely needed."
-    },
-    {
-      "id": "interlocked",
-      "label": "Interlocked guard",
-      "text": "When opened, it stops the hazard. The machine cannot restart until it is closed again."
-    },
-    {
-      "id": "adjustable",
-      "label": "Adjustable guard",
-      "text": "Adjusted to suit the work; must be set correctly each time."
-    },
-    {
-      "id": "distance",
-      "label": "Distance guard",
-      "text": "A barrier that keeps hands out of reach by safe distance (see ISO 13857)."
-    },
-    {
-      "id": "light_curtain",
-      "label": "Light curtain",
-      "text": "Sensing device that stops the machine when the beam is broken."
-    },
-    {
-      "id": "two_hand",
-      "label": "Two-hand control",
-      "text": "Both hands must press controls together so neither hand can be in the danger zone."
-    },
-    {
-      "id": "hold_to_run",
-      "label": "Hold-to-run / enabling device",
-      "text": "Movement only while the control is held; used for setting and teach modes."
-    },
-    {
-      "id": "emergency_stop",
-      "label": "Emergency stop",
-      "text": "Red mushroom button on a yellow background; latched; it must stop the hazard quickly and not be used as a normal stop."
-    }
-  ],
   "machines": [
     {
       "id": "lathe",
-      "name": "Lathe (turning machine)",
-      "category": "Metal cutting",
+      "title": "Lathe",
+      "icon": "🌀",
+      "summary": "Rotating workpiece and chuck; the main risks are entanglement, flying chips and ejected workpieces.",
       "hazards": [
-        "Entanglement in the rotating chuck and workpiece",
-        "Ejected chips and swarf",
-        "Flying workpiece or chuck key",
-        "Coolant mist"
+        "Entanglement in rotating chuck or workpiece",
+        "Flying chips and coolant",
+        "Ejected workpiece or chuck key",
+        "Cuts from swarf"
       ],
       "nip_points": [
-        "Rotating chuck and jaws",
+        "Chuck jaws and workpiece",
         "Lead screw and feed rod",
-        "Bar stock sticking out of the headstock"
+        "Gear train at headstock"
+      ],
+      "hidden_hazards": [
+        "Bar stock extending past the headstock whips",
+        "Long hair, jewellery or loose sleeves",
+        "Chuck key left in the chuck"
       ],
       "guarding": [
-        "Chuck guard (interlocked where the chuck is accessible)",
-        "Bar-stock tube or guard at the rear",
-        "Chip shield / splash guard",
-        "Guards fitted on belts and gears"
+        {
+          "type": "Chuck guard",
+          "detail": "Interlocked guard that stops the spindle when opened."
+        },
+        {
+          "type": "Lead screw cover",
+          "detail": "Fixed cover over lead screw and gear train."
+        },
+        {
+          "type": "Chip shield",
+          "detail": "Transparent guard to stop chips and coolant."
+        }
       ],
-      "controls": [
-        "Remove the chuck key before starting (key-retaining device)",
-        "Brake or controlled stop on the spindle",
-        "No gloves, loose sleeves or jewellery; tie back hair",
-        "Use a brush or hook for swarf, never hands"
+      "before_start": [
+        "Check guards are fitted and interlocks working.",
+        "Remove chuck key and check workpiece is secure.",
+        "Set correct speed and tool height.",
+        "Wear safety glasses and tie back hair; no gloves or loose sleeves."
       ],
-      "pre_start_checks": [
-        "Guards in place and interlocks working",
-        "Emergency stop works",
-        "Chuck is secure and the key is removed",
-        "Work area clear; coolant level OK"
+      "daily_checks": [
+        "Check emergency stop and foot brake.",
+        "Check coolant level and condition.",
+        "Check for oil leaks and clear swarf."
       ],
-      "loto_notes": "Isolate the main switch and lock; wait for the spindle to stop fully; release any clamped work before cleaning.",
+      "never": [
+        "Never use a rag or file near rotating work.",
+        "Never leave the chuck key in the chuck.",
+        "Never brake the chuck by hand.",
+        "Never wear gloves, rings or loose clothing."
+      ],
+      "energy_sources": [
+        "Electrical (motor)",
+        "Kinetic (spindle, chuck)",
+        "Stored (brake)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Turning on a lathe",
+        "risk_rating": "High",
+        "typical": [
+          "Entanglement",
+          "Eye injury",
+          "Crush by workpiece"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
       "standards": [
-        "ISO 23125 (turning machines)",
-        "ISO 12100",
-        "ISO 14120 (guards)"
-      ]
-    },
-    {
-      "id": "milling",
-      "name": "Milling machine",
-      "category": "Metal cutting",
-      "hazards": [
-        "Entanglement in the rotating cutter",
-        "Cuts from sharp tools",
-        "Flying chips",
-        "Pinch between table and column"
+        "EN ISO 23125",
+        "ANSI B11.6",
+        "IS 14452"
       ],
-      "nip_points": [
-        "Rotating cutter and arbor",
-        "Moving table and column"
-      ],
-      "guarding": [
-        "Cutter guard or enclosure with interlock",
-        "Chip guard",
-        "Fixed guards on belts and gears"
-      ],
-      "controls": [
-        "Stop the spindle before measuring or changing work",
-        "Use clamps correctly and keep the work secure",
-        "Tool changes only with the spindle locked off"
-      ],
-      "pre_start_checks": [
-        "Guard and interlocks OK",
-        "Cutter tight and not damaged",
-        "Work-holding secure",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Lock off power; support the head or table if it can drop; remove the cutter before cleaning.",
-      "standards": [
-        "ISO 16090-1 (milling machines)",
-        "ISO 12100"
-      ]
+      "encyclopedia_link": "machine_lathe"
     },
     {
       "id": "drill_press",
-      "name": "Drill press",
-      "category": "Metal cutting",
+      "title": "Drill Press",
+      "icon": "🔩",
+      "summary": "A rotating bit that can catch clothing, hair or a workpiece spinning with the bit.",
       "hazards": [
-        "Entanglement in the drill bit and chuck",
-        "Flying work that is not clamped",
-        "Chips"
-      ],
-      "nip_points": [
-        "Rotating drill bit and chuck"
-      ],
-      "guarding": [
-        "Adjustable chuck guard",
-        "Guard on the belt and pulleys"
-      ],
-      "controls": [
-        "Clamp the workpiece; never hold it by hand",
-        "Chuck key removed before starting",
-        "No gloves or loose clothing"
-      ],
-      "pre_start_checks": [
-        "Guards fitted",
-        "Drill bit sharp and secure",
-        "Work clamped",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Lock off the power before changing the bit or belts.",
-      "standards": [
-        "ISO 12100",
-        "ISO 14120"
-      ]
-    },
-    {
-      "id": "cnc_machining_center",
-      "name": "CNC machining center",
-      "category": "Metal cutting",
-      "hazards": [
-        "Contact with moving axes or tool changer",
-        "Ejected tool or chips",
-        "Coolant mist and fire (oil-based coolant)",
-        "Unexpected start-up"
-      ],
-      "nip_points": [
-        "Table and axis travel",
-        "Tool changer arm"
-      ],
-      "guarding": [
-        "Fully enclosed guarding with interlocked doors",
-        "Door lock that stops motion until the spindle is stopped",
-        "Chip and coolant shields"
-      ],
-      "controls": [
-        "Do not defeat or bypass door interlocks",
-        "Spindle and axes stop before the door is opened",
-        "Set-up mode with reduced speed and hold-to-run control"
-      ],
-      "pre_start_checks": [
-        "Interlocked doors work",
-        "Emergency stop works",
-        "Tool correctly held; offsets checked",
-        "Coolant level and fire-detection OK"
-      ],
-      "loto_notes": "Isolate the power and stored energy (air, hydraulic); lock the main isolator before entering the enclosure.",
-      "standards": [
-        "ISO 16090-1",
-        "ISO 13849-1",
-        "IEC 60204-1"
-      ]
-    },
-    {
-      "id": "mechanical_power_press",
-      "name": "Mechanical power press",
-      "category": "Pressing / forming",
-      "hazards": [
-        "Crush or amputation at the die area",
-        "Unexpected repeat stroke",
-        "Flying fragments",
-        "Noise"
-      ],
-      "nip_points": [
-        "Point of operation between the dies",
-        "Flywheel and drive"
-      ],
-      "guarding": [
-        "Fixed enclosure or interlocked barrier guard",
-        "Light curtain with a safe stopping time",
-        "Two-hand control with anti-tie-down",
-        "Die guards"
-      ],
-      "controls": [
-        "Never reach into the die area while the press is live",
-        "Use hand tools to feed or remove small parts",
-        "Brake monitoring and stopping-time checks",
-        "Lock off before die setting"
-      ],
-      "pre_start_checks": [
-        "Brake and clutch test",
-        "Light curtain and guards working",
-        "Two-hand control checked",
-        "Dies correctly set and secured",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Isolate the electrical, pneumatic and hydraulic energy; block the slide with die-safety blocks before work between the dies.",
-      "standards": [
-        "ISO 16092 (presses)",
-        "OSHA 29 CFR 1910.217",
-        "IEC 61496 (light curtains)",
-        "ISO 13851 (two-hand controls)"
-      ]
-    },
-    {
-      "id": "press_brake",
-      "name": "Press brake",
-      "category": "Pressing / forming",
-      "hazards": [
-        "Crush of fingers or hands at the tool",
-        "Pinch of the sheet being lifted",
-        "Back strain handling large sheets"
-      ],
-      "nip_points": [
-        "Point of operation between punch and die",
-        "Back gauge"
-      ],
-      "guarding": [
-        "Light curtain or laser guarding with muting",
-        "Foot pedal with a hold-to-run control",
-        "Rear fixed guards"
-      ],
-      "controls": [
-        "Never hold small parts near the tool; use fixtures or jigs",
-        "Stop the beam before reaching in",
-        "Use two people or mechanical aids for large sheets"
-      ],
-      "pre_start_checks": [
-        "Light curtain test",
-        "Foot pedal in good condition and guarded",
-        "Tool set-up correct",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Lock off power; block the ram if it could move; release hydraulic pressure before changing tools.",
-      "standards": [
-        "ISO 12100",
-        "IEC 61496",
-        "ISO 13849-1"
-      ]
-    },
-    {
-      "id": "hydraulic_press",
-      "name": "Hydraulic press",
-      "category": "Pressing / forming",
-      "hazards": [
-        "Crush at the platen",
-        "Hydraulic fluid injection injury",
-        "Sudden hose failure",
-        "Falling or ejected workpiece"
-      ],
-      "nip_points": [
-        "Platen and bolster",
-        "Moving ram"
-      ],
-      "guarding": [
-        "Fixed or interlocked guards",
-        "Light curtain",
-        "Two-hand control"
-      ],
-      "controls": [
-        "Relief valve set correctly and sealed",
-        "Inspect hoses and fittings for leaks",
-        "Never use hands to find a hydraulic leak"
-      ],
-      "pre_start_checks": [
-        "Guards and interlocks OK",
-        "No leaks",
-        "Pressure setting correct",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Release stored hydraulic pressure and lock the ram mechanically before maintenance.",
-      "standards": [
-        "EN 693 (hydraulic presses)",
-        "ISO 12100"
-      ]
-    },
-    {
-      "id": "injection_molding",
-      "name": "Injection molding machine",
-      "category": "Plastics",
-      "hazards": [
-        "Crush in the mould area",
-        "Burns from hot barrel and material",
-        "Hydraulic hazards",
-        "Gases and fumes"
-      ],
-      "nip_points": [
-        "Mould platens",
-        "Moving clamp",
-        "Screw and barrel area"
-      ],
-      "guarding": [
-        "Interlocked front and rear gates",
-        "Mould-area guard",
-        "Barrel and nozzle guard"
-      ],
-      "controls": [
-        "Gates must stop clamp movement when opened",
-        "Do not bypass safety gates or switches",
-        "Wear heat-resistant gloves for hot material"
-      ],
-      "pre_start_checks": [
-        "Gates and interlocks work",
-        "Emergency stop works",
-        "Heater guards fitted",
-        "Hoses and cooling lines checked"
-      ],
-      "loto_notes": "Isolate power and hydraulics, release pressure, lock the platens mechanically and allow the barrel to cool.",
-      "standards": [
-        "EN 201 (injection moulding machines)",
-        "ISO 12100"
-      ]
-    },
-    {
-      "id": "conveyor_belt",
-      "name": "Belt / roller conveyor",
-      "category": "Material handling",
-      "hazards": [
-        "Drawing-in at nip points",
         "Entanglement",
-        "Falling loads",
-        "Crush when clearing jams"
+        "Flying chips",
+        "Spinning workpiece",
+        "Drill bit breakage"
       ],
       "nip_points": [
-        "In-running nip between belt and drum or roller",
-        "Return rollers",
-        "Chain and sprocket drives"
+        "Spindle and chuck",
+        "Belt and pulley guard area"
+      ],
+      "hidden_hazards": [
+        "Unclamped workpiece that spins with the bit",
+        "Long swarf wrapping around the bit"
       ],
       "guarding": [
-        "Fixed guards on drives and tail drum",
-        "Nip guards at all in-running points",
-        "Pull-cord emergency stop along the length",
-        "Guards to prevent walking on or under (crossovers)"
+        {
+          "type": "Chuck guard",
+          "detail": "Retractable or transparent guard around the chuck."
+        },
+        {
+          "type": "Belt guard",
+          "detail": "Fixed guard over belts and pulleys."
+        },
+        {
+          "type": "Table clamps",
+          "detail": "Clamps or vice to hold work."
+        }
       ],
-      "controls": [
-        "Never clear a jam or clean a running conveyor",
-        "Keep loose clothing and hair away",
-        "Interlock covers to stop the drive when opened"
+      "before_start": [
+        "Clamp the workpiece to table or use a vice.",
+        "Set speed for material and bit size.",
+        "Remove chuck key.",
+        "Wear safety glasses; secure hair and clothing."
       ],
-      "pre_start_checks": [
-        "Guards fitted and secure",
-        "Pull-cord stop works along its length",
-        "Belt tracking and tension OK",
-        "Warning signs visible"
+      "daily_checks": [
+        "Check bit is sharp and straight.",
+        "Check guard and table lock.",
+        "Clear chips with a brush, not by hand."
       ],
-      "loto_notes": "Lock off the drive and release belt tension or stored energy; prevent movement of loads on inclines.",
+      "never": [
+        "Never hold the work by hand.",
+        "Never remove chips while spinning.",
+        "Never leave the chuck key in.",
+        "Never wear gloves or loose clothing."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Kinetic"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Drilling with a drill press",
+        "risk_rating": "High",
+        "typical": [
+          "Entanglement",
+          "Eye injury",
+          "Cut hands"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
       "standards": [
-        "EN 618 (continuous handling equipment)",
-        "ISO 14120",
-        "OSHA 29 CFR 1910.219"
-      ]
+        "EN 12717",
+        "ANSI B11.8",
+        "IS 3128 (verify)"
+      ],
+      "encyclopedia_link": "machine_drill_press"
     },
     {
       "id": "grinder",
-      "name": "Bench grinder / angle grinder",
-      "category": "Abrasive",
+      "title": "Bench / Angle Grinder",
+      "icon": "💥",
+      "summary": "A high-speed abrasive wheel can burst or kick back and throws sparks and particles.",
       "hazards": [
         "Wheel burst",
-        "Flying sparks and particles",
-        "Entanglement",
         "Kickback",
-        "Noise and dust"
+        "Sparks and fire",
+        "Abrasive dust and noise"
       ],
       "nip_points": [
-        "Gap between the wheel and the tool rest"
+        "Gap between wheel and tool rest",
+        "Wheel and guard opening"
+      ],
+      "hidden_hazards": [
+        "Cracked or wrong-speed wheel",
+        "Vibration (HAVS)",
+        "Sparks igniting nearby combustibles"
       ],
       "guarding": [
-        "Wheel guard enclosing most of the wheel",
-        "Adjustable work rest set close to the wheel (about 2 mm to 3 mm)",
-        "Tongue guard"
+        {
+          "type": "Wheel guard",
+          "detail": "Fixed guard covering at least 75% of the wheel."
+        },
+        {
+          "type": "Tool rest",
+          "detail": "Adjusted to 2 to 3 mm from the wheel."
+        },
+        {
+          "type": "Spark guard",
+          "detail": "Adjustable spark shield and eye shield."
+        }
       ],
-      "controls": [
-        "Use a wheel with the correct speed rating and check it by a ring test",
-        "Dress the wheel; do not use a cracked wheel",
-        "Hold the angle grinder with both hands and keep the guard on"
+      "before_start": [
+        "Ring test: tap the wheel to check for cracks.",
+        "Check wheel rating (RPM) is above machine speed.",
+        "Check guard, rest and flange are correct.",
+        "Let a new wheel run for a minute before use, standing aside."
       ],
-      "pre_start_checks": [
-        "Wheel not cracked or damaged",
-        "Guard and rest correctly set",
-        "Speed marking suits the machine",
-        "Use PPE: eye, face and hearing protection"
+      "daily_checks": [
+        "Inspect wheel for chips or cracks.",
+        "Adjust tool rest as the wheel wears.",
+        "Check dust extraction and sparks area."
       ],
-      "loto_notes": "Unplug or lock off; wait for the wheel to stop; never leave the machine to coast.",
+      "never": [
+        "Never use a wheel without guard.",
+        "Never grind on the side of a straight wheel.",
+        "Never use a cracked or damaged wheel.",
+        "Never stand in line with the wheel when starting."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Kinetic (wheel)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Grinding with a bench or angle grinder",
+        "risk_rating": "High",
+        "typical": [
+          "Wheel burst",
+          "Eye injury",
+          "Fire"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
       "standards": [
-        "ISO 16089 (stationary grinding machines)",
-        "EN 12413 (bonded abrasive products)",
-        "OSHA 29 CFR 1910.215"
-      ]
+        "EN 13236",
+        "ANSI B7.1",
+        "IS 1249"
+      ],
+      "encyclopedia_link": "machine_grinder"
     },
     {
-      "id": "saw",
-      "name": "Band saw / circular saw",
-      "category": "Cutting",
+      "id": "conveyor",
+      "title": "Conveyor",
+      "icon": "📦",
+      "summary": "Moving belts, rollers and pulleys create many nip points and are often cleared or worked on while running.",
       "hazards": [
-        "Cuts and amputation",
-        "Kickback",
-        "Blade breakage",
-        "Noise and dust"
-      ],
-      "nip_points": [
-        "Blade and table gap",
-        "Blade wheels"
-      ],
-      "guarding": [
-        "Blade guard that adjusts to the stock",
-        "Fixed guards on the wheels and pulleys",
-        "Riving knife on circular saws"
-      ],
-      "controls": [
-        "Use push sticks",
-        "Keep the guard close to the work",
-        "Do not remove jammed material while running"
-      ],
-      "pre_start_checks": [
-        "Blade not damaged and correctly tensioned",
-        "Guards in place",
-        "Emergency stop works",
-        "Dust extraction OK"
-      ],
-      "loto_notes": "Lock off power; wait for the blade to stop; wear gloves only to handle a stopped blade.",
-      "standards": [
-        "ISO 12100",
-        "ISO 14120"
-      ]
-    },
-    {
-      "id": "guillotine_shear",
-      "name": "Guillotine / sheet metal shear",
-      "category": "Cutting",
-      "hazards": [
-        "Amputation at the blade",
-        "Sharp edges",
-        "Crush from the hold-down"
-      ],
-      "nip_points": [
-        "Blade and hold-down area",
-        "Back gauge"
-      ],
-      "guarding": [
-        "Fixed guard or finger guard at the front",
-        "Interlocked rear guard",
-        "Two-hand or foot control with guarding"
-      ],
-      "controls": [
-        "Keep hands outside the guard line",
-        "Use tools to push small pieces",
-        "Handle sheets with gloves rated for cuts"
-      ],
-      "pre_start_checks": [
-        "Guards fitted",
-        "Blade clearances and sharpness OK",
-        "Foot control guarded",
-        "Emergency stop works"
-      ],
-      "loto_notes": "Lock off power; block the blade or ram; release stored energy.",
-      "standards": [
-        "ISO 12100",
-        "ISO 14120"
-      ]
-    },
-    {
-      "id": "robot_cell",
-      "name": "Industrial robot cell",
-      "category": "Automation",
-      "hazards": [
-        "Struck by arm movement",
-        "Crushed between the arm and fixed parts",
-        "Unexpected motion during programming"
-      ],
-      "nip_points": [
-        "Gap between the arm and fixed structures",
-        "End of arm tool"
-      ],
-      "guarding": [
-        "Perimeter fence with interlocked gates",
-        "Light curtain or area scanner at openings",
-        "Enabling device and reduced speed for teach mode"
-      ],
-      "controls": [
-        "Do not enter the cell unless the robot is stopped and locked off",
-        "Test the emergency stop and safe-limited speed regularly",
-        "Control access with a key or lock-off for maintenance"
-      ],
-      "pre_start_checks": [
-        "Perimeter guarding complete",
-        "Interlocks and scanners work",
-        "Emergency stop works",
-        "Safe zones marked"
-      ],
-      "loto_notes": "Isolate the power and pneumatics, release stored energy, apply a personal lock and take the key into the cell.",
-      "standards": [
-        "ISO 10218-1 and ISO 10218-2",
-        "ISO 13849-1",
-        "IEC 60204-1"
-      ]
-    },
-    {
-      "id": "air_compressor",
-      "name": "Air compressor",
-      "category": "Utilities",
-      "hazards": [
-        "Pressure vessel burst",
-        "Hot surfaces",
-        "Rotating belt drive",
+        "Entanglement and drawing-in at nip points",
+        "Falling loads",
+        "Crush",
         "Noise"
       ],
       "nip_points": [
-        "Belt and pulley drive"
+        "Belt and tail pulley",
+        "Belt and idlers or rollers",
+        "Drive chain and sprocket"
+      ],
+      "hidden_hazards": [
+        "Stored tension in take-up",
+        "Unexpected restart by remote control",
+        "Material buildup behind guards"
       ],
       "guarding": [
-        "Fixed belt guard",
-        "Guard on hot pipes"
+        {
+          "type": "Fixed guards",
+          "detail": "Cover drive, tail pulley and nip points."
+        },
+        {
+          "type": "Pull-cord e-stop",
+          "detail": "Along the full length of the belt."
+        },
+        {
+          "type": "Interlocked access",
+          "detail": "Doors and hatches that stop the conveyor."
+        }
       ],
-      "controls": [
-        "Safety valve is tested; do not alter the setting",
-        "Drain the receiver condensate regularly",
-        "Check the pressure vessel inspection date"
+      "before_start": [
+        "Check guards and pull cords.",
+        "Make sure the area is clear and people are warned.",
+        "Check start alarm and horn work.",
+        "Follow lockout procedure for any cleaning or adjustment."
       ],
-      "pre_start_checks": [
-        "Safety valve and pressure gauge OK",
-        "Belt guard fitted",
-        "No leaks",
-        "Vessel certificate in date"
+      "daily_checks": [
+        "Check belt tracking and condition.",
+        "Check rollers turn freely.",
+        "Check all e-stops."
       ],
-      "loto_notes": "Isolate power; vent and drain the receiver fully before opening any line.",
+      "never": [
+        "Never clean or adjust a moving conveyor.",
+        "Never ride or climb on a conveyor.",
+        "Never bypass interlocks or guards.",
+        "Never work with loose clothing near rollers."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Kinetic",
+        "Stored tension",
+        "Gravity (loads)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Operating or cleaning a conveyor",
+        "risk_rating": "High",
+        "typical": [
+          "Entanglement",
+          "Crush",
+          "Fall of load"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
       "standards": [
-        "EN 1012 (compressors)",
-        "Pressure vessel rules (verify local)"
-      ]
+        "EN 620",
+        "ASME B20.1",
+        "IS 11592 (verify)"
+      ],
+      "encyclopedia_link": "machine_conveyor"
     },
     {
-      "id": "packaging_machine",
-      "name": "Packaging / wrapping machine",
-      "category": "Packaging",
+      "id": "power_press",
+      "title": "Power Press / Press Brake",
+      "icon": "🏗️",
+      "summary": "A stamping press delivers extreme crushing force; point-of-operation guarding is critical.",
       "hazards": [
-        "Drawing-in at rollers",
-        "Cutting and sealing hazards",
-        "Heat from sealing bars",
-        "Pinch points"
+        "Crush and amputation at the die",
+        "Unintended cycle",
+        "Flying parts",
+        "Noise"
       ],
       "nip_points": [
-        "Roller nips",
-        "Chain drives",
-        "Film feed rollers"
+        "Die area (point of operation)",
+        "Ram and bolster",
+        "Flywheel and drive"
+      ],
+      "hidden_hazards": [
+        "Double stroke or repeat cycle",
+        "Die falling when unsupported",
+        "Hydraulic or pneumatic stored energy"
       ],
       "guarding": [
-        "Interlocked guards on access doors",
-        "Fixed guards on drives",
-        "Light barrier at feed openings"
+        {
+          "type": "Light curtain",
+          "detail": "Stops the ram when the beam is broken."
+        },
+        {
+          "type": "Two-hand control",
+          "detail": "Both hands must be clear and away from the die."
+        },
+        {
+          "type": "Fixed barrier guard",
+          "detail": "Prevents hands entering die area."
+        }
       ],
-      "controls": [
-        "Stop the machine for jam clearance",
-        "Do not bypass interlocks",
-        "Allow sealing bars to cool before touching"
+      "before_start": [
+        "Check light curtains, two-hand controls and e-stop.",
+        "Check die is correctly set and fastened.",
+        "Verify stopping time and safe distance.",
+        "Use hand tools for loading and clearing."
       ],
-      "pre_start_checks": [
-        "Guards and interlocks work",
-        "Emergency stop works",
-        "Sensors and photo-eyes clean",
-        "Film path clear"
+      "daily_checks": [
+        "Test safeguards before each shift.",
+        "Check clutch, brake and ram.",
+        "Check hydraulic and air systems for leaks."
       ],
-      "loto_notes": "Isolate the electrical and pneumatic power; wait for heating elements to cool.",
+      "never": [
+        "Never reach into the die area.",
+        "Never bypass or tie down controls.",
+        "Never work on the press without lockout and die blocks.",
+        "Never allow two people to run without separate controls."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Hydraulic",
+        "Pneumatic",
+        "Gravity (ram)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Operating a power press or press brake",
+        "risk_rating": "High",
+        "typical": [
+          "Amputation",
+          "Crush",
+          "Hand injuries"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
       "standards": [
-        "ISO 12100",
-        "ISO 14120"
-      ]
+        "EN 692 / EN 693",
+        "ANSI B11.1 / B11.3",
+        "IS 7083 (verify)"
+      ],
+      "encyclopedia_link": "machine_power_press"
+    },
+    {
+      "id": "saw",
+      "title": "Circular / Band Saw",
+      "icon": "🪚",
+      "summary": "Moving blades can cut deeply and cause kickback or workpiece ejection.",
+      "hazards": [
+        "Cut and amputation",
+        "Kickback",
+        "Flying chips",
+        "Dust and noise"
+      ],
+      "nip_points": [
+        "Blade and table gap",
+        "Blade-to-guard",
+        "Band saw wheels"
+      ],
+      "hidden_hazards": [
+        "Blade run-on after switch-off",
+        "Dust ignition",
+        "Binding of the workpiece"
+      ],
+      "guarding": [
+        {
+          "type": "Blade guard",
+          "detail": "Covers all but the cutting portion; adjust to the work."
+        },
+        {
+          "type": "Riving knife",
+          "detail": "Prevents the cut from closing on the blade."
+        },
+        {
+          "type": "Push stick",
+          "detail": "Keeps hands away from the blade."
+        }
+      ],
+      "before_start": [
+        "Check blade is sharp and correct for the material.",
+        "Adjust guard to the work thickness.",
+        "Check fence and riving knife.",
+        "Wear eye and hearing protection and dust control."
+      ],
+      "daily_checks": [
+        "Inspect the blade for cracks or missing teeth.",
+        "Check brake and e-stop.",
+        "Clear sawdust and offcuts."
+      ],
+      "never": [
+        "Never remove blade guard.",
+        "Never reach across the blade.",
+        "Never cut freehand without a fence or guide.",
+        "Never clear offcuts while blade is running."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Kinetic (blade)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Operating a saw",
+        "risk_rating": "High",
+        "typical": [
+          "Amputation",
+          "Kickback",
+          "Eye injury"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
+      "standards": [
+        "EN 1870",
+        "ANSI O1.1",
+        "IS 3528 (verify)"
+      ],
+      "encyclopedia_link": "machine_saw"
+    },
+    {
+      "id": "milling",
+      "title": "Milling Machine",
+      "icon": "🛠️",
+      "summary": "A rotating cutter removes material; the cutter, work table and swarf all present serious hazards.",
+      "hazards": [
+        "Entanglement with cutter or spindle",
+        "Flying chips",
+        "Cut by cutter",
+        "Crush by moving table"
+      ],
+      "nip_points": [
+        "Cutter and workpiece",
+        "Table and column",
+        "Belt and pulley guard"
+      ],
+      "hidden_hazards": [
+        "Cutter drawing in loose items",
+        "Coolant mist inhalation",
+        "Heavy workpiece falling"
+      ],
+      "guarding": [
+        {
+          "type": "Cutter guard",
+          "detail": "Transparent guard around the cutting area."
+        },
+        {
+          "type": "Interlocked door",
+          "detail": "Enclosed machines stop when door opens."
+        },
+        {
+          "type": "Belt guard",
+          "detail": "Fixed guard on drive."
+        }
+      ],
+      "before_start": [
+        "Secure the work and cutter correctly.",
+        "Check speed and feed setting.",
+        "Remove spanners and keys.",
+        "Wear glasses and tie back hair; no gloves."
+      ],
+      "daily_checks": [
+        "Check lubrication and coolant.",
+        "Check guard and e-stop.",
+        "Clear chips with a brush."
+      ],
+      "never": [
+        "Never touch the cutter while spinning.",
+        "Never leave keys or spanners on the machine.",
+        "Never measure or adjust while running.",
+        "Never use gloves or loose clothing."
+      ],
+      "energy_sources": [
+        "Electrical",
+        "Kinetic",
+        "Stored (springs)"
+      ],
+      "bridge": {
+        "hazard_category": "Mechanical",
+        "activity": "Milling operations",
+        "risk_rating": "High",
+        "typical": [
+          "Entanglement",
+          "Cut",
+          "Eye injury"
+        ]
+      },
+      "legal": {
+        "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+        "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+        "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+        "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+        "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+        "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
+      },
+      "standards": [
+        "EN ISO 16090-1",
+        "ANSI B11.8",
+        "IS 4064 (verify)"
+      ],
+      "encyclopedia_link": "machine_milling"
     }
   ],
-  "loto_steps": [
-    {
-      "step": 1,
-      "title": "Prepare",
-      "text": "Identify the machine and every energy source: electrical, hydraulic, pneumatic, mechanical (springs, flywheels), gravity, thermal and chemical. Read the lockout procedure.",
-      "check": "All energy sources are listed."
+  "nip_points": {
+    "types": [
+      {
+        "name": "In-running nip",
+        "detail": "Two parts rotating toward each other draw in clothing or hands.",
+        "example": "Belt over a pulley, conveyor tail roller"
+      },
+      {
+        "name": "Shear point",
+        "detail": "Moving part passes close to a fixed part and cuts or traps.",
+        "example": "Press ram and bolster, scissor lifts"
+      },
+      {
+        "name": "Crush point",
+        "detail": "A body part trapped between a moving and fixed part.",
+        "example": "Press brake tooling, rolling stock"
+      },
+      {
+        "name": "Entanglement point",
+        "detail": "Exposed rotating shaft or spindle catches clothing or hair.",
+        "example": "Lathe bar stock, drill chuck"
+      },
+      {
+        "name": "Pinch point",
+        "detail": "Parts moving together trap fingers.",
+        "example": "Chain and sprocket, gears"
+      },
+      {
+        "name": "Cutting point",
+        "detail": "A sharp moving edge cuts.",
+        "example": "Saw blade, milling cutter"
+      }
+    ],
+    "walk_steps": [
+      "Stop and ensure the machine is isolated before inspection.",
+      "Look at every moving part, shaft, belt and gear.",
+      "Mark every spot where two parts move toward each other.",
+      "Check each nip point is guarded and that the guard is fixed.",
+      "Ask what could happen during setup, cleaning and fault clearing.",
+      "Record findings and fix the highest-risk first."
+    ],
+    "tips": [
+      "Ask whether a hand, sleeve or hair could be drawn in.",
+      "Look beyond normal use: maintenance and jams are when injuries happen.",
+      "Fixed guards are better than adjustable guards.",
+      "Guards must not be removable without a tool."
+    ]
+  },
+  "loto": {
+    "title": "Lockout / Tagout (LOTO)",
+    "principle": "Isolate every energy source, lock it off, test it, and only then work. Each person applies their own lock and keeps the key.",
+    "legal": {
+      "india": "Factories Act 1948 Sections 21 to 23 (fencing of machinery) and state factory rules; OSH Code 2020.",
+      "uae": "Federal Law No. 33 of 2021 and MOHRE OSH ministerial decisions; Abu Dhabi OSHAD and Dubai local requirements.",
+      "saudi": "Saudi Labor Law and MHRSD OSH regulations; ISO 45001 widely applied.",
+      "uk": "PUWER 1998 and Health and Safety at Work etc. Act 1974; Supply of Machinery (Safety) Regulations 2008.",
+      "usa": "OSHA 29 CFR 1910 Subpart O (machinery and machine guarding) and 1910.147 (lockout/tagout).",
+      "canada": "Provincial OHS regulations (e.g. Ontario Reg. 851 Industrial Establishments) and CSA Z432 safeguarding."
     },
-    {
-      "step": 2,
-      "title": "Notify",
-      "text": "Tell the affected operators and the supervisor that the machine will be shut down and locked out.",
-      "check": "Everyone affected knows."
-    },
-    {
-      "step": 3,
-      "title": "Shut down",
-      "text": "Stop the machine using the normal stopping procedure.",
-      "check": "Machine has come to a complete stop."
-    },
-    {
-      "step": 4,
-      "title": "Isolate",
-      "text": "Operate the isolating devices (switches, valves, breakers) to cut every energy source.",
-      "check": "Isolators are in the safe position."
-    },
-    {
-      "step": 5,
-      "title": "Lock and tag",
-      "text": "Apply your own personal lock and tag to each isolating point. Each person working on the machine adds their own lock.",
-      "check": "Each lock is yours with your name on the tag."
-    },
-    {
-      "step": 6,
-      "title": "Release stored energy",
-      "text": "Bleed pressure, block or support raised parts, discharge capacitors, let hot parts cool and restrain spring tension.",
-      "check": "No residual energy remains."
-    },
-    {
-      "step": 7,
-      "title": "Verify (try-out)",
-      "text": "Test that the machine cannot start: try the normal start controls, check gauges and use a tested voltage tester where relevant. Then return the controls to off.",
-      "check": "Isolation is proven before work starts."
-    }
-  ],
-  "loto_restore": [
-    "Remove tools and check that everyone is clear of the machine.",
-    "Replace guards and check that safety devices work.",
-    "Remove locks and tags: each person removes only their own lock.",
-    "Tell the affected operators, then restart."
-  ],
-  "loto_rules": [
-    "Only the person who applied a lock removes it.",
-    "One person, one lock; use a group lock box for team jobs.",
-    "Never bypass or remove another person's lock or tag.",
-    "Test before touch: prove the isolation works.",
-    "Contractors follow the same lockout procedure."
-  ],
-  "legal_references": [
-    "India: Factories Act 1948, Section 21 (fencing of machinery) and Section 22 (work on or near machinery in motion) - verify the current text and state rules",
-    "USA: OSHA 29 CFR 1910.147 (control of hazardous energy), 1910.212 (general machine guarding), 1910.219 (power transmission)",
-    "International: ISO 12100 (risk assessment), ISO 14120 (guards), ISO 13857 (safety distances), ISO 13849-1 (control systems), ISO 13850 (emergency stop), IEC 60204-1 (electrical equipment of machines)"
-  ]
+    "steps": [
+      {
+        "n": 1,
+        "title": "Prepare",
+        "do": [
+          "Identify the machine, energy sources and isolation points.",
+          "Tell affected workers and the supervisor.",
+          "Gather locks, tags and test equipment."
+        ],
+        "verify": "Written procedure and energy source list are available.",
+        "mistakes": [
+          "Not knowing all energy sources",
+          "Skipping notification"
+        ]
+      },
+      {
+        "n": 2,
+        "title": "Shut down",
+        "do": [
+          "Stop the machine using the normal stop.",
+          "Wait for all motion to stop."
+        ],
+        "verify": "All movement has stopped and controls are off.",
+        "mistakes": [
+          "Switching off at the wrong point",
+          "Leaving the machine running"
+        ]
+      },
+      {
+        "n": 3,
+        "title": "Isolate",
+        "do": [
+          "Open disconnects and close valves.",
+          "Disconnect or block other energy sources."
+        ],
+        "verify": "Every isolation point is in the safe position.",
+        "mistakes": [
+          "Missing a secondary supply",
+          "Isolating only the control circuit"
+        ]
+      },
+      {
+        "n": 4,
+        "title": "Lock and tag",
+        "do": [
+          "Apply your personal lock and tag to each isolation point.",
+          "Fill in the tag with name, date and reason."
+        ],
+        "verify": "Each device is locked and tagged.",
+        "mistakes": [
+          "Using one lock for several people",
+          "Tagging without a lock where locks are possible"
+        ]
+      },
+      {
+        "n": 5,
+        "title": "Release stored energy",
+        "do": [
+          "Bleed pressure, discharge capacitors, lower or block suspended parts.",
+          "Release springs and cool hot parts."
+        ],
+        "verify": "Gauges read zero and parts are blocked.",
+        "mistakes": [
+          "Forgetting gravity loads",
+          "Leaving residual pressure"
+        ]
+      },
+      {
+        "n": 6,
+        "title": "Verify (try-out)",
+        "do": [
+          "Try to start the machine using normal controls.",
+          "Test the circuit with a meter where electrical."
+        ],
+        "verify": "Machine does not start and tests show zero energy.",
+        "mistakes": [
+          "Skipping the try-out",
+          "Using an unproven tester"
+        ]
+      }
+    ],
+    "restoration": [
+      "Remove tools and materials and replace guards.",
+      "Check that everyone is clear.",
+      "Notify affected workers.",
+      "Each person removes their own lock and tag.",
+      "Re-energise and test before returning to service."
+    ],
+    "rules": [
+      "One person, one lock, one key.",
+      "Never remove another person's lock without a formal authorised procedure.",
+      "Never work on equipment unless you have verified zero energy.",
+      "Group lockout uses a lock box for each person's lock.",
+      "Contractors must follow the site LOTO procedure.",
+      "Review procedures at least annually."
+    ],
+    "energy_types": [
+      {
+        "type": "Electrical",
+        "examples": "Motors, panels, capacitors",
+        "isolation": "Open the disconnect, lock it, test dead with a meter."
+      },
+      {
+        "type": "Hydraulic",
+        "examples": "Presses, cylinders, accumulators",
+        "isolation": "Close valves, relieve pressure, drain accumulators."
+      },
+      {
+        "type": "Pneumatic",
+        "examples": "Air cylinders, clamps",
+        "isolation": "Close the air supply, vent the line, lock the valve."
+      },
+      {
+        "type": "Mechanical / gravity",
+        "examples": "Raised rams, suspended loads, springs",
+        "isolation": "Lower or block parts, release spring tension."
+      },
+      {
+        "type": "Thermal",
+        "examples": "Steam lines, hot surfaces",
+        "isolation": "Close valves and let it cool."
+      },
+      {
+        "type": "Chemical",
+        "examples": "Process lines, tanks",
+        "isolation": "Close, blank or double-block and bleed; purge."
+      }
+    ]
+  }
 }
