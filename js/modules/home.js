@@ -6,8 +6,7 @@
  * js/services/workspace.js (role + industry + experience + the person's own
  * layout):
  *   jarvis         greeting for the time of day and an ask bar (text or voice)
- *   quick_actions  one-tap shortcuts (a shortcut whose module is not built yet
- *                  asks JARVIS to build it)
+ *   quick_actions  one-tap shortcuts ("coming soon" until the module exists)
  *   date_time      live date and clock in the chosen time zone
  *   weather        current weather, place chooser and general heat guidance
  *   today_summary  counts of what was saved today
@@ -26,8 +25,10 @@
  * changes, when the page becomes visible again, and at midnight. Changing the
  * language, time zone, units, role, industry or date format rebuilds Home.
  *
- * The ask bar opens JARVIS (js/jarvis/drawer.js) and sends the text through
- * its normal flow with getJarvis().ask(text), so the same privacy rules apply.
+ * PHASE 1 FIX: the Ask bar and the "Ask JARVIS" tile now call
+ * getJarvis().ask(text) (js/jarvis/drawer.js), which opens the drawer and sends
+ * the message at once. The "Machines" tile always opens the Machine Safety
+ * module through hrefFor('machine_safety') (the real route is /machine-safety).
  */
 
 import { EVENTS, STORES } from '../core/config.js';
@@ -61,6 +62,7 @@ const REFRESH_DELAY_MS = 250;
 const ASK_MAX_CHARS = 2000;
 const ACTION_TEXT_MAX = 90;
 const TOP_ACTIONS = 3;
+const MACHINE_MODULE_ID = 'machine_safety';
 
 function skeleton() {
   return html`<span class="visually-hidden" role="status">Loading</span>
@@ -151,6 +153,21 @@ function heatHtml(heat, units) {
   </div>`;
 }
 
+/**
+ * Quick actions as described by js/services/workspace.js, with the Machines
+ * tile always pointing at the Machine Safety module. When that module is not
+ * active the tile is left exactly as workspace.js described it.
+ */
+function fixedQuickActions(actions) {
+  const machineHref = moduleHref(MACHINE_MODULE_ID);
+  return actions.map((action) => {
+    if (machineHref !== null && action.kind !== 'jarvis' && /machine/i.test(String(action.label || ''))) {
+      return { ...action, available: true, href: machineHref };
+    }
+    return action;
+  });
+}
+
 function quickActionHtml(action) {
   const inner = html`<span class="quick-action__icon" aria-hidden="true">${action.icon}</span>
     <span class="quick-action__label">${action.label}</span>`;
@@ -160,7 +177,7 @@ function quickActionHtml(action) {
   if (action.available) {
     return html`<a class="quick-action" href="${action.href}">${inner}</a>`;
   }
-  return html`<button type="button" class="quick-action" data-qa="soon" data-label="${action.label}">${inner}<span class="quick-action__note">Build with JARVIS</span></button>`;
+  return html`<button type="button" class="quick-action" aria-disabled="true" data-qa="soon" data-label="${action.label}">${inner}<span class="quick-action__note">Coming soon</span></button>`;
 }
 
 
@@ -230,10 +247,18 @@ export async function render(ctx) {
     emit(EVENTS.TOAST, { message, type: type || 'info' });
   }
 
-  /** Opens JARVIS and, when there is text, sends it through JARVIS's normal flow. */
+  /**
+   * Opens the JARVIS drawer. With text, the drawer also sends it at once
+   * (the same flow as typing it in the drawer, so the same privacy rules apply).
+   */
   function askJarvis(text) {
-    const jarvis = getJarvis();
-    if (jarvis === null || jarvis === undefined) {
+    let jarvis = null;
+    try {
+      jarvis = getJarvis();
+    } catch (error) {
+      console.error('NASUR Home: JARVIS could not be opened.', error);
+    }
+    if (!jarvis || typeof jarvis.open !== 'function') {
       toast('JARVIS is not available right now.', 'warning');
       return;
     }
@@ -241,7 +266,11 @@ export async function render(ctx) {
       jarvis.open();
       return;
     }
-    jarvis.ask(text);
+    if (typeof jarvis.ask === 'function') {
+      jarvis.ask(text);
+    } else {
+      jarvis.open();
+    }
   }
 
   /* ---- frames ------------------------------------------------------------ */
@@ -267,7 +296,7 @@ export async function render(ctx) {
   function fillJarvis(body) {
     renderHtml(body, html`
       <h2 class="jarvis-hero__greeting" data-greeting>${greetingText(new Date())}</h2>
-      <p class="jarvis-hero__sub">Your HSE safety assistant. Ask in English, Tamil, Hindi or Arabic, by typing or speaking.</p>
+      <p class="jarvis-hero__sub">Your HSE safety assistant. Ask in English, Tamil or Tanglish. Tap the microphone to speak.</p>
       <form class="ask-bar" data-ask-form>
         <input class="ask-bar__input" type="text" name="ask" maxlength="${ASK_MAX_CHARS}" autocomplete="off" placeholder="Ask JARVIS…" aria-label="Ask JARVIS">
         ${micAvailable ? html`<button type="button" class="icon-btn" data-act="mic" aria-label="Speak your question" aria-pressed="false"><span class="icon-btn__glyph" data-mic-glyph aria-hidden="true">🎤</span></button>` : ''}
@@ -351,7 +380,7 @@ export async function render(ctx) {
 
   /* ---- quick actions ----------------------------------------------------- */
   function fillQuick(body) {
-    const actions = describeQuickActions(workspace.quickActions);
+    const actions = fixedQuickActions(describeQuickActions(workspace.quickActions));
     renderHtml(body, html`<div class="quick-actions">${actions.map((action) => quickActionHtml(action))}</div>`);
     body.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target.closest('[data-qa]') : null;
@@ -361,7 +390,7 @@ export async function render(ctx) {
       if (target.getAttribute('data-qa') === 'jarvis') {
         askJarvis('');
       } else {
-        askJarvis('Build module: ' + (target.getAttribute('data-label') || 'new module'));
+        toast((target.getAttribute('data-label') || 'This') + ' is coming soon.', 'info');
       }
     });
   }
