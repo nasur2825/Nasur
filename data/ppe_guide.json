@@ -1,828 +1,596 @@
 {
-  "schema_version": 1,
-  "id": "ppe_guide",
-  "title": "PPE Guide",
-  "updated": "2026-11",
-  "disclaimer": "PPE is the last line of the hierarchy of controls. Standards shown are common references (EN, ANSI, IS); your site, client or country may require others. Always check the safety data sheet and the maker's instructions.",
-  "hierarchy_of_controls": [
-    "Eliminate",
-    "Substitute",
-    "Engineering controls",
-    "Administrative controls",
-    "PPE"
-  ],
-  "ppe_items": [
+  "tasks": [
     {
-      "id": "helmet",
-      "name": "Safety helmet",
-      "standards": [
-        "EN 397",
-        "ANSI/ISEA Z89.1",
-        "IS 2925 (India)"
-      ],
-      "protects_against": [
-        "Falling objects",
-        "Bumps",
-        "Fixed-object impact"
-      ],
-      "pre_use_checks": [
-        "No cracks, dents or chalky/faded shell (UV damage)",
-        "Suspension and harness intact, correct size",
-        "Chin strap works when working at height",
-        "Within the maker's service life; replace after any heavy impact"
+      "id": "general",
+      "label": "General Site / Workshop",
+      "icon": "🏭",
+      "note": "Baseline for everyone entering the work area.",
+      "ppe": [
+        "hard_hat",
+        "safety_glasses",
+        "safety_shoes",
+        "hi_vis",
+        "coverall"
       ]
+    },
+    {
+      "id": "welding",
+      "label": "Welding and Cutting",
+      "icon": "🔥",
+      "note": "Arc, sparks and fumes: protect eyes, skin, lungs.",
+      "ppe": [
+        "welding_helmet",
+        "gloves_heat",
+        "fr_clothing",
+        "safety_shoes",
+        "respirator",
+        "hearing"
+      ]
+    },
+    {
+      "id": "grinding",
+      "label": "Grinding / Machining",
+      "icon": "⚙️",
+      "note": "Flying particles and noise; avoid loose gloves near rotating parts.",
+      "ppe": [
+        "safety_glasses",
+        "face_shield",
+        "hearing",
+        "safety_shoes",
+        "coverall"
+      ]
+    },
+    {
+      "id": "chemical",
+      "label": "Chemical Handling",
+      "icon": "🧪",
+      "note": "Select by chemical and SDS.",
+      "ppe": [
+        "goggles",
+        "face_shield",
+        "gloves_chem",
+        "respirator",
+        "coverall",
+        "safety_shoes"
+      ]
+    },
+    {
+      "id": "height",
+      "label": "Work at Height",
+      "icon": "🪜",
+      "note": "Fall arrest plus head protection.",
+      "ppe": [
+        "harness",
+        "hard_hat",
+        "safety_shoes",
+        "hi_vis",
+        "gloves_cut"
+      ]
+    },
+    {
+      "id": "electrical",
+      "label": "Electrical Work",
+      "icon": "⚡",
+      "note": "Arc rated PPE and insulated tools; follow energy study.",
+      "ppe": [
+        "fr_clothing",
+        "hard_hat",
+        "face_shield",
+        "safety_shoes",
+        "safety_glasses"
+      ]
+    },
+    {
+      "id": "noise",
+      "label": "High-Noise Area",
+      "icon": "🔊",
+      "note": "Above 85 dB(A) means protection is required.",
+      "ppe": [
+        "hearing",
+        "safety_glasses",
+        "safety_shoes",
+        "hard_hat"
+      ]
+    },
+    {
+      "id": "material",
+      "label": "Material Handling",
+      "icon": "📦",
+      "note": "Crush, cut and vehicle hazards.",
+      "ppe": [
+        "gloves_cut",
+        "safety_shoes",
+        "hi_vis",
+        "hard_hat",
+        "safety_glasses"
+      ]
+    },
+    {
+      "id": "painting",
+      "label": "Painting / Spraying",
+      "icon": "🎨",
+      "note": "Vapours and mists; ventilation and respirators.",
+      "ppe": [
+        "respirator",
+        "goggles",
+        "gloves_chem",
+        "coverall",
+        "safety_shoes"
+      ]
+    },
+    {
+      "id": "foundry",
+      "label": "Hot Metal / Foundry",
+      "icon": "🌋",
+      "note": "Heat and molten splash.",
+      "ppe": [
+        "fr_clothing",
+        "face_shield",
+        "gloves_heat",
+        "safety_shoes",
+        "hard_hat",
+        "hearing"
+      ]
+    }
+  ],
+  "items": {
+    "hard_hat": {
+      "id": "hard_hat",
+      "name": "Safety Helmet",
+      "icon": "⛑️",
+      "protects_against": "Falling objects, bumps, overhead strikes and some electrical contact",
+      "standards": {
+        "eu": "EN 397 (EN 50365 for electrical)",
+        "usa": "ANSI/ISEA Z89.1 (Type I/II, Class E/G/C)",
+        "canada": "CSA Z94.1",
+        "india": "IS 2925"
+      },
+      "choose": [
+        "Choose Class E (electrical) when near live parts.",
+        "Use Type II where side impact is possible.",
+        "Fit a chin strap for work at height or in wind.",
+        "Check the date stamp; replace at manufacturer's age limit."
+      ]
+    },
+    "safety_glasses": {
+      "id": "safety_glasses",
+      "name": "Safety Glasses",
+      "icon": "🥽",
+      "protects_against": "Flying particles, dust, minor splashes",
+      "standards": {
+        "eu": "EN 166",
+        "usa": "ANSI/ISEA Z87.1",
+        "canada": "CSA Z94.3",
+        "india": "IS 5983"
+      },
+      "choose": [
+        "Choose side shields for grinding and machining.",
+        "Use anti-fog, scratch-resistant lenses.",
+        "Wear over prescription glasses only if designed for it, or use prescription safety glasses."
+      ]
+    },
+    "goggles": {
+      "id": "goggles",
+      "name": "Safety Goggles",
+      "icon": "🥸",
+      "protects_against": "Chemical splash, fine dust, molten metal splash",
+      "standards": {
+        "eu": "EN 166 (marks 3 / 4 / 5)",
+        "usa": "ANSI/ISEA Z87.1 (D3 / D4 / D5)",
+        "canada": "CSA Z94.3",
+        "india": "IS 5983"
+      },
+      "choose": [
+        "Use indirect-vent goggles for liquids and sealed goggles for fine dust or gas.",
+        "Check the strap is elastic and seals against the face.",
+        "Never use direct-vent goggles for chemical splash."
+      ]
+    },
+    "face_shield": {
+      "id": "face_shield",
+      "name": "Face Shield",
+      "icon": "🛡️",
+      "protects_against": "Splashes, sparks, flying chips, heat",
+      "standards": {
+        "eu": "EN 166 (marks 3, 8, 9)",
+        "usa": "ANSI/ISEA Z87.1",
+        "canada": "CSA Z94.3",
+        "india": "IS 8521"
+      },
+      "choose": [
+        "Always wear safety glasses underneath.",
+        "Choose polycarbonate for impact and acetate for chemical splash.",
+        "Pick an arc-rated shield for electrical arc risk."
+      ]
+    },
+    "hearing": {
+      "id": "hearing",
+      "name": "Hearing Protection",
+      "icon": "🎧",
+      "protects_against": "Noise-induced hearing loss",
+      "standards": {
+        "eu": "EN 352",
+        "usa": "ANSI S3.19 / NRR rating",
+        "canada": "CSA Z94.2",
+        "india": "IS 9167"
+      },
+      "choose": [
+        "Pick enough attenuation to bring exposure below 85 dB(A) at the ear without overprotecting.",
+        "Earmuffs for intermittent noise; plugs for long wear or hot places.",
+        "Use both plugs and muffs above about 105 dB(A).",
+        "Train workers on correct insertion."
+      ]
+    },
+    "respirator": {
+      "id": "respirator",
+      "name": "Respirator / Dust Mask",
+      "icon": "😷",
+      "protects_against": "Dust, fumes, mists, vapours, gases",
+      "standards": {
+        "eu": "EN 149 (FFP1/2/3), EN 140 / 143 / 14387",
+        "usa": "NIOSH 42 CFR Part 84 (N95, P100, cartridge)",
+        "canada": "CSA Z94.4",
+        "india": "IS 9473 / IS 14746"
+      },
+      "choose": [
+        "Match the filter to the contaminant: particulate (P), organic vapour (A), acid gas (B/E), combined.",
+        "Fit-test every tight-fitting respirator; no facial hair on the seal.",
+        "Use supplied-air or SCBA in oxygen-deficient or IDLH atmospheres.",
+        "Replace filters by schedule or when breathing resistance or smell appears."
+      ]
+    },
+    "gloves_cut": {
+      "id": "gloves_cut",
+      "name": "Cut / Mechanical Gloves",
+      "icon": "🧤",
+      "protects_against": "Cuts, abrasion, punctures, impact",
+      "standards": {
+        "eu": "EN 388",
+        "usa": "ANSI/ISEA 105 (cut A1 to A9)",
+        "canada": "No single CSA code; use ANSI/ISEA 105 or EN 388 ratings",
+        "india": "IS 6994"
+      },
+      "choose": [
+        "Pick the cut level for the blade or sheet edge risk.",
+        "Do NOT wear gloves near rotating machinery where entanglement is a risk.",
+        "Choose grip coating suited to oily or dry work."
+      ]
+    },
+    "gloves_chem": {
+      "id": "gloves_chem",
+      "name": "Chemical-Resistant Gloves",
+      "icon": "🧪",
+      "protects_against": "Corrosives, solvents, oils, biological hazards",
+      "standards": {
+        "eu": "EN ISO 374-1 / 374-5",
+        "usa": "ASTM F739 permeation; ANSI/ISEA 105",
+        "canada": "Use supplier chemical permeation data",
+        "india": "IS 4501 (verify for use)"
+      },
+      "choose": [
+        "Select the glove material for the specific chemical using the manufacturer's breakthrough chart (nitrile, neoprene, butyl, PVC, Viton).",
+        "Check glove thickness and length.",
+        "Never reuse disposable gloves; change before breakthrough time."
+      ]
+    },
+    "gloves_heat": {
+      "id": "gloves_heat",
+      "name": "Heat / Welding Gloves",
+      "icon": "🔥",
+      "protects_against": "Hot surfaces, sparks, molten splash, radiant heat",
+      "standards": {
+        "eu": "EN 407 / EN 12477 (welding)",
+        "usa": "ASTM F1060; ANSI/ISEA 105",
+        "canada": "CSA Z195 / supplier data",
+        "india": "IS 6994 / IS 8996 (verify)"
+      },
+      "choose": [
+        "Match contact heat level and flame rating to the job.",
+        "Use long gauntlet cuffs for welding.",
+        "Keep dry; wet gloves transmit heat quickly."
+      ]
+    },
+    "safety_shoes": {
+      "id": "safety_shoes",
+      "name": "Safety Footwear",
+      "icon": "🥾",
+      "protects_against": "Crush, puncture, slips, electrical and chemical hazards",
+      "standards": {
+        "eu": "EN ISO 20345 (S1 to S5)",
+        "usa": "ASTM F2413",
+        "canada": "CSA Z195",
+        "india": "IS 15298 Part 2"
+      },
+      "choose": [
+        "Toe cap (steel or composite) and puncture-resistant midsole for sites with nails.",
+        "Anti-slip sole for wet or oily floors.",
+        "Metatarsal guards for heavy handling.",
+        "Use EH-rated for electrical hazard and ESD for electronics."
+      ]
+    },
+    "hi_vis": {
+      "id": "hi_vis",
+      "name": "High-Visibility Clothing",
+      "icon": "🦺",
+      "protects_against": "Being struck by vehicles or machinery",
+      "standards": {
+        "eu": "EN ISO 20471",
+        "usa": "ANSI/ISEA 107",
+        "canada": "CSA Z96",
+        "india": "IS 15809 (verify)"
+      },
+      "choose": [
+        "Choose the class by traffic speed and visibility.",
+        "Fluorescent yellow/orange for day; add retroreflective strips for night.",
+        "Replace when faded or dirty."
+      ]
+    },
+    "harness": {
+      "id": "harness",
+      "name": "Full-Body Harness and Lanyard",
+      "icon": "🪢",
+      "protects_against": "Falls from height",
+      "standards": {
+        "eu": "EN 361 + EN 355 / EN 354 / EN 358",
+        "usa": "ANSI/ASSP Z359.11, Z359.13",
+        "canada": "CSA Z259.10",
+        "india": "IS 3521"
+      },
+      "choose": [
+        "Use a full-body harness with shock-absorbing lanyard for fall arrest.",
+        "Anchor point must be rated for 15 kN (EU) or 22 kN (US) per person.",
+        "Check clearance below to avoid hitting the ground.",
+        "Have a rescue plan before work starts."
+      ]
+    },
+    "fr_clothing": {
+      "id": "fr_clothing",
+      "name": "Flame-Resistant / Arc-Rated Clothing",
+      "icon": "🥼",
+      "protects_against": "Flash fire, arc flash, molten metal splash",
+      "standards": {
+        "eu": "EN ISO 11612 / EN 61482 / EN ISO 11611",
+        "usa": "NFPA 70E; ASTM F1506; NFPA 2112",
+        "canada": "CSA Z462",
+        "india": "IS 15748 (verify)"
+      },
+      "choose": [
+        "Choose the arc rating (cal/cm²) from the incident energy study.",
+        "No synthetic underlayers that melt.",
+        "Do not wash with fabric softener; follow care labels."
+      ]
+    },
+    "welding_helmet": {
+      "id": "welding_helmet",
+      "name": "Welding Helmet / Shield",
+      "icon": "🔧",
+      "protects_against": "Arc radiation, sparks, spatter",
+      "standards": {
+        "eu": "EN 175 / EN 379 / EN 169",
+        "usa": "ANSI Z87.1 / ANSI Z49.1",
+        "canada": "CSA W117.2",
+        "india": "IS 1179 / IS 5983"
+      },
+      "choose": [
+        "Select shade number for the process and current (typically 10 to 14).",
+        "Auto-darkening lens should be tested before use.",
+        "Wear safety glasses underneath."
+      ]
+    },
+    "coverall": {
+      "id": "coverall",
+      "name": "Coverall / Work Clothing",
+      "icon": "👷",
+      "protects_against": "Dust, minor abrasion, splashes",
+      "standards": {
+        "eu": "EN ISO 13688 (general); EN 13034 chemical",
+        "usa": "ANSI/ISEA 101 (general)",
+        "canada": "CSA Z96 (visibility)",
+        "india": "IS 15748 (verify)"
+      },
+      "choose": [
+        "Choose close-fitting, no loose cuffs or dangling parts near machines.",
+        "Natural fibre or FR fabric for hot work.",
+        "Washable and replaceable as per condition."
+      ]
+    }
+  },
+  "selection_rules": [
+    "PPE is the last line of defence: first try to eliminate, substitute, isolate or guard (hierarchy of controls).",
+    "Choose PPE based on a documented hazard assessment for the specific task, not on habit.",
+    "Pick certified PPE that bears the correct standard mark and is suitable for the workplace.",
+    "Make sure the PPE fits the individual; ill-fitting PPE offers less protection and is not worn.",
+    "Combine items so they work together (e.g. glasses under a face shield, hearing protection under a helmet).",
+    "Train workers on when to use, how to wear, limits, care and disposal.",
+    "Never mix up PPE: protection from one hazard can create another (loose gloves near rotating parts).",
+    "Provide it free to workers and replace it when worn, damaged or past its service life."
+  ],
+  "verifyNote": "Standards listed are commonly applied references and are updated from time to time. Always verify the current edition and local legal requirements with your regulator, supplier or competent safety professional before purchase or use.",
+  "inspection": [
+    {
+      "id": "hard_hat",
+      "name": "Safety Helmet",
+      "icon": "⛑️",
+      "before_use": [
+        "Check shell for cracks, dents, chalking or discolouration.",
+        "Check harness, suspension and chin strap for wear.",
+        "Read the date stamp inside the shell."
+      ],
+      "reject_if": [
+        "Any crack, deep gouge or impact history.",
+        "Brittle shell or faded surface.",
+        "Past the manufacturer's date limit."
+      ],
+      "care": [
+        "Clean with mild soap and water.",
+        "Store away from sunlight, heat and solvents.",
+        "Do not drill holes or paint with solvent paint."
+      ],
+      "life": "Typically 3 to 5 years (supplier dependent); replace immediately after a heavy impact."
     },
     {
       "id": "eye",
-      "name": "Safety glasses / goggles",
-      "standards": [
-        "EN 166",
-        "ANSI/ISEA Z87.1"
+      "name": "Eye and Face Protection",
+      "icon": "🥽",
+      "before_use": [
+        "Look for scratches, haze or cracks.",
+        "Check frames and straps for damage.",
+        "Make sure lenses are clean."
       ],
-      "protects_against": [
-        "Flying particles",
-        "Dust",
-        "Splashes (use sealed goggles)"
+      "reject_if": [
+        "Deep scratches or pitting that affect vision.",
+        "Cracked or loose lens.",
+        "Damaged strap or seal."
       ],
-      "pre_use_checks": [
-        "Lenses not scratched, cracked or cloudy",
-        "Side shields and frame intact",
-        "Marked with the standard (EN 166 or Z87.1)",
-        "Goggles seal fully against the face for splash or dust"
-      ]
+      "care": [
+        "Clean with lens cleaner and soft cloth.",
+        "Store in a clean case."
+      ],
+      "life": "Replace when scratched or damaged; no fixed life."
     },
     {
-      "id": "face_shield",
-      "name": "Face shield",
-      "standards": [
-        "EN 166",
-        "ANSI/ISEA Z87.1"
+      "id": "hearing",
+      "name": "Hearing Protection",
+      "icon": "🎧",
+      "before_use": [
+        "Check earmuff cups and cushions for cracks.",
+        "Check plugs are clean and flexible."
       ],
-      "protects_against": [
-        "Grinding sparks",
-        "Chemical splash",
-        "Molten metal splash (specific rating)"
+      "reject_if": [
+        "Hardened or cracked foam or cushions.",
+        "Broken headband or loss of spring tension."
       ],
-      "pre_use_checks": [
-        "Visor is clear, not cracked or pitted",
-        "Headband fits and locks",
-        "Worn over safety glasses, never alone"
-      ]
+      "care": [
+        "Replace disposable plugs after one use.",
+        "Wash reusable plugs per label."
+      ],
+      "life": "Disposable: single use; muff cushions about 6 to 12 months."
     },
     {
-      "id": "welding_shield",
-      "name": "Welding helmet / filter",
-      "standards": [
-        "EN 175",
-        "EN 169 (filter shade)",
-        "ANSI/ISEA Z87.1"
+      "id": "respirator",
+      "name": "Respirator",
+      "icon": "😷",
+      "before_use": [
+        "Check straps, valves and seals.",
+        "Check filter expiry and condition.",
+        "Perform a seal check each time you wear it."
       ],
-      "protects_against": [
-        "Arc radiation",
-        "Spatter"
+      "reject_if": [
+        "Damaged facepiece or cracked valve.",
+        "Expired filters or higher breathing resistance.",
+        "Visible contamination."
       ],
-      "pre_use_checks": [
-        "Correct filter shade for the process and amperage",
-        "Auto-darkening lens works when tested",
-        "Cover plate clean and unbroken"
-      ]
+      "care": [
+        "Clean and disinfect after use.",
+        "Store in sealed bag away from dust and chemicals."
+      ],
+      "life": "Disposable per shift or when damaged; cartridges by change schedule."
     },
     {
-      "id": "ear",
-      "name": "Ear plugs / ear muffs",
-      "standards": [
-        "EN 352 (parts 1-2)",
-        "ANSI S3.19 / ANSI S12.6"
+      "id": "gloves",
+      "name": "Gloves",
+      "icon": "🧤",
+      "before_use": [
+        "Check for holes, tears, cuts and thin spots.",
+        "For chemical gloves, inflate or look for leaks."
       ],
-      "protects_against": [
-        "Noise above the action level of 85 dB(A)"
+      "reject_if": [
+        "Holes or cuts.",
+        "Stiffening, swelling, discolouration or chemical smell.",
+        "Contaminated inside."
       ],
-      "pre_use_checks": [
-        "Plugs clean and soft, muffs' cushions not split",
-        "Headband keeps tension",
-        "Fitted correctly; attenuation suits the noise level"
-      ]
+      "care": [
+        "Wash or air dry per label.",
+        "Do not store with chemicals."
+      ],
+      "life": "Per condition; disposable gloves are single use."
     },
     {
-      "id": "respirator_ffp",
-      "name": "Disposable respirator (FFP / N95)",
-      "standards": [
-        "EN 149 (FFP1, FFP2, FFP3)",
-        "NIOSH 42 CFR 84 (N95)"
+      "id": "footwear",
+      "name": "Safety Footwear",
+      "icon": "🥾",
+      "before_use": [
+        "Check soles for wear, cuts and cracks.",
+        "Check the toe cap is not exposed or dented.",
+        "Check laces and fasteners."
       ],
-      "protects_against": [
-        "Dust",
-        "Fumes",
-        "Mists (not gases)"
+      "reject_if": [
+        "Exposed toe cap or soles worn smooth.",
+        "Sole separating from upper.",
+        "Crush damage."
       ],
-      "pre_use_checks": [
-        "Seal check: no air leaks around the edges",
-        "Straps elastic and intact; not damp or dirty",
-        "Fit-tested for the wearer; no beard under the seal",
-        "Single shift or as the maker states"
-      ]
-    },
-    {
-      "id": "respirator_half",
-      "name": "Half / full-face respirator with filters",
-      "standards": [
-        "EN 140 / EN 136",
-        "EN 143 (particle filters)",
-        "EN 14387 (gas filters: A, B, E, K, P)"
+      "care": [
+        "Clean and dry after shifts.",
+        "Resole only if supplier permits."
       ],
-      "protects_against": [
-        "Solvent vapour",
-        "Acid gases",
-        "Particulates (filter type must match the hazard)"
-      ],
-      "pre_use_checks": [
-        "Right filter type and class for the contaminant",
-        "Filter in date, not clogged; valves clean and seat well",
-        "Fit test and seal check done",
-        "Not used in oxygen-deficient or unknown atmospheres (use supplied air or SCBA)"
-      ]
-    },
-    {
-      "id": "gloves_mech",
-      "name": "Mechanical gloves",
-      "standards": [
-        "EN 388"
-      ],
-      "protects_against": [
-        "Abrasion",
-        "Cuts",
-        "Tears",
-        "Punctures"
-      ],
-      "pre_use_checks": [
-        "No holes, thin patches or exposed stitching",
-        "Right size and grip",
-        "Cut level on the label matches the task"
-      ]
-    },
-    {
-      "id": "gloves_chem",
-      "name": "Chemical-resistant gloves",
-      "standards": [
-        "EN ISO 374-1"
-      ],
-      "protects_against": [
-        "Specific chemicals (check the permeation chart)"
-      ],
-      "pre_use_checks": [
-        "Material suits the exact chemical (SDS section 8)",
-        "Inflate or inspect for pinholes",
-        "Cuffs long enough; replace when swollen or tacky"
-      ]
-    },
-    {
-      "id": "gloves_heat",
-      "name": "Heat-resistant gloves",
-      "standards": [
-        "EN 407",
-        "EN 12477 (welding gloves)"
-      ],
-      "protects_against": [
-        "Contact heat",
-        "Hot sparks",
-        "Spatter"
-      ],
-      "pre_use_checks": [
-        "No burn marks, thin spots or damp lining",
-        "Rated for the contact temperature"
-      ]
-    },
-    {
-      "id": "gloves_elec",
-      "name": "Electrical insulating gloves",
-      "standards": [
-        "IEC 60903 / EN 60903",
-        "ASTM D120"
-      ],
-      "protects_against": [
-        "Electric shock (voltage class rated)"
-      ],
-      "pre_use_checks": [
-        "Air-inflation test for pin holes before every use",
-        "Test date in date and voltage class suits the work",
-        "Worn with leather protectors; never used if cut or contaminated"
-      ]
-    },
-    {
-      "id": "shoes",
-      "name": "Safety footwear",
-      "standards": [
-        "EN ISO 20345 (S1, S1P, S2, S3)",
-        "ASTM F2413",
-        "IS 15298 (India)"
-      ],
-      "protects_against": [
-        "Falling objects (toe cap)",
-        "Nails (midsole)",
-        "Slips",
-        "Oil"
-      ],
-      "pre_use_checks": [
-        "Toe cap intact, sole not worn smooth",
-        "No cuts or loose sole",
-        "Class marking matches the hazard (S3 for wet, nails and oil)"
-      ]
-    },
-    {
-      "id": "hivis",
-      "name": "High-visibility clothing",
-      "standards": [
-        "EN ISO 20471 (classes 1-3)",
-        "ANSI/ISEA 107"
-      ],
-      "protects_against": [
-        "Not being seen near vehicles and plant"
-      ],
-      "pre_use_checks": [
-        "Clean, bright fluorescent colour and reflective tape",
-        "Not torn or faded",
-        "Fastened and sized to be worn over other clothing"
-      ]
-    },
-    {
-      "id": "coverall_fr",
-      "name": "Flame-retardant / welding clothing",
-      "standards": [
-        "EN ISO 11612 (heat and flame)",
-        "EN ISO 11611 (welding)",
-        "EN 1149-5 (antistatic)"
-      ],
-      "protects_against": [
-        "Sparks",
-        "Flash fire",
-        "Radiant heat"
-      ],
-      "pre_use_checks": [
-        "No burn holes, oil or grease contamination",
-        "Cotton or FR fabric, never synthetic that melts",
-        "Fully fastened; cuffs and collar closed"
-      ]
-    },
-    {
-      "id": "arc_flash",
-      "name": "Arc-flash suit and hood",
-      "standards": [
-        "EN 61482-1-2",
-        "IEC 61482",
-        "NFPA 70E (risk categories)"
-      ],
-      "protects_against": [
-        "Arc flash thermal energy"
-      ],
-      "pre_use_checks": [
-        "Rated to the incident energy in the arc-flash label",
-        "Hood visor clean and not cracked",
-        "No holes or contamination"
-      ]
-    },
-    {
-      "id": "chem_suit",
-      "name": "Chemical protective suit",
-      "standards": [
-        "EN 14605 (types 3/4)",
-        "EN 13034 (type 6)"
-      ],
-      "protects_against": [
-        "Liquid splash",
-        "Spray",
-        "Particles"
-      ],
-      "pre_use_checks": [
-        "Suit type matches the hazard",
-        "Seams and zips not split",
-        "Used once; disposed of as chemical waste"
-      ]
+      "life": "Typically 6 to 12 months of heavy use; replace after impact."
     },
     {
       "id": "harness",
-      "name": "Full-body harness",
-      "standards": [
-        "EN 361",
-        "ANSI Z359.11"
+      "name": "Harness and Lanyard",
+      "icon": "🪢",
+      "before_use": [
+        "Check webbing for cuts, burns, fraying or chemical damage.",
+        "Check buckles, D-rings and stitching.",
+        "Check shock absorber pack is not deployed."
       ],
-      "protects_against": [
-        "Falls from height"
+      "reject_if": [
+        "Any fall arrest event.",
+        "Frayed, cut or burnt webbing.",
+        "Missing inspection tag or overdue inspection."
       ],
-      "pre_use_checks": [
-        "Webbing has no cuts, fraying, burns or chemical damage",
-        "Stitching intact; no pulled threads",
-        "Buckles and D-rings undamaged and working",
-        "Label readable; within the maker's date",
-        "Shock-pack or load indicator not deployed"
-      ]
+      "care": [
+        "Store hung, clean and dry.",
+        "Wash with mild soap; no bleach."
+      ],
+      "life": "Manufacturer limit (often up to 10 years); formal inspection at least every 6 to 12 months."
     },
     {
-      "id": "lanyard",
-      "name": "Lanyard with energy absorber",
-      "standards": [
-        "EN 354",
-        "EN 355"
+      "id": "hivis",
+      "name": "High-Visibility Clothing",
+      "icon": "🦺",
+      "before_use": [
+        "Check fluorescent colour is bright.",
+        "Check reflective tape is intact."
       ],
-      "protects_against": [
-        "Fall arrest force"
+      "reject_if": [
+        "Faded colour or peeling tape.",
+        "Torn or dirty beyond cleaning."
       ],
-      "pre_use_checks": [
-        "Rope or webbing undamaged",
-        "Energy absorber pack intact, not deployed",
-        "Snap hooks lock fully and gates close",
-        "Length suits the fall clearance"
-      ]
-    },
-    {
-      "id": "anchor",
-      "name": "Anchor point / lifeline",
-      "standards": [
-        "EN 795",
-        "EN 353-1 (guided fall arresters)"
+      "care": [
+        "Wash at low temperature without softener."
       ],
-      "protects_against": [
-        "Connection point for fall protection"
-      ],
-      "pre_use_checks": [
-        "Rated for the load by a competent person (verify the rating)",
-        "Not bent or corroded; tagged and in inspection date",
-        "Positioned to limit swing and free-fall distance"
-      ]
+      "life": "Typically 25 to 50 washes or when faded."
     }
   ],
-  "activities": [
-    {
-      "id": "welding_hot_work",
-      "label": "Welding / hot work",
-      "hazards": [
-        "Arc radiation",
-        "Sparks and spatter",
-        "Fumes",
-        "Fire",
-        "Heat"
-      ],
-      "ppe": [
-        {
-          "item": "welding_shield",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_heat",
-          "requirement": "required"
-        },
-        {
-          "item": "coverall_fr",
-          "requirement": "required"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "respirator_ffp",
-          "requirement": "when needed",
-          "note": "Use a welding-rated respirator when ventilation is not enough"
-        },
-        {
-          "item": "ear",
-          "requirement": "when needed"
-        }
-      ],
-      "permits": [
-        "Hot work permit",
-        "Fire watch"
-      ],
-      "notes": "Remove combustibles and keep an extinguisher at hand. Provide local exhaust ventilation."
-    },
-    {
-      "id": "grinding_cutting",
-      "label": "Grinding / cutting",
-      "hazards": [
-        "Flying particles",
-        "Sparks",
-        "Noise",
-        "Dust",
-        "Kickback"
-      ],
-      "ppe": [
-        {
-          "item": "eye",
-          "requirement": "required"
-        },
-        {
-          "item": "face_shield",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "required"
-        },
-        {
-          "item": "ear",
-          "requirement": "required"
-        },
-        {
-          "item": "respirator_ffp",
-          "requirement": "when needed"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        }
-      ],
-      "permits": [
-        "Hot work permit when near combustibles"
-      ],
-      "notes": "Check the wheel rating matches the machine speed and the guard is fitted."
-    },
-    {
-      "id": "work_at_height",
-      "label": "Work at height",
-      "hazards": [
-        "Falls",
-        "Falling objects",
-        "Weather",
-        "Unstable platforms"
-      ],
-      "ppe": [
-        {
-          "item": "helmet",
-          "requirement": "required",
-          "note": "Use a helmet with a chin strap"
-        },
-        {
-          "item": "harness",
-          "requirement": "required"
-        },
-        {
-          "item": "lanyard",
-          "requirement": "required"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "when needed"
-        },
-        {
-          "item": "hivis",
-          "requirement": "when needed"
-        }
-      ],
-      "permits": [
-        "Work at height permit"
-      ],
-      "notes": "Use collective protection (guardrails) first. A harness is a last resort. Plan rescue before work starts."
-    },
-    {
-      "id": "confined_space",
-      "label": "Confined space entry",
-      "hazards": [
-        "Toxic or flammable atmosphere",
-        "Oxygen deficiency",
-        "Engulfment",
-        "Heat"
-      ],
-      "ppe": [
-        {
-          "item": "helmet",
-          "requirement": "required"
-        },
-        {
-          "item": "harness",
-          "requirement": "required",
-          "note": "With a rescue line attached outside"
-        },
-        {
-          "item": "respirator_half",
-          "requirement": "required",
-          "note": "Or supplied air / SCBA as set by the gas test"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "required"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        }
-      ],
-      "permits": [
-        "Confined space entry permit",
-        "Gas test",
-        "Standby person"
-      ],
-      "notes": "Never enter on a filtering mask in an unknown atmosphere. A trained standby and a rescue plan are required."
-    },
-    {
-      "id": "chemical_handling",
-      "label": "Chemical handling",
-      "hazards": [
-        "Skin and eye contact",
-        "Inhalation",
-        "Fire",
-        "Spills"
-      ],
-      "ppe": [
-        {
-          "item": "eye",
-          "requirement": "required",
-          "note": "Sealed goggles for splash"
-        },
-        {
-          "item": "face_shield",
-          "requirement": "when needed"
-        },
-        {
-          "item": "gloves_chem",
-          "requirement": "required"
-        },
-        {
-          "item": "chem_suit",
-          "requirement": "when needed"
-        },
-        {
-          "item": "respirator_half",
-          "requirement": "when needed"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        }
-      ],
-      "permits": [
-        "Chemical-specific procedure; permit if bulk transfer"
-      ],
-      "notes": "Read the safety data sheet section 8 for the exact PPE. Eyewash and shower must be within reach."
-    },
-    {
-      "id": "electrical_work",
-      "label": "Electrical work",
-      "hazards": [
-        "Shock",
-        "Arc flash",
-        "Burns"
-      ],
-      "ppe": [
-        {
-          "item": "helmet",
-          "requirement": "required",
-          "note": "Non-conductive type"
-        },
-        {
-          "item": "eye",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_elec",
-          "requirement": "required"
-        },
-        {
-          "item": "arc_flash",
-          "requirement": "when needed",
-          "note": "Required inside the arc-flash boundary"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required",
-          "note": "Electrical-hazard rated footwear"
-        }
-      ],
-      "permits": [
-        "Electrical permit",
-        "Lockout/tagout"
-      ],
-      "notes": "Isolate and prove dead before work. Live work only when authorised and risk-assessed."
-    },
-    {
-      "id": "manual_handling_warehouse",
-      "label": "Manual handling / warehouse",
-      "hazards": [
-        "Back injury",
-        "Pinch and crush",
-        "Cuts from packaging",
-        "Vehicle traffic"
-      ],
-      "ppe": [
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "required"
-        },
-        {
-          "item": "hivis",
-          "requirement": "required"
-        },
-        {
-          "item": "helmet",
-          "requirement": "when needed",
-          "note": "Where overhead racking or lifting"
-        }
-      ],
-      "permits": [],
-      "notes": "Mechanical aids first; team lift heavy loads. Segregate pedestrians from forklifts."
-    },
-    {
-      "id": "forklift_operation",
-      "label": "Forklift / material handling vehicles",
-      "hazards": [
-        "Collision",
-        "Overturn",
-        "Falling loads",
-        "Pedestrians"
-      ],
-      "ppe": [
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "hivis",
-          "requirement": "required"
-        },
-        {
-          "item": "helmet",
-          "requirement": "when needed",
-          "note": "Where the site rule or overhead hazard requires"
-        }
-      ],
-      "permits": [
-        "Operator authorisation"
-      ],
-      "notes": "Use the seat belt. Check the truck before use (brakes, horn, forks, mast, tyres)."
-    },
-    {
-      "id": "machine_operation",
-      "label": "Machine operation (rotating / cutting)",
-      "hazards": [
-        "Entanglement",
-        "Cuts",
-        "Noise",
-        "Ejected parts"
-      ],
-      "ppe": [
-        {
-          "item": "eye",
-          "requirement": "required"
-        },
-        {
-          "item": "ear",
-          "requirement": "when needed"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "when needed",
-          "note": "Not on rotating machines where gloves can be caught"
-        }
-      ],
-      "permits": [
-        "Lockout/tagout for cleaning and maintenance"
-      ],
-      "notes": "No loose clothing, jewellery or long hair. Never wear gloves near in-running nip points."
-    },
-    {
-      "id": "painting_spraying",
-      "label": "Painting / spray work",
-      "hazards": [
-        "Solvent vapour",
-        "Mist",
-        "Fire",
-        "Skin contact"
-      ],
-      "ppe": [
-        {
-          "item": "respirator_half",
-          "requirement": "required",
-          "note": "Organic-vapour filters (type A) with a particle filter"
-        },
-        {
-          "item": "eye",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_chem",
-          "requirement": "required"
-        },
-        {
-          "item": "chem_suit",
-          "requirement": "when needed"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        }
-      ],
-      "permits": [
-        "Hot work control nearby"
-      ],
-      "notes": "Remove ignition sources and ventilate. Fit-test the respirator."
-    },
-    {
-      "id": "lifting_rigging",
-      "label": "Lifting and rigging",
-      "hazards": [
-        "Falling loads",
-        "Crush",
-        "Swinging loads",
-        "Pinch"
-      ],
-      "ppe": [
-        {
-          "item": "helmet",
-          "requirement": "required"
-        },
-        {
-          "item": "gloves_mech",
-          "requirement": "required"
-        },
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "hivis",
-          "requirement": "required"
-        },
-        {
-          "item": "eye",
-          "requirement": "when needed"
-        }
-      ],
-      "permits": [
-        "Lifting plan for critical lifts"
-      ],
-      "notes": "Never stand under a suspended load. Inspect slings and shackles before each use."
-    },
-    {
-      "id": "general_factory",
-      "label": "General factory floor",
-      "hazards": [
-        "Slips and trips",
-        "Impact",
-        "Noise",
-        "Moving equipment"
-      ],
-      "ppe": [
-        {
-          "item": "shoes",
-          "requirement": "required"
-        },
-        {
-          "item": "eye",
-          "requirement": "when needed"
-        },
-        {
-          "item": "ear",
-          "requirement": "where posted"
-        },
-        {
-          "item": "hivis",
-          "requirement": "where vehicles operate"
-        },
-        {
-          "item": "helmet",
-          "requirement": "where posted"
-        }
-      ],
-      "permits": [],
-      "notes": "Follow the area signage. Housekeeping is the first line of defence."
-    },
-    {
-      "id": "noisy_area",
-      "label": "High-noise areas (over 85 dB(A))",
-      "hazards": [
-        "Hearing loss",
-        "Communication problems"
-      ],
-      "ppe": [
-        {
-          "item": "ear",
-          "requirement": "required"
-        }
-      ],
-      "permits": [],
-      "notes": "Hearing protection is needed above the action level; reduce noise at the source first and check audiometry."
-    }
-  ],
-  "inspection_general": [
-    "Check PPE before every use and replace damaged items at once.",
-    "Store PPE clean and dry, away from sunlight, heat and chemicals.",
-    "Keep inspection records for harnesses, lanyards, insulating gloves and respirators.",
-    "Train workers to fit, use, clean and store each item."
-  ],
-  "sources": [
-    "EN 397, EN 166, EN 352, EN 149, EN 388, EN ISO 374-1, EN ISO 20345, EN ISO 20471, EN 361, EN 795",
-    "ANSI/ISEA Z89.1, Z87.1, 107; ASTM F2413",
-    "IS 2925, IS 15298 (India)",
-    "OSHA 29 CFR 1910 Subpart I (verify current text)"
-  ]
+  "heat_stress": {
+    "principle": "Heavy PPE reduces the body's ability to cool, so the PPE selection and work plan must be adjusted for hot conditions to prevent heat illness.",
+    "adjustments": [
+      {
+        "issue": "Impermeable chemical suits trap sweat and heat",
+        "adjust": "Limit continuous wear, use cooling vests or ventilated suits, and add rest breaks."
+      },
+      {
+        "issue": "Heavy FR clothing in hot weather",
+        "adjust": "Use lightweight FR fabrics and plan hot work for cooler hours."
+      },
+      {
+        "issue": "Respirators raise breathing effort",
+        "adjust": "Use powered air-purifying respirators for long jobs and rotate staff."
+      },
+      {
+        "issue": "Helmets and hoods trap heat",
+        "adjust": "Use ventilated helmets, cooling liners and shade breaks."
+      }
+    ],
+    "rules": [
+      "Provide cool drinking water and encourage frequent small drinks; do not wait for thirst.",
+      "Acclimatise new or returning workers gradually over 1 to 2 weeks.",
+      "Use a work and rest schedule based on the WBGT heat index.",
+      "Provide shaded or cool rest areas near the work.",
+      "Watch for heat illness signs: heavy sweating, dizziness, headache, nausea, confusion, hot dry skin.",
+      "Stop work and call emergency services if someone has confusion or collapses (possible heat stroke); cool the person immediately.",
+      "Pair workers so they can monitor each other."
+    ]
+  }
 }
