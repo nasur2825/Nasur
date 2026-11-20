@@ -1,1252 +1,620 @@
-// js/jarvis/drawer.js — NASUR JARVIS drawer (ES2022+)
-// Exports: mountJarvis, getJarvis, askJarvis, mount, render (+ default)
+/* js/jarvis/drawer.js — JARVIS modal drawer (always-mounted, 8-key rotation, local brain) */
 
-const LS = {
-  pool: 'nasur.jarvis.keyPool.v1',
-  cursor: 'nasur.jarvis.keyCursor.v1',
-  local: 'nasur.jarvis.localBrain.v1',
-  hist: 'nasur.jarvis.history.v1',
-  speak: 'nasur.jarvis.speakReply.v1',
-  vlang: 'nasur.jarvis.voiceLang.v1'
+const DRAWER_ID = 'jarvis-drawer';
+const STYLE_ID = 'jarvis-drawer-style';
+const LS_KEYS = 'nasur_jarvis_keys_v2';
+const LS_LOCAL = 'nasur_jarvis_local_brain';
+const LS_SPEAK = 'nasur_jarvis_autospeak';
+const LS_LANG = 'nasur_jarvis_voice_lang';
+
+const PROVIDERS = {
+  gemini: { label: 'Gemini', prefixes: ['AQ.', 'AIzaSy'] },
+  groq: { label: 'Groq', prefixes: ['gsk_'] },
+  openrouter: { label: 'OpenRouter', prefixes: ['sk-or-'] },
+  nvidia: { label: 'NVIDIA', prefixes: ['nvapi-'] },
 };
-
-const PROVIDERS = [
-  { id: 'gemini', name: 'Google Gemini' },
-  { id: 'groq', name: 'Groq Cloud' },
-  { id: 'openrouter', name: 'OpenRouter' },
-  { id: 'nvidia', name: 'NVIDIA NIM' }
-];
-
-const KEY_RE = /(AQ\.[A-Za-z0-9_.\-]{10,}|AIzaSy[A-Za-z0-9_\-]{20,}|gsk_[A-Za-z0-9]{20,}|sk-or-[A-Za-z0-9_\-]{20,}|nvapi-[A-Za-z0-9_\-]{20,})/g;
-
-const LOCAL_MODEL = 'onnx-community/Qwen2.5-0.5B-Instruct';
-const TRANSFORMERS_CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
-const LOCAL_RETRY_MS = 5 * 60_000;
-const KB_FILES = ['fire_safety', 'ppe_guide', 'machine_safety'];
-const MAX_INPUT = 10000;
-const REQ_TIMEOUT_MS = 25000;
-
-const RE_REPORT = /^\s*prepare\s+(a\s+|the\s+|my\s+)?report/i;
-const RE_BUILD = /^\s*build\s+module\s*:/i;
-const RE_TASK = /(report|plan|audit|build|code|research|analy[sz]e|checklist|permit|ptw|jsa|hira|rca|incident|investigat|compare|draft|write|explain|legal|standard|procedure|loto|risk)/i;
-
-/* ---------------- tiny helpers ---------------- */
-
-const lsGet = (k, d = null) => {
-  try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; }
-};
-const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* quota */ } };
-
-function el(tag, attrs = {}, kids = []) {
-  const e = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') e.className = v;
-    else if (k === 'text') e.textContent = v;
-    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
-    else e.setAttribute(k, v);
-  }
-  for (const c of [].concat(kids)) if (c) e.append(c);
-  return e;
-}
-
-const pick = (mod, names) => {
-  if (!mod) return null;
-  for (const n of names) if (typeof mod[n] === 'function') return mod[n].bind(mod);
-  return null;
-};
-
-function toText(r) {
-  if (r == null) return '';
-  if (typeof r === 'string') return r;
-  if (typeof r === 'object') {
-    for (const k of ['text', 'report', 'markdown', 'output', 'result', 'message', 'content', 'summary']) {
-      if (typeof r[k] === 'string' && r[k]) return r[k];
-    }
-  }
-  return '';
-}
-
-function detectLang(t) {
-  if (/[\u0B80-\u0BFF]/.test(t)) return 'ta';
-  if (/\b(macha|machan|machaa|enna|sollu|sollunga|epdi|eppadi|iruku|irukku|irukkanga|venum|vendam|pannu|panna|seri|nalla|illa|illai|vanakkam|nandri|da|di|aachu|theriyum|puriyala|romba)\b/i.test(t)) return 'tg';
-  return 'en';
-}
-
-/* ---------------- soul ---------------- */
 
 const SOUL = [
-  'You are JARVIS, a deeply humble, warm and loyal friend and partner created by Nasur, who is learning and leading factory health & safety for thousands of workers and their families.',
-  'Speak like a real, emotionally intelligent human friend: natural, gentle, honest, never robotic, never salesy.',
-  'Mirror the user\'s language and style exactly: Tamil script, Tanglish (Tamil in English letters, casual "macha" tone when he uses it), or English.',
-  'Never list your capabilities or features unless he asks. Never repeat the same opening line twice. No corporate filler.',
-  'Be humble: say "I may be wrong" or "I\'m not fully sure" when you are unsure, and never invent laws, clause numbers, or figures.',
-  'Human life and practical field safety come before bureaucracy. For legal or safety-critical points, remind him gently that the official site plan, permit and local law decide the final word.',
-  'Keep answers short and natural unless depth is needed. Acknowledge feelings first when he sounds tired, worried or stressed.'
-].join('\n');
+  'You are JARVIS, a humble, warm, human-like senior HSE mentor and close friend of Nasur.',
+  'Speak naturally in the language the user writes (Tamil, Tanglish, English, Hindi or Arabic). Casual, caring tone like "Macha".',
+  'Human life and practical field clarity come above bureaucracy. Nasur is responsible for the health and safety of 3000+ workers and their families.',
+  'Be concise and practical. Never list your capabilities or tools. Never claim to remember anything that was not saved with approval.',
+  'For every answer silently plan, critique your own plan for mistakes and unsafe advice, then output only the final improved answer.',
+  'If a legal or safety point is uncertain, say so plainly and tell him to verify with the official local rule.',
+].join(' ');
 
-const SMALLTALK = {
-  ta: ['வணக்கம்! சொல்லுங்க, இன்னைக்கு எப்படி இருக்கு?', 'நான் இங்கே தான் இருக்கேன். என்ன வேணும் சொல்லுங்க.'],
-  tg: ['Vanakkam macha! Sollunga, innaikku eppadi irukku?', 'Naan inga dhaan irukken, macha. Enna venum sollunga.'],
-  en: ['Hello Nasur! How is your day going so far?', 'I\'m right here with you. What\'s on your mind?']
+const state = {
+  mounted: false,
+  open: false,
+  busy: false,
+  history: [],
+  keys: { gemini: [], groq: [], openrouter: [], nvidia: [] },
+  rot: { gemini: 0, groq: 0, openrouter: 0, nvidia: 0 },
+  cool: new Map(),
+  mods: null,
+  modsPromise: null,
+  recog: null,
+  listening: false,
+  lastReply: '',
+  localEngine: null,
+  localLoading: null,
+  refs: {},
 };
 
-/* ---------------- lazy module loaders (never break boot) ---------------- */
+/* ---------- helpers ---------- */
+const lsGet = (k, d = '') => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const mods = {
-  _c: {},
-  async _load(key, path) {
-    if (key in this._c) return this._c[key];
-    try { this._c[key] = await import(path); } catch { this._c[key] = null; }
-    return this._c[key];
-  },
-  brains() { return this._load('brains', './brains_75.js'); },
-  caps() { return this._load('caps', './capabilities.js'); },
-  builder() { return this._load('builder', './self_builder.js'); },
-  config() { return this._load('config', '../services/config.js'); },
-  settings() { return this._load('settings', '../services/settings.js'); },
-  bus() { return this._load('bus', '../core/eventbus.js'); },
-  coreCfg() { return this._load('coreCfg', '../core/config.js'); }
-};
-
-/* ---------------- key pool: detect, store, sync ---------------- */
-
-function providerOf(key) {
-  if (key.startsWith('AQ.') || key.startsWith('AIzaSy')) return 'gemini';
-  if (key.startsWith('gsk_')) return 'groq';
-  if (key.startsWith('sk-or-')) return 'openrouter';
-  if (key.startsWith('nvapi-')) return 'nvidia';
+function detectProvider(key) {
+  for (const [id, p] of Object.entries(PROVIDERS)) {
+    if (p.prefixes.some((pre) => key.startsWith(pre))) return id;
+  }
   return null;
 }
 
-function emptyPool() { return { gemini: [], groq: [], openrouter: [], nvidia: [] }; }
-
-function detectKeys(text) {
-  const pool = emptyPool();
-  const seen = new Set();
-  const src = String(text || '');
-  for (const m of src.matchAll(KEY_RE)) {
-    const k = m[1];
-    if (seen.has(k)) continue;
-    seen.add(k);
-    const p = providerOf(k);
-    if (p) pool[p].push(k);
-  }
-  let unknown = 0;
-  for (const tok of src.split(/[\s,;"'`]+/)) {
-    if (tok.length >= 24 && !seen.has(tok) && !KEY_RE.test(tok)) unknown++;
-    KEY_RE.lastIndex = 0;
-  }
-  return { pool, unknown };
-}
-
-function collectStrings(v, out = []) {
-  if (typeof v === 'string') out.push(v);
-  else if (Array.isArray(v)) v.forEach(x => collectStrings(x, out));
-  else if (v && typeof v === 'object') Object.values(v).forEach(x => collectStrings(x, out));
-  return out;
-}
-
-function mergePools(...pools) {
-  const out = emptyPool();
-  for (const p of pools) {
-    if (!p) continue;
-    for (const { id } of PROVIDERS) {
-      for (const k of p[id] || []) if (!out[id].includes(k)) out[id].push(k);
-    }
+function parseKeys(text) {
+  const out = { gemini: [], groq: [], openrouter: [], nvidia: [] };
+  const tokens = String(text || '').split(/[\s,;]+/).map((t) => t.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  for (const t of tokens) {
+    const id = detectProvider(t);
+    if (id && !out[id].includes(t)) out[id].push(t);
   }
   return out;
 }
 
-const countKeys = pool => PROVIDERS.reduce((n, p) => n + (pool[p.id]?.length || 0), 0);
-const poolCounts = pool => Object.fromEntries(PROVIDERS.map(p => [p.id, pool[p.id].length]));
-
-async function readConfigPool() {
-  try {
-    const cm = await mods.config();
-    const get = pick(cm, ['getUserConfig', 'loadUserConfig']);
-    if (!get) return emptyPool();
-    const cfg = await get();
-    const strings = collectStrings([cfg?.apiKeys, cfg?.apiKeyPool]);
-    return detectKeys(strings.join('\n')).pool;
-  } catch { return emptyPool(); }
+function flattenKeys(k) {
+  return [...k.gemini, ...k.groq, ...k.openrouter, ...k.nvidia].join('\n');
 }
 
-function mirrorToLocalStorage(apiKeys) {
-  for (const name of ['apiKeys', 'nasur.apiKeys', 'nasur_apiKeys']) {
+function keyCounts() {
+  return Object.entries(PROVIDERS).map(([id, p]) => `${p.label} ${state.keys[id].length}`).join(' · ');
+}
+
+function totalKeys() {
+  return Object.values(state.keys).reduce((n, a) => n + a.length, 0);
+}
+
+async function importSafe(path) {
+  try { return await import(path); } catch { return null; }
+}
+
+function pickFn(mod, names) {
+  if (!mod) return null;
+  for (const n of names) if (typeof mod[n] === 'function') return mod[n];
+  if (mod.default) {
+    if (typeof mod.default === 'function' && names.includes('default')) return mod.default;
+    for (const n of names) if (typeof mod.default[n] === 'function') return mod.default[n].bind(mod.default);
+  }
+  return null;
+}
+
+async function loadModules() {
+  if (state.mods) return state.mods;
+  if (!state.modsPromise) {
+    state.modsPromise = (async () => {
+      const [brains, caps, builder, config] = await Promise.all([
+        importSafe('./brains_75.js'),
+        importSafe('./capabilities.js'),
+        importSafe('./self_builder.js'),
+        importSafe('../services/config.js'),
+      ]);
+      state.mods = { brains, caps, builder, config };
+      return state.mods;
+    })();
+  }
+  return state.modsPromise;
+}
+
+/* ---------- key storage + sync ---------- */
+async function loadKeys() {
+  let raw = lsGet(LS_KEYS, '');
+  const mods = await loadModules();
+  if (!raw && mods.config) {
     try {
-      const raw = localStorage.getItem(name);
-      let cur = {};
-      if (raw) { const p = JSON.parse(raw); if (p && typeof p === 'object' && !Array.isArray(p)) cur = p; }
-      localStorage.setItem(name, JSON.stringify({ ...cur, ...apiKeys }));
+      const get = pickFn(mods.config, ['getUserConfig', 'loadUserConfig']);
+      const cfg = get ? await get() : null;
+      const ak = cfg && cfg.apiKeys;
+      if (ak && typeof ak === 'object') {
+        raw = Object.values(ak).flat().filter((x) => typeof x === 'string').join('\n');
+      }
     } catch { /* ignore */ }
   }
+  state.keys = parseKeys(raw);
+  refreshKeyUi();
 }
 
-// Sync the whole pool to: services/config (apiKeys + apiKeyPool), services/settings (JARVIS Studio), localStorage mirrors.
-async function writeConfigPool(pool) {
-  const apiKeys = {};
-  for (const { id } of PROVIDERS) apiKeys[id] = pool[id][0] || '';
-  apiKeys.google = apiKeys.gemini;
-  apiKeys.nim = apiKeys.nvidia;
-
+async function saveKeys(text) {
+  const parsed = parseKeys(text);
+  state.keys = parsed;
+  state.cool.clear();
+  lsSet(LS_KEYS, flattenKeys(parsed));
+  const mods = await loadModules();
   try {
-    const cm = await mods.config();
-    const get = pick(cm, ['getUserConfig', 'loadUserConfig']);
-    const upd = pick(cm, ['updateUserConfig']);
-    if (upd) {
-      const cfg = (get ? await get() : null) || {};
-      const merged = { ...(cfg.apiKeys && typeof cfg.apiKeys === 'object' ? cfg.apiKeys : {}), ...apiKeys };
-      await upd({ apiKeys: merged, apiKeyPool: pool });
-    }
-  } catch { /* best-effort */ }
-
-  try {
-    const sm = await mods.settings();
-    if (sm) {
-      const one = pick(sm, ['setApiKey', 'saveApiKey']);
-      if (one) {
-        for (const { id } of PROVIDERS) {
-          if (pool[id][0]) { try { await one(id, pool[id][0]); } catch { /* next */ } }
-        }
-      }
-      const many = pick(sm, ['setApiKeys', 'saveApiKeys', 'syncApiKeys', 'updateApiKeys']);
-      if (many) { try { await many(apiKeys); } catch { try { await many(pool); } catch { /* ignore */ } } }
-    }
-  } catch { /* optional */ }
-
-  mirrorToLocalStorage(apiKeys);
-  try { window.dispatchEvent(new CustomEvent('nasur:keys-changed', { detail: { counts: poolCounts(pool) } })); } catch { /* noop */ }
+    const upd = pickFn(mods.config, ['updateUserConfig']);
+    if (upd) await upd({ apiKeys: { gemini: parsed.gemini, groq: parsed.groq, openrouter: parsed.openrouter, nvidia: parsed.nvidia } });
+  } catch { /* ignore */ }
+  refreshKeyUi();
 }
 
-/* ---------------- cloud providers with rotation ---------------- */
-
-const cooldown = new Map();
-
-function flatCandidates(pool) {
-  const lists = PROVIDERS.map(p => pool[p.id].map(key => ({ provider: p.id, key })));
-  const max = Math.max(0, ...lists.map(l => l.length));
-  const flat = [];
-  for (let i = 0; i < max; i++) for (const l of lists) if (l[i]) flat.push(l[i]);
-  if (!flat.length) return flat;
-  const cur = (Number(lsGet(LS.cursor, 0)) || 0) % flat.length;
-  return flat.slice(cur).concat(flat.slice(0, cur));
+function refreshKeyUi() {
+  const r = state.refs;
+  if (!r.counts) return;
+  r.counts.textContent = totalKeys() ? keyCounts() : 'No keys saved';
+  if (r.status) r.status.textContent = totalKeys() ? `${totalKeys()} keys ready` : (isLocalOn() ? 'Local brain' : 'Offline mode');
 }
 
-async function fetchJSON(url, init, ms = REQ_TIMEOUT_MS) {
+/* ---------- AI providers with rotation ---------- */
+function toChat(history, system, text) {
+  const msgs = [{ role: 'system', content: system }];
+  for (const h of history.slice(-8)) msgs.push({ role: h.role === 'bot' ? 'assistant' : 'user', content: h.text });
+  msgs.push({ role: 'user', content: text });
+  return msgs;
+}
+
+async function fetchJson(url, init, timeoutMs = 25000) {
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), ms);
+  const t = setTimeout(() => ctl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { ...init, signal: ctl.signal });
-    const body = await res.text();
-    let json = null;
-    try { json = JSON.parse(body); } catch { /* non-json */ }
-    if (!res.ok) {
-      const err = new Error((json?.error?.message || body || res.statusText || 'HTTP error').toString().slice(0, 200));
-      err.status = res.status;
-      throw err;
-    }
-    return json;
+    let data = null;
+    try { data = await res.json(); } catch { data = null; }
+    return { res, data };
   } finally { clearTimeout(t); }
 }
 
-async function callProvider(provider, key, messages, opts = {}) {
-  const maxTokens = opts.short ? 450 : 1400;
-  if (provider === 'gemini') {
-    const sys = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
-    const contents = messages.filter(m => m.role !== 'system').map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
-    const j = await fetchJSON('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+async function callProvider(id, key, msgs) {
+  if (id === 'gemini') {
+    const sys = msgs[0].content;
+    const contents = msgs.slice(1).map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+    const { res, data } = await fetchJson('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: sys ? { parts: [{ text: sys }] } : undefined,
-        contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
-      })
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents }),
     });
-    return (j?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+    if (!res.ok) throw Object.assign(new Error('gemini ' + res.status), { status: res.status, body: data });
+    const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+    if (!text) throw Object.assign(new Error('empty'), { status: 204 });
+    return text;
   }
   const cfg = {
     groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile' },
     openrouter: { url: 'https://openrouter.ai/api/v1/chat/completions', model: 'meta-llama/llama-3.3-70b-instruct:free' },
-    nvidia: { url: 'https://integrate.api.nvidia.com/v1/chat/completions', model: 'meta/llama-3.1-70b-instruct' }
-  }[provider];
-  if (!cfg) throw new Error('Unknown provider');
-  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` };
-  if (provider === 'openrouter') { headers['HTTP-Referer'] = location.origin; headers['X-Title'] = 'NASUR JARVIS'; }
-  const j = await fetchJSON(cfg.url, {
+    nvidia: { url: 'https://integrate.api.nvidia.com/v1/chat/completions', model: 'meta/llama-3.1-70b-instruct' },
+  }[id];
+  const { res, data } = await fetchJson(cfg.url, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ model: cfg.model, messages, temperature: 0.7, max_tokens: maxTokens })
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+    body: JSON.stringify({ model: cfg.model, messages: msgs, temperature: 0.5, max_tokens: 1400 }),
   });
-  return (j?.choices?.[0]?.message?.content || '').trim();
+  if (!res.ok) throw Object.assign(new Error(id + ' ' + res.status), { status: res.status, body: data });
+  const text = data?.choices?.[0]?.message?.content || '';
+  if (!text) throw Object.assign(new Error('empty'), { status: 204 });
+  return text;
 }
 
-function cooldownFor(err) {
-  const s = err?.status;
-  if (s === 429 || /quota|rate|limit|exhaust/i.test(err?.message || '')) return 90_000;
-  if (s === 401 || s === 403) return 10 * 60_000;
-  return 30_000;
+function isRetryable(err) {
+  const s = err && err.status;
+  const m = String((err && err.message) || '').toLowerCase();
+  const b = JSON.stringify((err && err.body) || '').toLowerCase();
+  return !s || s === 429 || s === 408 || s === 204 || s >= 500 || s === 403 || s === 401 || s === 400
+    || m.includes('abort') || m.includes('fetch') || m.includes('network') || b.includes('quota') || b.includes('rate');
 }
 
-async function cloudGenerate(pool, messages, opts) {
-  const cands = flatCandidates(pool);
-  if (!cands.length) { const e = new Error('NO_KEYS'); e.code = 'NO_KEYS'; throw e; }
-  const now = Date.now();
-  const live = cands.filter(c => (cooldown.get(c.provider + c.key.slice(-8)) || 0) <= now);
-  const order = live.length ? live : cands;
-  let last = null;
-  for (const c of order.slice(0, 10)) {
-    try {
-      const text = await callProvider(c.provider, c.key, messages, opts);
-      if (!text) throw new Error('Empty reply');
-      const idx = cands.findIndex(x => x.key === c.key);
-      lsSet(LS.cursor, idx + 1);
-      return { text, via: 'cloud', provider: c.provider };
-    } catch (e) {
-      last = e;
-      cooldown.set(c.provider + c.key.slice(-8), Date.now() + cooldownFor(e));
-    }
-  }
-  const err = new Error(last?.message || 'ALL_FAILED');
-  err.code = 'ALL_FAILED';
-  throw err;
-}
-
-/* ---------------- local HSE knowledge base ---------------- */
-
-const kb = { loaded: null, entries: [] };
-
-function flattenKB(node, src, out, depth = 0) {
-  if (out.length > 5000 || depth > 9) return;
-  if (Array.isArray(node)) { node.forEach(n => flattenKB(n, src, out, depth + 1)); return; }
-  if (node && typeof node === 'object') {
-    const parts = [];
-    for (const [k, v] of Object.entries(node)) {
-      if (typeof v === 'string') parts.push(`${k}: ${v}`);
-      else if (typeof v === 'number') parts.push(`${k}: ${v}`);
-      else if (Array.isArray(v) && v.length && v.every(x => typeof x === 'string')) parts.push(`${k}: ${v.join('; ')}`);
-    }
-    if (parts.length) out.push({ src, text: parts.join(' | ').slice(0, 700) });
-    for (const v of Object.values(node)) if (v && typeof v === 'object') flattenKB(v, src, out, depth + 1);
-  }
-}
-
-function loadKB() {
-  if (kb.loaded) return kb.loaded;
-  kb.loaded = (async () => {
-    for (const name of KB_FILES) {
+async function askRemote(system, text) {
+  const msgs = toChat(state.history, system, text);
+  const order = Object.keys(PROVIDERS).filter((id) => state.keys[id].length);
+  let lastErr = null;
+  for (const id of order) {
+    const list = state.keys[id];
+    for (let i = 0; i < list.length; i++) {
+      const idx = (state.rot[id] + i) % list.length;
+      const key = list[idx];
+      const until = state.cool.get(key) || 0;
+      if (until > Date.now()) continue;
       try {
-        const res = await fetch(new URL(`../../data/${name}.json`, import.meta.url));
-        if (!res.ok) continue;
-        flattenKB(await res.json(), name, kb.entries);
-      } catch { /* offline or missing */ }
-    }
-    return kb.entries;
-  })();
-  return kb.loaded;
-}
-
-async function searchKB(query, n = 3) {
-  const entries = await loadKB();
-  const toks = [...new Set(String(query).toLowerCase().match(/[a-z0-9]{3,}/g) || [])];
-  if (!toks.length || !entries.length) return [];
-  const scored = [];
-  for (const e of entries) {
-    const low = e.text.toLowerCase();
-    let s = 0;
-    for (const t of toks) if (low.includes(t)) s++;
-    if (s > 0) scored.push({ s, e });
-  }
-  scored.sort((a, b) => b.s - a.s);
-  return scored.slice(0, n).map(x => x.e);
-}
-
-async function kbContext(query) {
-  const hits = await searchKB(query, 3);
-  if (!hits.length) return '';
-  return 'Local HSE reference (use only if relevant, treat as guidance):\n' + hits.map(h => `- [${h.src}] ${h.text}`).join('\n').slice(0, 1800);
-}
-
-/* ---------------- built-in local brain (WebGPU / WASM) — silent on failure ---------------- */
-
-const local = { gen: null, loading: null, status: '', failedAt: 0, onStatus: null };
-
-function setLocalStatus(s) { local.status = s; try { local.onStatus?.(s); } catch { /* noop */ } }
-
-async function loadLocalBrain() {
-  if (local.gen) return local.gen;
-  if (local.loading) return local.loading;
-  if (local.failedAt && Date.now() - local.failedAt < LOCAL_RETRY_MS) return Promise.reject(new Error('LOCAL_UNAVAILABLE'));
-  local.loading = (async () => {
-    setLocalStatus('Preparing local brain…');
-    const tf = await import(/* @vite-ignore */ TRANSFORMERS_CDN);
-    try { tf.env.allowLocalModels = false; tf.env.useBrowserCache = true; } catch { /* noop */ }
-    const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
-    const gen = await tf.pipeline('text-generation', LOCAL_MODEL, {
-      device: gpu ? 'webgpu' : 'wasm',
-      dtype: gpu ? 'q4f16' : 'q8',
-      progress_callback: p => {
-        if (p?.status === 'progress' && typeof p.progress === 'number') setLocalStatus(`Downloading local brain… ${Math.round(p.progress)}%`);
-      }
-    });
-    local.gen = gen;
-    setLocalStatus(`Local brain ready (${gpu ? 'WebGPU' : 'WASM'})`);
-    return gen;
-  })().catch(() => {
-    local.loading = null;
-    local.failedAt = Date.now();
-    setLocalStatus('Local brain will be ready when the internet is back.');
-    throw new Error('LOCAL_UNAVAILABLE');
-  });
-  return local.loading;
-}
-
-async function localGenerate(messages) {
-  const gen = await loadLocalBrain();
-  const trimmed = messages.map(m => ({ role: m.role, content: String(m.content).slice(0, 3500) }));
-  const out = await gen(trimmed, { max_new_tokens: 380, do_sample: true, temperature: 0.7, top_p: 0.9 });
-  const g = out?.[0]?.generated_text;
-  const text = Array.isArray(g) ? g[g.length - 1]?.content : g;
-  const t = String(text || '').trim();
-  if (!t) throw new Error('LOCAL_EMPTY');
-  return { text: t, via: 'local' };
-}
-
-/* ---------------- offline fallback (rule-based, warm) ---------------- */
-
-async function offlineAnswer(query) {
-  const lang = detectLang(query);
-  const hits = await searchKB(query, 3);
-  const intro = {
-    ta: 'இப்போ இன்டர்நெட் அல்லது AI இல்லை, ஆனா என் கையில இருக்கற குறிப்புகளில் இதை பார்த்தேன்:',
-    tg: 'Ippo net / AI key illa macha, aana en kitta irukkura offline notes la ithu kedachudhu:',
-    en: 'I\'m offline with no AI available right now, but here is what my saved HSE notes say:'
-  }[lang];
-  const none = {
-    ta: 'மன்னிச்சிடுங்க, இதுக்கு என் offline குறிப்புகளில் தெளிவான பதில் இல்லை. Key அல்லது இன்டர்நெட் வந்ததும் சரியா சொல்றேன்.',
-    tg: 'Sorry macha, idhukku en offline notes la clear answer illa. Key illa net vandhadhum properly solren.',
-    en: 'I\'m sorry, my offline notes don\'t have a clear answer for this. Once a key or internet is available, I\'ll answer it properly.'
-  }[lang];
-  if (!hits.length) return none;
-  const tail = {
-    ta: 'இது வழிகாட்டுதல் மட்டும் தான்; உங்கள் site plan மற்றும் சட்டமே இறுதி.',
-    tg: 'Idhu guidance mattum dhaan macha; unga site plan and local law dhaan final.',
-    en: 'This is guidance only; your site plan and local law have the final word.'
-  }[lang];
-  return `${intro}\n\n${hits.map(h => `• ${h.text}`).join('\n')}\n\n${tail}`;
-}
-
-/* ---------------- state ---------------- */
-
-const S = {
-  mounted: false,
-  open: false,
-  wired: false,
-  locked: false,
-  scrollY: 0,
-  prevHtml: '',
-  prevBody: '',
-  busy: false,
-  mounting: null,
-  synced: false,
-  chain: Promise.resolve(),
-  pool: emptyPool(),
-  hist: lsGet(LS.hist, []).slice(-30),
-  ui: {},
-  details: [],
-  inst: null,
-  unsubs: []
-};
-
-const hasCloud = () => countKeys(S.pool) > 0 && (typeof navigator === 'undefined' || navigator.onLine !== false);
-const localEnabled = () => lsGet(LS.local, false) === true;
-
-/* ---------------- unified generation: cloud → local → offline ---------------- */
-
-async function generate(messages, opts = {}) {
-  if (hasCloud()) {
-    try { return await cloudGenerate(S.pool, messages, opts); } catch { /* rotate to next layer silently */ }
-  }
-  if (localEnabled()) {
-    try { return await localGenerate(messages); } catch { /* silent: fall through to offline notes */ }
-  }
-  const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content || '';
-  return { text: await offlineAnswer(lastUser), via: 'offline' };
-}
-
-async function askLLM(prompt, opts = {}) {
-  const r = await generate([{ role: 'system', content: SOUL }, { role: 'user', content: String(prompt) }], opts);
-  return r.text;
-}
-
-/* ---------------- brains_75 integration + reasoning loop ---------------- */
-
-async function selectBrain(q) {
-  try {
-    const m = await mods.brains();
-    const fn = pick(m, ['selectBrainForTask']);
-    return fn ? await fn(q) : null;
-  } catch { return null; }
-}
-
-async function brainPrompt(stage, q, brain, extra = {}) {
-  try {
-    const m = await mods.brains();
-    const fn = pick(m, ['buildMultiBrainPrompt']);
-    if (!fn) return '';
-    const r = await fn(q, brain, { stage, query: q, brain, ...extra });
-    if (typeof r === 'string') return r;
-    return (r && (r.system || r.prompt || r.content)) || '';
-  } catch { return ''; }
-}
-
-async function capabilityContext(q) {
-  try {
-    const m = await mods.caps();
-    const fn = pick(m, ['getCapabilityContext', 'buildCapabilityContext', 'matchCapabilities']);
-    if (!fn) return '';
-    return toText(await fn(q)).slice(0, 800);
-  } catch { return ''; }
-}
-
-const STAGE = {
-  plan: 'STAGE 1 - PLAN: write a brief numbered plan (max 6 short lines) for how to answer well. Do NOT give the final answer.',
-  critique: 'STAGE 2 - CRITIQUE: review the plan below. List gaps, wrong assumptions, safety or legal risks and missing facts (max 6 bullets).',
-  final: 'STAGE 3 - FINALIZE: using the plan and critique, write the best final answer for the user in his own language and style. Never mention stages, plans or critiques.'
-};
-
-function histMessages() {
-  return S.hist.slice(-10).map(h => ({ role: h.role === 'bot' ? 'assistant' : 'user', content: h.text }));
-}
-
-async function think(q, setStatus) {
-  const small = q.split(/\s+/).length <= 8 && !RE_TASK.test(q);
-  const [brain, ctx, capCtx] = await Promise.all([selectBrain(q), kbContext(q), capabilityContext(q)]);
-  const baseCtx = [ctx, capCtx].filter(Boolean).join('\n\n');
-  const history = histMessages();
-  const sysFor = async (stage, extra) => {
-    const bp = await brainPrompt(stage, q, brain, extra);
-    return [SOUL, bp, STAGE[stage] || '', baseCtx].filter(Boolean).join('\n\n');
-  };
-
-  if (small || !hasCloud()) {
-    const sys = await sysFor('final', {});
-    const r = await generate([{ role: 'system', content: sys.replace(STAGE.final, '') }, ...history, { role: 'user', content: q }]);
-    if (r.via === 'offline' && small) {
-      const lang = detectLang(q);
-      if (/^\s*(hi|hello|hey|vanakkam|good\s+(morning|evening|afternoon)|macha|machan|da)\b/i.test(q)) {
-        const arr = SMALLTALK[lang];
-        return arr[Math.floor(Math.random() * arr.length)];
+        const out = await callProvider(id, key, msgs);
+        state.rot[id] = idx;
+        return out;
+      } catch (err) {
+        lastErr = err;
+        const s = err && err.status;
+        state.cool.set(key, Date.now() + ((s === 401 || s === 400) ? 600000 : 60000));
+        state.rot[id] = (idx + 1) % list.length;
+        if (!isRetryable(err)) throw err;
       }
     }
-    return r.text;
   }
-
-  setStatus('Thinking it through…');
-  const plan = (await generate([{ role: 'system', content: await sysFor('plan', {}) }, ...history, { role: 'user', content: q }], { short: true })).text;
-  setStatus('Double-checking myself…');
-  const crit = (await generate([
-    { role: 'system', content: await sysFor('critique', { plan }) },
-    { role: 'user', content: `Question:\n${q}\n\nPlan:\n${plan}` }
-  ], { short: true })).text;
-  setStatus('Writing it for you…');
-  const fin = await generate([
-    { role: 'system', content: await sysFor('final', { plan, critique: crit }) },
-    ...history,
-    { role: 'user', content: `${q}\n\n[Private notes - do not mention]\nPlan:\n${plan}\n\nCritique:\n${crit}` }
-  ]);
-  return fin.text;
+  throw lastErr || new Error('no-keys');
 }
 
-/* ---------------- 6-stage report pipeline ---------------- */
+/* ---------- local brain (WebGPU / WASM) ---------- */
+function isLocalOn() { return lsGet(LS_LOCAL, '0') === '1'; }
 
-const REPORT_STAGES = [
-  ['Collecting facts', 'List every fact, assumption and missing input needed for this report. Be concise.'],
-  ['Analysing hazards and risks', 'Analyse hazards, risks, legal/standard references and priorities from the facts. Do not invent figures; mark unknowns.'],
-  ['Drafting', 'Draft the full report body with clear headings (Summary, Findings, Risk rating, Root causes, Corrective actions with owner and target date).'],
-  ['Auditing', 'Audit the draft: find errors, unsupported claims, missing actions. Return a short list of fixes.'],
-  ['Formatting', 'Apply the fixes and format as a clean A4 executive report with sign-off block placeholders.'],
-  ['Final polish', 'Final polish: concise, human, accurate. Return only the finished report.']
-];
+async function ensureLocalEngine() {
+  if (state.localEngine) return state.localEngine;
+  if (!state.localLoading) {
+    state.localLoading = (async () => {
+      const lib = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3');
+      const device = (typeof navigator !== 'undefined' && navigator.gpu) ? 'webgpu' : 'wasm';
+      const pipe = await lib.pipeline('text-generation', 'onnx-community/Qwen2.5-0.5B-Instruct', { device, dtype: device === 'webgpu' ? 'q4f16' : 'q8' });
+      state.localEngine = pipe;
+      return pipe;
+    })().catch((e) => { state.localLoading = null; throw e; });
+  }
+  return state.localLoading;
+}
 
-async function runReport(q, setStatus) {
-  const cap = await mods.caps();
-  const fn = pick(cap, ['runReportPipeline', 'runSixStagePipeline', 'runPipeline', 'prepareReport']);
-  if (fn) {
-    try {
-      const r = await fn(q, {
-        ask: askLLM, llm: askLLM,
-        onStage: s => setStatus(typeof s === 'string' ? s : (s?.name || s?.title || 'Working…')),
-        onProgress: s => setStatus(typeof s === 'string' ? s : (s?.name || 'Working…'))
+async function askLocal(system, text) {
+  setStatus('Loading local brain…');
+  const pipe = await ensureLocalEngine();
+  setStatus('Local brain');
+  const msgs = toChat(state.history, system, text);
+  const out = await pipe(msgs, { max_new_tokens: 320, do_sample: false });
+  const last = out?.[0]?.generated_text;
+  const reply = Array.isArray(last) ? (last[last.length - 1]?.content || '') : String(last || '');
+  if (!reply.trim()) throw new Error('local-empty');
+  return reply.trim();
+}
+
+function askOfflineRules(text) {
+  const t = text.toLowerCase();
+  const tips = [
+    [/fire|தீ|agni|aag/, 'Macha, fire na first: alarm adi, aalungala evacuate pannu, safe-ah irundha mattum right extinguisher use pannu (PASS). Class A/B/C/D/K-ku different extinguisher.'],
+    [/loto|lockout|isolation/, 'LOTO: prepare, shutdown, isolate, lock & tag, release stored energy, verify zero energy, apdi dhaan work start. Own lock, own key, always.'],
+    [/guard|machine|nip|pinch/, 'Machine guard illa na machine run panna koodadhu. Nip/pinch points, rotating parts, ejection points check pannu. Fixed guard first, interlock next.'],
+    [/ppe|helmet|glove|goggle/, 'PPE last line of defence. First eliminate/substitute/engineer, adhukku apram PPE. Task-ku suitable, certified, damage illaama irukanum.'],
+    [/permit|ptw|hot work|confined/, 'Permit-ku munnadi JSA, isolation, gas test, rescue plan, fire watch ellam ready-ah irukanum. Expiry mudinja work stop.'],
+    [/heat|summer|vெயில்|veyil/, 'Heat stress: water, shade, rest breaks, buddy check. Dizzy / hot dry skin / confusion irundha immediate cooling & medical help.'],
+  ];
+  for (const [re, ans] of tips) if (re.test(t)) return ans + '\n\n(Offline mode — add keys or enable Local Brain in ⚙ for full answers.)';
+  return 'Macha, ippo offline-la irukken. ⚙-la keys add pannunga illa Local Brain on pannunga, appo full-ah help panren. Basic fire, LOTO, machine guard, PPE, permit, heat pathi ippo-vum kekkalam.';
+}
+
+/* ---------- brain prompt ---------- */
+async function buildSystem(text) {
+  const mods = await loadModules();
+  let extra = '';
+  try {
+    const select = pickFn(mods.brains, ['selectBrainForTask']);
+    const build = pickFn(mods.brains, ['buildMultiBrainPrompt']);
+    let brain = null;
+    if (select) brain = await select(text);
+    if (build) {
+      let p = await build(text, brain);
+      if (p && typeof p === 'object') p = p.system || p.prompt || p.text || '';
+      if (typeof p === 'string') extra = p;
+    } else if (brain && typeof brain === 'object') {
+      extra = brain.prompt || brain.system || '';
+    } else if (typeof brain === 'string') {
+      extra = brain;
+    }
+  } catch { /* ignore */ }
+  return extra ? `${SOUL}\n\n${extra}` : SOUL;
+}
+
+/* ---------- main ask pipeline ---------- */
+async function think(text) {
+  const mods = await loadModules();
+  const system = await buildSystem(text);
+  const aiCall = (prompt) => askRemote(SOUL, prompt);
+
+  if (/^\s*build\s+module\s*:/i.test(text)) {
+    const fn = pickFn(mods.builder, ['buildModule', 'requestBuild', 'runSelfBuild', 'selfBuild', 'build', 'default']);
+    if (fn) {
+      const res = await fn(text.replace(/^\s*build\s+module\s*:/i, '').trim(), {
+        callAI: aiCall,
+        approve: (msg) => Promise.resolve(window.confirm(msg || 'JARVIS oru new module build panna poren. Approve pannalama?')),
       });
-      const t = toText(r);
-      if (t) return t;
-    } catch { /* fall back to built-in stages */ }
+      return typeof res === 'string' ? res : (res && (res.message || res.text || res.summary)) || 'Module request processed.';
+    }
   }
-  const ctx = await kbContext(q);
-  let carry = `Request: ${q}${ctx ? '\n\n' + ctx : ''}`;
-  for (let i = 0; i < REPORT_STAGES.length; i++) {
-    const [label, instr] = REPORT_STAGES[i];
-    setStatus(`Stage ${i + 1} of 6: ${label}…`);
-    carry = await askLLM(`${instr}\n\n${carry}`, { short: i < 4 });
+
+  if (/prepare\s+(a\s+|the\s+)?report/i.test(text)) {
+    const fn = pickFn(mods.caps, ['runReportPipeline', 'prepareReport', 'runPipeline', 'runSixStagePipeline']);
+    if (fn) {
+      const res = await fn(text, { callAI: aiCall });
+      return typeof res === 'string' ? res : (res && (res.message || res.text || res.summary)) || 'Report pipeline finished.';
+    }
   }
-  return carry;
+
+  const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+  if (!offline && !isLocalOn() && totalKeys()) {
+    try { return await askRemote(system, text); } catch { /* fall through */ }
+  }
+  if (isLocalOn() || offline || !totalKeys()) {
+    try { return await askLocal(system, text); } catch { /* fall through */ }
+  }
+  return askOfflineRules(text);
 }
 
-/* ---------------- self_builder with approval gate ---------------- */
-
-function approvalGate(info) {
-  return new Promise(resolve => {
-    if (!S.ui.msgs) { resolve(false); return; }
-    const preview = (toText(info) || (info ? JSON.stringify(info, null, 2) : 'Proposed change')).slice(0, 2500);
-    const card = el('div', { class: 'nj-gate' }, [
-      el('div', { class: 'nj-gate-t', text: 'Approval needed before I save anything' }),
-      el('pre', { class: 'nj-gate-p', text: preview }),
-      el('div', { class: 'nj-row' }, [
-        el('button', { class: 'nj-btn nj-ok', type: 'button', text: 'Approve', onclick: () => { card.remove(); resolve(true); } }),
-        el('button', { class: 'nj-btn nj-no', type: 'button', text: 'Reject', onclick: () => { card.remove(); resolve(false); } })
-      ])
-    ]);
-    S.ui.msgs.append(card);
-    scrollDown();
-  });
+/* ---------- UI ---------- */
+function injectStyle() {
+  if (document.getElementById(STYLE_ID)) return;
+  const st = document.createElement('style');
+  st.id = STYLE_ID;
+  st.textContent = `
+#${DRAWER_ID}{position:fixed!important;inset:0!important;z-index:99999!important;display:none;flex-direction:column;background:#0f172a!important;color:#f8fafc!important;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100vh;height:100dvh;width:100vw;box-sizing:border-box}
+#${DRAWER_ID}[data-open="1"]{display:flex}
+#${DRAWER_ID} *{box-sizing:border-box}
+#${DRAWER_ID} .jd-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1e293b;background:#0f172a}
+#${DRAWER_ID} .jd-title{font-weight:700;font-size:17px;flex:1}
+#${DRAWER_ID} .jd-status{font-size:11px;color:#94a3b8}
+#${DRAWER_ID} button{font:inherit;color:#f8fafc;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:8px 12px;cursor:pointer;min-width:42px}
+#${DRAWER_ID} button:active{background:#334155}
+#${DRAWER_ID} button.on{background:#0369a1;border-color:#38bdf8}
+#${DRAWER_ID} .jd-settings{display:none;padding:12px 14px;border-bottom:1px solid #1e293b;background:#111c33;overflow:auto;max-height:55vh}
+#${DRAWER_ID} .jd-settings[data-show="1"]{display:block}
+#${DRAWER_ID} .jd-settings label{display:block;font-size:12px;color:#94a3b8;margin:10px 0 4px}
+#${DRAWER_ID} textarea,#${DRAWER_ID} input,#${DRAWER_ID} select{width:100%;font:inherit;font-size:16px;color:#f8fafc;background:#0b1220;border:1px solid #334155;border-radius:10px;padding:10px}
+#${DRAWER_ID} .jd-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+#${DRAWER_ID} .jd-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+#${DRAWER_ID} .jd-b{max-width:88%;padding:10px 13px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word;line-height:1.45;font-size:15px}
+#${DRAWER_ID} .jd-b.u{align-self:flex-end;background:#0369a1;color:#f8fafc;border-bottom-right-radius:4px}
+#${DRAWER_ID} .jd-b.a{align-self:flex-start;background:#1e293b;color:#f8fafc;border-bottom-left-radius:4px}
+#${DRAWER_ID} .jd-foot{display:flex;gap:8px;align-items:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #1e293b;background:#0f172a}
+#${DRAWER_ID} .jd-foot input{flex:1}
+`;
+  (document.head || document.documentElement).appendChild(st);
 }
 
-async function runBuild(q, setStatus) {
-  const spec = q.replace(RE_BUILD, '').trim();
-  if (!spec) return 'Tell me which module you want after "build module:" and I\'ll prepare it for your approval.';
-  const sb = await mods.builder();
-  const fn = pick(sb, ['proposeModule', 'planModule', 'buildModule', 'generateModule', 'selfBuild', 'run']);
-  if (!fn) return 'I couldn\'t load the self-builder file just now, so nothing was changed. Please check js/jarvis/self_builder.js is in the repo.';
-  const r = await fn(spec, {
-    ask: askLLM, llm: askLLM,
-    approve: approvalGate, requestApproval: approvalGate, onApproval: approvalGate,
-    onStage: s => setStatus(typeof s === 'string' ? s : (s?.name || 'Building…')),
-    onProgress: s => setStatus(typeof s === 'string' ? s : (s?.name || 'Building…'))
-  });
-  return toText(r) || 'Done. Everything stayed behind your approval.';
-}
+function setStatus(t) { if (state.refs.status) state.refs.status.textContent = t; }
 
-/* ---------------- voice: speak reply + mic ---------------- */
-
-const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
-const voice = { rec: null, on: false };
-
-const speakOn = () => lsGet(LS.speak, false) === true;
-
-function stopSpeaking() {
-  try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+function addBubble(role, text) {
+  const m = state.refs.msgs;
+  if (!m) return null;
+  const b = document.createElement('div');
+  b.className = 'jd-b ' + (role === 'user' ? 'u' : 'a');
+  b.textContent = text;
+  m.appendChild(b);
+  m.scrollTop = m.scrollHeight;
+  return b;
 }
 
 function speak(text) {
   try {
-    const ss = window.speechSynthesis;
-    if (!ss || !text) return;
-    ss.cancel();
-    const clean = String(text).replace(/[*_`#>•]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1500);
-    if (!clean) return;
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = /[\u0B80-\u0BFF]/.test(clean) ? 'ta-IN' : 'en-IN';
-    u.rate = 1;
-    ss.speak(u);
-  } catch { /* noop */ }
+    if (!('speechSynthesis' in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 1200));
+    u.lang = lsGet(LS_LANG, 'ta-IN');
+    window.speechSynthesis.speak(u);
+  } catch { /* ignore */ }
 }
 
-function stopListening() {
-  try { voice.rec?.stop(); } catch { /* noop */ }
-  voice.on = false;
-  S.ui.mic?.classList.remove('nj-rec');
-}
+function stopSpeak() { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch { /* ignore */ } }
 
-function startListening() {
-  if (!SR) {
-    if (S.ui.msgs) addMsg('bot', 'Voice input is not supported in this browser. Chrome on Android works best.');
-    return;
-  }
-  if (voice.on) { stopListening(); return; }
-  try {
-    const r = new SR();
-    r.lang = lsGet(LS.vlang, 'en-IN');
-    r.interimResults = true;
-    r.continuous = false;
-    r.maxAlternatives = 1;
-    let finalText = '';
-    r.onresult = e => {
-      let interim = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) finalText += t; else interim += t;
-      }
-      if (S.ui.input) S.ui.input.value = (finalText + interim).trim();
-    };
-    r.onerror = () => { voice.on = false; S.ui.mic?.classList.remove('nj-rec'); };
-    r.onend = () => {
-      voice.on = false;
-      S.ui.mic?.classList.remove('nj-rec');
-      const t = finalText.trim();
-      if (t && S.ui.input) {
-        S.ui.input.value = '';
-        S.ui.input.style.height = 'auto';
-        S.chain = S.chain.then(() => converse(t)).catch(() => {});
-      }
-    };
-    voice.rec = r;
-    voice.on = true;
-    S.ui.mic?.classList.add('nj-rec');
-    stopSpeaking();
-    r.start();
-  } catch {
-    stopListening();
-  }
-}
-
-/* ---------------- conversation runner ---------------- */
-
-function remember(role, text) {
-  S.hist.push({ role, text: String(text).slice(0, 4000) });
-  S.hist = S.hist.slice(-30);
-  lsSet(LS.hist, S.hist);
-}
-
-function friendlyError(q) {
-  const lang = detectLang(q);
-  return ({
-    ta: 'மன்னிச்சிடுங்க, இப்போ ஏதோ தடங்கல் ஆச்சு. இன்னொரு முறை முயற்சி பண்ணலாமா?',
-    tg: 'Sorry macha, ippo oru thadangal aachu. Marubadiyum try pannalama?',
-    en: 'I\'m sorry, something got in the way just now. Shall we try once more?'
-  })[lang];
-}
-
-async function converse(raw, { show = true } = {}) {
-  const q = String(raw || '').trim().slice(0, MAX_INPUT);
-  if (!q) return '';
-  let holder = null;
-  S.busy = true;
-  setBusy(true);
-  if (show && S.ui.msgs) { addMsg('user', q); holder = addMsg('bot', '…'); }
-  const status = s => { if (holder) setMsg(holder, s); };
-  try {
-    let out;
-    if (RE_BUILD.test(q)) out = await runBuild(q, status);
-    else if (RE_REPORT.test(q)) out = await runReport(q, status);
-    else out = await think(q, status);
-    out = String(out || '').trim() || '…';
-    if (holder) setMsg(holder, out);
-    remember('user', q);
-    remember('bot', out);
-    if (show && speakOn()) speak(out);
-    return out;
-  } catch {
-    const msg = friendlyError(q);
-    if (holder) setMsg(holder, msg);
-    return msg;
-  } finally {
-    S.busy = false;
-    setBusy(false);
-  }
-}
-
-/* ---------------- UI ---------------- */
-
-const CSS = `
-#jarvis-drawer.nj-root{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .18s ease,visibility 0s linear .18s}
-#jarvis-drawer.nj-root.nj-open{visibility:visible;opacity:1;pointer-events:auto;transition:opacity .18s ease}
-.nj-back{position:absolute;inset:0;background:rgba(2,6,23,.72)}
-.nj-panel{position:relative;width:100%;height:100%;max-width:560px;background:#0f172a;color:#f8fafc;opacity:1;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;transform:translateY(12px);transition:transform .2s ease}
-.nj-root.nj-open .nj-panel{transform:none}
-@media (min-width:700px){.nj-panel{height:min(92vh,780px);border-radius:20px;border:1px solid #1e293b;box-shadow:0 20px 60px rgba(0,0,0,.6)}}
-.nj-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1e293b;background:#0f172a;flex:none}
-.nj-title{flex:1;font-weight:700;font-size:16px;color:#f8fafc}
-.nj-sub{font-size:11px;color:#94a3b8;font-weight:400;display:block}
-.nj-ib{background:transparent;border:0;color:#f8fafc;font-size:20px;line-height:1;padding:8px 10px;cursor:pointer;border-radius:10px;min-width:40px;min-height:40px}
-.nj-ib:active{background:#1e293b}
-.nj-msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;background:#0f172a}
-.nj-m{max-width:86%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;font-size:14.5px;line-height:1.5}
-.nj-user{align-self:flex-end;background:#2563eb;color:#fff;border-bottom-right-radius:6px}
-.nj-bot{align-self:flex-start;background:#1e293b;color:#f8fafc;border:1px solid #334155;border-bottom-left-radius:6px}
-.nj-pending{opacity:.75;font-style:italic}
-.nj-bar{display:flex;align-items:flex-end;gap:6px;padding:10px;border-top:1px solid #1e293b;background:#0f172a;flex:none}
-.nj-vb{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid #334155;background:#1e293b;color:#f8fafc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-.nj-vb:active{background:#334155}
-.nj-vb.nj-rec{background:#dc2626;border-color:#dc2626;animation:njpulse 1s infinite}
-.nj-vb.nj-on{background:#0e7490;border-color:#06b6d4}
-.nj-vl{font-size:12px;font-weight:700}
-@keyframes njpulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.6)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
-.nj-in{flex:1;min-width:0;min-height:42px;max-height:120px;resize:none;border-radius:21px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px 14px;font:inherit;font-size:16px;box-sizing:border-box;outline:none}
-.nj-in::placeholder{color:#94a3b8}
-.nj-in:focus{border-color:#3b82f6}
-.nj-send{flex:none;height:42px;border:0;border-radius:21px;padding:0 18px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
-.nj-send:disabled{opacity:.5}
-.nj-set{display:none;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px;flex-direction:column;gap:12px;background:#0f172a}
-.nj-panel.nj-settings .nj-set{display:flex}
-.nj-panel.nj-settings .nj-msgs,.nj-panel.nj-settings .nj-bar{display:none}
-.nj-h{font-weight:700;font-size:14px;color:#f8fafc}
-.nj-note{font-size:12px;color:#94a3b8;line-height:1.4}
-.nj-keys{width:100%;min-height:130px;border-radius:12px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;box-sizing:border-box}
-.nj-chips{display:flex;flex-wrap:wrap;gap:6px}
-.nj-chip{padding:4px 10px;border-radius:999px;background:#1e293b;border:1px solid #334155;color:#f8fafc;font-size:12px}
-.nj-chip b{margin-left:6px;color:#38bdf8}
-.nj-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.nj-btn{border:0;border-radius:12px;padding:10px 14px;background:#334155;color:#f8fafc;font-weight:600;cursor:pointer}
-.nj-btn.nj-ok{background:#16a34a;color:#fff}
-.nj-btn.nj-no{background:#dc2626;color:#fff}
-.nj-btn.nj-pri{background:#2563eb;color:#fff}
-.nj-gate{align-self:stretch;border:1px solid #854d0e;border-radius:14px;padding:12px;background:#1c1917;color:#f8fafc}
-.nj-gate-t{font-weight:700;margin-bottom:6px}
-.nj-gate-p{max-height:220px;overflow:auto;font-size:11.5px;white-space:pre-wrap;margin:0 0 8px;color:#e2e8f0}
-.nj-sw{display:flex;align-items:center;gap:10px;color:#f8fafc;font-size:14px}
-.nj-card{border:1px solid #334155;border-radius:14px;padding:0;background:#111c33;color:#f8fafc}
-.nj-card>summary{cursor:pointer;list-style:none;padding:13px 14px;font-weight:700;font-size:14px}
-.nj-card>summary::-webkit-details-marker{display:none}
-.nj-card>summary::after{content:'▸';float:right;opacity:.7}
-.nj-card[open]>summary::after{content:'▾'}
-.nj-card-b{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}
-`;
-
-function ensureStyle() {
-  let s = document.getElementById('nj-style');
-  if (!s) { s = el('style', { id: 'nj-style' }); document.head.append(s); }
-  s.textContent = CSS;
-}
-
-function lockScroll() {
-  if (S.locked) return;
-  S.locked = true;
-  S.scrollY = window.scrollY || 0;
-  S.prevHtml = document.documentElement.style.overflow;
-  S.prevBody = document.body.style.overflow;
-  document.documentElement.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
-}
-
-function unlockScroll() {
-  if (!S.locked) return;
-  S.locked = false;
-  document.documentElement.style.overflow = S.prevHtml;
-  document.body.style.overflow = S.prevBody;
-  try { window.scrollTo(0, S.scrollY); } catch { /* noop */ }
-}
-
-function scrollDown() {
-  const m = S.ui.msgs;
-  if (m) m.scrollTop = m.scrollHeight;
-}
-
-function addMsg(role, text) {
-  const d = el('div', { class: `nj-m nj-${role}` });
-  d.textContent = text;
-  if (text === '…') d.classList.add('nj-pending');
-  S.ui.msgs.append(d);
-  scrollDown();
-  return d;
-}
-
-function setMsg(node, text) {
-  node.textContent = text;
-  node.classList.toggle('nj-pending', text === '…' || (/…$/.test(text) && text.length < 60));
-  scrollDown();
-}
-
-function setBusy(b) {
-  if (S.ui.send) S.ui.send.disabled = b;
-}
-
-function renderChips() {
-  const box = S.ui.chips;
-  if (!box) return;
-  box.textContent = '';
-  const c = poolCounts(S.pool);
-  for (const p of PROVIDERS) box.append(el('span', { class: 'nj-chip' }, [p.name, el('b', { text: String(c[p.id]) })]));
-  if (S.ui.total) S.ui.total.textContent = countKeys(S.pool) ? `${countKeys(S.pool)} key(s) active - rotating automatically` : 'No keys yet - local brain and offline notes still work';
-}
-
-function renderLocalStatus() {
-  if (!S.ui.localStatus) return;
-  const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
-  S.ui.localStatus.textContent = local.status || (localEnabled()
-    ? `On. Model downloads once when first needed (about 400 MB, ${gpu ? 'WebGPU' : 'WASM'}).`
-    : 'Off.');
-}
-
-function buildSettings() {
-  const ta = el('textarea', { class: 'nj-keys', placeholder: 'Paste all your free keys here, one per line or together.\nAQ. / AIzaSy -> Gemini   gsk_ -> Groq   sk-or- -> OpenRouter   nvapi- -> NVIDIA', spellcheck: 'false', autocomplete: 'off', autocapitalize: 'off' });
-  const msg = el('div', { class: 'nj-note' });
-  S.ui.chips = el('div', { class: 'nj-chips' });
-  S.ui.total = el('div', { class: 'nj-note' });
-
-  const save = el('button', { class: 'nj-btn nj-pri', type: 'button', text: 'Save keys', onclick: async () => {
-    const { pool, unknown } = detectKeys(ta.value);
-    const added = countKeys(pool);
-    if (!added) { msg.textContent = unknown ? 'I could not recognise those keys. Check the prefixes.' : 'Nothing to save yet.'; return; }
-    S.pool = mergePools(S.pool, pool);
-    lsSet(LS.pool, S.pool);
-    await writeConfigPool(S.pool);
-    ta.value = '';
-    msg.textContent = `Saved ${added} key(s)${unknown ? `, ${unknown} unrecognised skipped` : ''}.`;
-    renderChips();
-  } });
-  const clear = el('button', { class: 'nj-btn', type: 'button', text: 'Remove all keys', onclick: async () => {
-    if (!confirm('Remove all saved keys from JARVIS and Settings?')) return;
-    S.pool = emptyPool();
-    lsSet(LS.pool, S.pool);
-    await writeConfigPool(S.pool);
-    msg.textContent = 'All keys removed.';
-    renderChips();
-  } });
-
-  const sw = el('input', { type: 'checkbox', id: 'nj-local-sw' });
-  sw.checked = localEnabled();
-  sw.addEventListener('change', () => {
-    lsSet(LS.local, sw.checked);
-    if (!sw.checked) setLocalStatus('');
-    renderLocalStatus();
-  });
-  S.ui.localStatus = el('div', { class: 'nj-note' });
-  const prep = el('button', { class: 'nj-btn', type: 'button', text: 'Prepare local brain now', onclick: () => {
-    lsSet(LS.local, true);
-    sw.checked = true;
-    local.failedAt = 0;
-    loadLocalBrain().catch(() => {}).finally(renderLocalStatus);
-  } });
-  local.onStatus = () => renderLocalStatus();
-
-  const dKeys = el('details', { class: 'nj-card' }, [
-    el('summary', { text: 'Universal key box' }),
-    el('div', { class: 'nj-card-b' }, [ta, el('div', { class: 'nj-row' }, [save, clear]), msg, S.ui.chips, S.ui.total])
-  ]);
-  const dLocal = el('details', { class: 'nj-card' }, [
-    el('summary', { text: 'Built-in Local Brain (No Key / Offline)' }),
-    el('div', { class: 'nj-card-b' }, [
-      el('label', { class: 'nj-sw', for: 'nj-local-sw' }, [sw, el('span', { text: 'Use on-device AI when keys or internet are missing' })]),
-      S.ui.localStatus,
-      el('div', { class: 'nj-note', text: 'Runs inside your browser with WebGPU or WASM and works with the local HSE notes. Keys stay on this device.' }),
-      prep
-    ])
-  ]);
-  S.details = [dKeys, dLocal];
-
-  const back = el('button', { class: 'nj-btn', type: 'button', text: '← Back to chat', onclick: () => S.ui.panel?.classList.remove('nj-settings') });
-  return el('div', { class: 'nj-set' }, [back, dKeys, dLocal]);
-}
-
-function buildUI() {
-  ensureStyle();
-  document.getElementById('jarvis-drawer')?.remove();
-  stopListening();
-
-  const msgs = el('div', { class: 'nj-msgs', id: 'jarvis-messages' });
-  const input = el('textarea', { class: 'nj-in', id: 'jarvis-input', rows: '1', placeholder: 'Sollunga, naan kekkuren…', maxlength: String(MAX_INPUT) });
-  const send = el('button', { class: 'nj-send', id: 'jarvis-send', type: 'button', text: 'Send' });
-
-  const mic = el('button', { class: 'nj-vb', id: 'jarvis-mic', type: 'button', 'aria-label': 'Voice input', title: 'Voice input', text: '🎤' });
-  const spk = el('button', { class: 'nj-vb', id: 'jarvis-speak', type: 'button', 'aria-label': 'Speak reply', title: 'Speak reply' });
-  const vl = el('button', { class: 'nj-vb nj-vl', id: 'jarvis-vlang', type: 'button', 'aria-label': 'Voice language', title: 'Voice language' });
-
-  const paintVoice = () => {
-    const on = speakOn();
-    spk.textContent = on ? '🔊' : '🔇';
-    spk.classList.toggle('nj-on', on);
-    vl.textContent = lsGet(LS.vlang, 'en-IN') === 'ta-IN' ? 'த' : 'EN';
-  };
-  paintVoice();
-
-  mic.addEventListener('click', startListening);
-  spk.addEventListener('click', () => {
-    const next = !speakOn();
-    lsSet(LS.speak, next);
-    if (!next) stopSpeaking();
-    paintVoice();
-  });
-  vl.addEventListener('click', () => {
-    lsSet(LS.vlang, lsGet(LS.vlang, 'en-IN') === 'ta-IN' ? 'en-IN' : 'ta-IN');
-    paintVoice();
-  });
-
-  const settingsBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Settings', text: '⚙' });
-  const closeBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Close', text: '✕' });
-  const panel = el('div', { class: 'nj-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'JARVIS' }, [
-    el('div', { class: 'nj-head' }, [
-      el('div', { class: 'nj-title' }, ['JARVIS', el('span', { class: 'nj-sub', text: 'Your friend and partner' })]),
-      settingsBtn, closeBtn
-    ]),
-    msgs,
-    buildSettings(),
-    el('div', { class: 'nj-bar' }, [mic, spk, vl, input, send])
-  ]);
-  const back = el('div', { class: 'nj-back' });
-  const root = el('div', { class: 'nj-root', id: 'jarvis-drawer' }, [back, panel]);
-  document.body.append(root);
-
-  S.ui = { ...S.ui, root, panel, msgs, input, send, mic, spk };
-
-  const doSend = () => {
-    const v = input.value;
-    if (!v.trim()) return;
-    input.value = '';
-    input.style.height = 'auto';
-    panel.classList.remove('nj-settings');
-    stopListening();
-    S.chain = S.chain.then(() => converse(v)).catch(() => {});
-  };
-  send.addEventListener('click', doSend);
-  input.addEventListener('keydown', e => {
-    const coarse = window.matchMedia?.('(pointer:coarse)').matches;
-    if (e.key === 'Enter' && !e.shiftKey && !coarse) { e.preventDefault(); doSend(); }
-  });
-  input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; });
-  settingsBtn.addEventListener('click', () => {
-    const on = panel.classList.toggle('nj-settings');
-    if (on) { renderChips(); renderLocalStatus(); }
-  });
-  closeBtn.addEventListener('click', () => inst().close());
-  back.addEventListener('click', () => inst().close());
-
-  for (const h of S.hist.slice(-12)) addMsg(h.role === 'bot' ? 'bot' : 'user', h.text);
-  if (!S.hist.length) addMsg('bot', 'Vanakkam Nasur! I\'m right here with you. Sollunga, enna venum?');
-  renderChips();
-  renderLocalStatus();
-}
-
-/* ---------------- instance, wiring, exports ---------------- */
-
-function escHandler(e) { if (e.key === 'Escape' && S.open) inst().close(); }
-
-function onOpenEvt(ev) {
-  const q = ev?.detail?.q || ev?.detail?.query;
-  if (q) askJarvis(q, { open: true }); else mountJarvis({ open: true });
-}
-
-const OPEN_EVENTS = ['jarvis:open', 'nasur:jarvis-open', 'nasur:open-jarvis'];
-
-function onKeysChanged() { renderChips(); }
-
-function inst() {
-  if (S.inst) return S.inst;
-  S.inst = {
-    open() {
-      if (!S.mounted || !S.ui.root) return;
-      S.open = true;
-      S.ui.panel?.classList.remove('nj-settings');
-      S.details.forEach(d => { d.open = false; });
-      lockScroll();
-      S.ui.root.classList.add('nj-open');
-      requestAnimationFrame(scrollDown);
-    },
-    close() {
-      S.open = false;
-      S.ui.root?.classList.remove('nj-open');
-      stopListening();
-      stopSpeaking();
-      try { document.activeElement?.blur?.(); } catch { /* noop */ }
-      unlockScroll();
-    },
-    toggle() { S.open ? this.close() : this.open(); },
-    isOpen: () => S.open,
-    openSettings() {
-      this.open();
-      S.ui.panel?.classList.add('nj-settings');
-      renderChips();
-      renderLocalStatus();
-    },
-    ask: (q, o) => askJarvis(q, o),
-    keyCounts: () => poolCounts(S.pool),
-    resyncKeys: async () => { await writeConfigPool(S.pool); return poolCounts(S.pool); },
-    setKeysFromText: async text => {
-      const { pool } = detectKeys(text);
-      S.pool = mergePools(S.pool, pool);
-      lsSet(LS.pool, S.pool);
-      await writeConfigPool(S.pool);
-      renderChips();
-      return poolCounts(S.pool);
-    },
-    destroy() {
-      S.unsubs.forEach(f => { try { f(); } catch { /* noop */ } });
-      S.unsubs = [];
-      document.removeEventListener('keydown', escHandler);
-      OPEN_EVENTS.forEach(n => window.removeEventListener(n, onOpenEvt));
-      window.removeEventListener('nasur:keys-changed', onKeysChanged);
-      stopListening();
-      stopSpeaking();
-      unlockScroll();
-      S.ui.root?.remove();
-      S.mounted = false;
-      S.open = false;
-      S.wired = false;
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const r = state.refs;
+  if (!SR) { addBubble('bot', 'Indha browser-la voice input support illa macha. Type pannunga.'); return; }
+  if (state.listening && state.recog) { try { state.recog.stop(); } catch { /* ignore */ } return; }
+  const rec = new SR();
+  rec.lang = lsGet(LS_LANG, 'ta-IN');
+  rec.interimResults = true;
+  rec.continuous = false;
+  let finalText = '';
+  rec.onstart = () => { state.listening = true; r.mic.classList.add('on'); r.mic.textContent = '🔴'; };
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const tr = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalText += tr; else interim += tr;
     }
+    r.input.value = (finalText + interim).trim();
   };
-  return S.inst;
+  const done = () => {
+    state.listening = false;
+    r.mic.classList.remove('on');
+    r.mic.textContent = '🎤';
+    const t = r.input.value.trim();
+    if (t) api.ask(t);
+  };
+  rec.onend = done;
+  rec.onerror = () => { state.listening = false; r.mic.classList.remove('on'); r.mic.textContent = '🎤'; };
+  state.recog = rec;
+  try { rec.start(); } catch { /* ignore */ }
 }
 
-async function refreshPool() {
-  S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), await readConfigPool());
-  lsSet(LS.pool, S.pool);
-  renderChips();
+function buildDom() {
+  const root = document.createElement('div');
+  root.id = DRAWER_ID;
+  root.setAttribute('data-jarvis-ready', '1');
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', 'JARVIS');
+  root.innerHTML = `
+<div class="jd-head">
+  <div class="jd-title">🤖 JARVIS</div>
+  <div class="jd-status" data-r="status"></div>
+  <button type="button" data-r="gear" aria-label="Settings">⚙</button>
+  <button type="button" data-r="close" aria-label="Close">✕</button>
+</div>
+<div class="jd-settings" data-r="settings">
+  <label>Universal key box — paste all keys (one per line). Auto-detects Gemini, Groq, OpenRouter, NVIDIA.</label>
+  <textarea data-r="keybox" rows="6" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+  <div class="jd-row"><button type="button" data-r="savekeys">Save keys</button><span class="jd-status" data-r="counts"></span></div>
+  <label>Built-in Local Brain (offline, WebGPU/WASM — first load downloads a small model)</label>
+  <div class="jd-row"><button type="button" data-r="local">Local Brain: OFF</button></div>
+  <label>Voice language</label>
+  <select data-r="lang">
+    <option value="ta-IN">Tamil / Tanglish (ta-IN)</option>
+    <option value="en-IN">English (en-IN)</option>
+    <option value="hi-IN">Hindi (hi-IN)</option>
+    <option value="ar-SA">Arabic (ar-SA)</option>
+  </select>
+  <div class="jd-row"><button type="button" data-r="clear">Clear chat</button></div>
+</div>
+<div class="jd-msgs" data-r="msgs"></div>
+<div class="jd-foot">
+  <button type="button" data-r="mic" aria-label="Voice input">🎤</button>
+  <input data-r="input" type="text" placeholder="Ask JARVIS…" autocomplete="off" enterkeyhint="send">
+  <button type="button" data-r="speak" aria-label="Speak replies">🔊</button>
+  <button type="button" data-r="send" aria-label="Send">➤</button>
+</div>`;
+  return root;
 }
 
-function wireOnce() {
-  if (S.wired) return;
-  S.wired = true;
-  document.addEventListener('keydown', escHandler);
-  OPEN_EVENTS.forEach(n => window.addEventListener(n, onOpenEvt));
-  window.addEventListener('nasur:keys-changed', onKeysChanged);
-  (async () => {
+function bindDom(root) {
+  const r = {};
+  root.querySelectorAll('[data-r]').forEach((el) => { r[el.getAttribute('data-r')] = el; });
+  state.refs = r;
+
+  r.close.addEventListener('click', () => api.close());
+  r.gear.addEventListener('click', () => {
+    const show = r.settings.getAttribute('data-show') === '1';
+    r.settings.setAttribute('data-show', show ? '0' : '1');
+    r.gear.classList.toggle('on', !show);
+  });
+  r.savekeys.addEventListener('click', async () => {
+    await saveKeys(r.keybox.value);
+    r.keybox.value = flattenKeys(state.keys);
+  });
+  const paintLocal = () => {
+    const on = isLocalOn();
+    r.local.textContent = 'Local Brain: ' + (on ? 'ON' : 'OFF');
+    r.local.classList.toggle('on', on);
+    refreshKeyUi();
+  };
+  r.local.addEventListener('click', () => { lsSet(LS_LOCAL, isLocalOn() ? '0' : '1'); paintLocal(); });
+  r.lang.value = lsGet(LS_LANG, 'ta-IN');
+  r.lang.addEventListener('change', () => lsSet(LS_LANG, r.lang.value));
+  r.clear.addEventListener('click', () => { state.history = []; r.msgs.textContent = ''; state.lastReply = ''; });
+
+  const paintSpeak = () => r.speak.classList.toggle('on', lsGet(LS_SPEAK, '0') === '1');
+  r.speak.addEventListener('click', () => {
+    const on = lsGet(LS_SPEAK, '0') === '1';
+    if (on) { lsSet(LS_SPEAK, '0'); stopSpeak(); } else { lsSet(LS_SPEAK, '1'); if (state.lastReply) speak(state.lastReply); }
+    paintSpeak();
+  });
+  r.mic.addEventListener('click', startMic);
+
+  const send = () => { const t = r.input.value.trim(); if (t) api.ask(t); };
+  r.send.addEventListener('click', send);
+  r.input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+
+  paintLocal();
+  paintSpeak();
+  r.keybox.value = flattenKeys(state.keys);
+  refreshKeyUi();
+}
+
+function ensureMounted() {
+  if (typeof document === 'undefined') return false;
+  let root = document.getElementById(DRAWER_ID);
+  if (root && root.getAttribute('data-jarvis-ready') === '1' && state.refs.msgs && root.contains(state.refs.msgs)) {
+    state.mounted = true;
+    return true;
+  }
+  if (root) root.remove();
+  injectStyle();
+  root = buildDom();
+  (document.body || document.documentElement).appendChild(root);
+  bindDom(root);
+  state.mounted = true;
+  loadKeys().catch(() => {});
+  return true;
+}
+
+document.addEventListener && document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.open) api.close();
+});
+
+/* ---------- public API ---------- */
+const api = {
+  get mounted() { return state.mounted; },
+  get isOpen() { return state.open; },
+  open() {
+    ensureMounted();
+    const root = document.getElementById(DRAWER_ID);
+    root.setAttribute('data-open', '1');
+    state.open = true;
+    document.documentElement.style.overflow = 'hidden';
+    document.body && (document.body.style.overflow = 'hidden');
+    if (!state.refs.msgs.children.length) {
+      addBubble('bot', 'Macha, naan JARVIS. Sollunga, enna help venum?');
+    }
+    setTimeout(() => { try { state.refs.input.focus(); } catch { /* ignore */ } }, 60);
+    return true;
+  },
+  close() {
+    const root = document.getElementById(DRAWER_ID);
+    if (root) root.setAttribute('data-open', '0');
+    state.open = false;
+    document.documentElement.style.overflow = '';
+    document.body && (document.body.style.overflow = '');
+    stopSpeak();
+    return true;
+  },
+  toggle() { return state.open ? api.close() : api.open(); },
+  async ask(text) {
+    const q = String(text == null ? '' : text).trim().slice(0, 10000);
+    api.open();
+    if (!q) return '';
+    if (state.busy) return '';
+    state.busy = true;
+    const r = state.refs;
+    r.input.value = '';
+    addBubble('user', q);
+    const pending = addBubble('bot', '…');
+    let reply = '';
     try {
-      const [bus, core] = await Promise.all([mods.bus(), mods.coreCfg()]);
-      const evName = core?.EVENTS?.CONFIG_CHANGED;
-      if (bus && typeof bus.on === 'function' && evName) {
-        const off = bus.on(evName, () => refreshPool().catch(() => {}));
-        if (typeof off === 'function') S.unsubs.push(off);
-      }
-    } catch { /* optional */ }
-  })();
-}
-
-export async function mountJarvis(opts = {}) {
-  if (typeof document === 'undefined') return inst();
-  const o = opts && typeof opts === 'object' ? opts : {};
-
-  if (S.mounting) { await S.mounting; if (o.open) inst().open(); return inst(); }
-
-  if (S.mounted && document.getElementById('jarvis-drawer')) {
-    if (o.open) inst().open();
-    return inst();
-  }
-
-  S.mounting = (async () => {
-    S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), S.pool);
-    buildUI();
-    S.mounted = true;
-    S.open = false;
-    wireOnce();
-    try { await refreshPool(); } catch { /* noop */ }
-    if (!S.synced && countKeys(S.pool) > 0) {
-      S.synced = true;
-      writeConfigPool(S.pool).catch(() => {});
+      reply = await think(q);
+    } catch (err) {
+      reply = 'Macha, ippo answer edukka mudiyala (' + ((err && err.message) || 'error') + '). ⚙-la keys check pannunga illa Local Brain on pannunga.';
+    } finally {
+      state.busy = false;
     }
-  })();
-  try { await S.mounting; } finally { S.mounting = null; }
+    if (pending) pending.textContent = reply;
+    state.history.push({ role: 'user', text: q }, { role: 'bot', text: reply });
+    state.history = state.history.slice(-20);
+    state.lastReply = reply;
+    if (state.refs.msgs) state.refs.msgs.scrollTop = state.refs.msgs.scrollHeight;
+    if (lsGet(LS_SPEAK, '0') === '1') speak(reply);
+    return reply;
+  },
+};
 
-  if (o.open) inst().open();
-  return inst();
+export function getJarvis() {
+  ensureMounted();
+  return api;
 }
 
-export function getJarvis() { return S.inst && S.mounted ? S.inst : null; }
-
-export async function askJarvis(question, opts = {}) {
-  const o = opts && typeof opts === 'object' ? opts : {};
-  const i = await mountJarvis();
-  if (o.open) i.open();
-  const run = S.chain.then(() => converse(question, { show: o.show !== false }));
-  S.chain = run.catch(() => {});
-  return run;
+export function mountJarvis() {
+  ensureMounted();
+  return api;
 }
 
-// mount(container, ctx): opens the modal chat directly; the container is left untouched.
-export async function mount(container, ctx = {}) {
-  const base = ctx && typeof ctx === 'object' ? ctx : {};
-  return mountJarvis({ ...base, open: true });
+export function askJarvis(text) {
+  return getJarvis().ask(text);
 }
 
-export async function render(a, b) {
-  const container = a && a.nodeType === 1 ? a : null;
-  const ctx = container ? b : a;
-  return mount(container, ctx);
-}
-
-/* ---------------- global triggers: work even before the drawer is mounted ---------------- */
-
-const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
-const ASK_PLACEHOLDER = /ask\s*jarvis/i;
-const CLICKABLE = 'a,button,[role="button"],.tile,.quick-action,.qa-tile,.action-tile,[data-route],[data-href]';
-
-function askInputFor(node) {
-  let cur = node;
-  for (let i = 0; i < 5 && cur && cur !== document.body; i++) {
-    const found = cur.querySelectorAll?.('input,textarea');
-    if (found) {
-      for (const f of found) {
-        if (f.closest('#jarvis-drawer')) continue;
-        if (ASK_PLACEHOLDER.test(f.getAttribute('placeholder') || '') || ASK_PLACEHOLDER.test(f.getAttribute('aria-label') || '')) return f;
-      }
-    }
-    cur = cur.parentElement;
+export function mount(el) {
+  ensureMounted();
+  if (el && el.nodeType === 1) {
+    el.textContent = '';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '🤖 Open JARVIS';
+    btn.style.cssText = 'padding:12px 16px;border-radius:12px;border:1px solid #334155;background:#0f172a;color:#f8fafc;font:inherit;cursor:pointer';
+    btn.addEventListener('click', () => api.open());
+    el.appendChild(btn);
   }
-  return null;
+  return api;
 }
 
-function isAskTile(node) {
-  const t = (node.textContent || '').replace(/\s+/g, ' ').trim();
-  return t.length > 0 && t.length < 70 && /^\S{0,3}\s*ask\s+jarvis\b/i.test(t);
+export function render(a, b) {
+  const el = (a && a.nodeType === 1) ? a : (b && b.nodeType === 1 ? b : null);
+  return mount(el);
 }
 
-function submitFromInput(inp) {
-  const text = String(inp.value || '').trim();
-  inp.value = '';
-  try { inp.blur(); } catch { /* noop */ }
-  if (text) askJarvis(text, { open: true }).catch(() => {});
-  else mountJarvis({ open: true }).catch(() => {});
-}
+export default api;
 
-function onClickCapture(e) {
-  const tgt = e.target;
-  if (!tgt || !tgt.closest || tgt.closest('#jarvis-drawer')) return;
-
-  const btn = tgt.closest('button,[role="button"],input[type="submit"],a');
-  if (btn) {
-    const inp = askInputFor(btn);
-    if (inp) {
-      const label = ((btn.textContent || '') + ' ' + (btn.getAttribute('aria-label') || '') + ' ' + (btn.getAttribute('title') || '')).trim();
-      if (btn.type === 'submit' || /^(ask|go|send|submit|➤|→|›|>)\b/i.test(label) || /ask|send|submit/i.test(label)) {
-        e.preventDefault();
-        e.stopPropagation();
-        submitFromInput(inp);
-        return;
-      }
-    }
+/* auto-mount on module load / DOMContentLoaded */
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => ensureMounted(), { once: true });
+  } else {
+    ensureMounted();
   }
-
-  const direct = tgt.closest(OPEN_SEL);
-  const tile = direct || (() => { const c = tgt.closest(CLICKABLE); return c && isAskTile(c) ? c : null; })();
-  if (tile) {
-    e.preventDefault();
-    e.stopPropagation();
-    mountJarvis({ open: true }).catch(() => {});
-  }
+  window.JARVIS = api;
 }
-
-function onSubmitCapture(e) {
-  const form = e.target;
-  if (!form || form.closest?.('#jarvis-drawer')) return;
-  const inp = askInputFor(form);
-  if (inp && form.contains(inp)) {
-    e.preventDefault();
-    e.stopPropagation();
-    submitFromInput(inp);
-  }
-}
-
-function onKeyCapture(e) {
-  if (e.key !== 'Enter' || e.shiftKey) return;
-  const t = e.target;
-  if (!t || !t.matches || !t.matches('input,textarea') || t.closest('#jarvis-drawer')) return;
-  if (!ASK_PLACEHOLDER.test(t.getAttribute('placeholder') || '') && !ASK_PLACEHOLDER.test(t.getAttribute('aria-label') || '')) return;
-  e.preventDefault();
-  e.stopPropagation();
-  submitFromInput(t);
-}
-
-function installGlobalTriggers() {
-  if (typeof document === 'undefined' || window.__njTriggers) return;
-  window.__njTriggers = true;
-  document.addEventListener('click', onClickCapture, true);
-  document.addEventListener('submit', onSubmitCapture, true);
-  document.addEventListener('keydown', onKeyCapture, true);
-  for (const n of OPEN_EVENTS) window.addEventListener(n, onOpenEvt);
-}
-
-installGlobalTriggers();
-
-export default { mountJarvis, getJarvis, askJarvis, mount, render };
