@@ -21,6 +21,7 @@ const KEY_RE = /(AQ\.[A-Za-z0-9_.\-]{10,}|AIzaSy[A-Za-z0-9_\-]{20,}|gsk_[A-Za-z0
 
 const LOCAL_MODEL = 'onnx-community/Qwen2.5-0.5B-Instruct';
 const TRANSFORMERS_CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3';
+const LOCAL_RETRY_MS = 5 * 60_000;
 const KB_FILES = ['fire_safety', 'ppe_guide', 'machine_safety'];
 const MAX_INPUT = 10000;
 const REQ_TIMEOUT_MS = 25000;
@@ -95,7 +96,7 @@ const mods = {
   _c: {},
   async _load(key, path) {
     if (key in this._c) return this._c[key];
-    try { this._c[key] = await import(path); } catch (e) { console.warn('[JARVIS] optional module missing:', path, e?.message); this._c[key] = null; }
+    try { this._c[key] = await import(path); } catch { this._c[key] = null; }
     return this._c[key];
   },
   brains() { return this._load('brains', './brains_75.js'); },
@@ -174,12 +175,13 @@ async function writeConfigPool(pool) {
     const cm = await mods.config();
     const get = pick(cm, ['getUserConfig', 'loadUserConfig']);
     const upd = pick(cm, ['updateUserConfig']);
-    if (!upd) return;
-    const cfg = (get ? await get() : null) || {};
-    const apiKeys = { ...(cfg.apiKeys && typeof cfg.apiKeys === 'object' ? cfg.apiKeys : {}) };
-    for (const { id } of PROVIDERS) apiKeys[id] = pool[id][0] || '';
-    await upd({ apiKeys, apiKeyPool: pool });
-  } catch (e) { console.warn('[JARVIS] config sync skipped:', e?.message); }
+    if (upd) {
+      const cfg = (get ? await get() : null) || {};
+      const apiKeys = { ...(cfg.apiKeys && typeof cfg.apiKeys === 'object' ? cfg.apiKeys : {}) };
+      for (const { id } of PROVIDERS) apiKeys[id] = pool[id][0] || '';
+      await upd({ apiKeys, apiKeyPool: pool });
+    }
+  } catch { /* config sync is best-effort */ }
   try {
     const sm = await mods.settings();
     for (const n of ['setApiKeys', 'saveApiKeys', 'syncApiKeys']) {
@@ -343,15 +345,16 @@ async function kbContext(query) {
   return 'Local HSE reference (use only if relevant, treat as guidance):\n' + hits.map(h => `- [${h.src}] ${h.text}`).join('\n').slice(0, 1800);
 }
 
-/* ---------------- built-in local brain (WebGPU / WASM) ---------------- */
+/* ---------------- built-in local brain (WebGPU / WASM) — silent on failure ---------------- */
 
-const local = { gen: null, loading: null, status: '', onStatus: null };
+const local = { gen: null, loading: null, status: '', failedAt: 0, onStatus: null };
 
 function setLocalStatus(s) { local.status = s; try { local.onStatus?.(s); } catch { /* noop */ } }
 
 async function loadLocalBrain() {
   if (local.gen) return local.gen;
   if (local.loading) return local.loading;
+  if (local.failedAt && Date.now() - local.failedAt < LOCAL_RETRY_MS) return Promise.reject(new Error('LOCAL_UNAVAILABLE'));
   local.loading = (async () => {
     setLocalStatus('Preparing local brain…');
     const tf = await import(/* @vite-ignore */ TRANSFORMERS_CDN);
@@ -367,10 +370,11 @@ async function loadLocalBrain() {
     local.gen = gen;
     setLocalStatus(`Local brain ready (${gpu ? 'WebGPU' : 'WASM'})`);
     return gen;
-  })().catch(e => {
+  })().catch(() => {
     local.loading = null;
-    setLocalStatus('Local brain unavailable: ' + (e?.message || 'error'));
-    throw e;
+    local.failedAt = Date.now();
+    setLocalStatus('Local brain will be ready when the internet is back.');
+    throw new Error('LOCAL_UNAVAILABLE');
   });
   return local.loading;
 }
@@ -382,7 +386,7 @@ async function localGenerate(messages) {
   const g = out?.[0]?.generated_text;
   const text = Array.isArray(g) ? g[g.length - 1]?.content : g;
   const t = String(text || '').trim();
-  if (!t) throw new Error('Empty local reply');
+  if (!t) throw new Error('LOCAL_EMPTY');
   return { text: t, via: 'local' };
 }
 
@@ -415,13 +419,17 @@ async function offlineAnswer(query) {
 const S = {
   mounted: false,
   open: false,
-  embed: false,
   wired: false,
+  locked: false,
+  scrollY: 0,
+  prevHtml: '',
+  prevBody: '',
   busy: false,
   chain: Promise.resolve(),
   pool: emptyPool(),
   hist: lsGet(LS.hist, []).slice(-30),
   ui: {},
+  details: [],
   inst: null,
   unsubs: []
 };
@@ -433,10 +441,10 @@ const localEnabled = () => lsGet(LS.local, false) === true;
 
 async function generate(messages, opts = {}) {
   if (hasCloud()) {
-    try { return await cloudGenerate(S.pool, messages, opts); } catch (e) { console.warn('[JARVIS] cloud failed:', e?.message); }
+    try { return await cloudGenerate(S.pool, messages, opts); } catch { /* rotate to next layer silently */ }
   }
   if (localEnabled()) {
-    try { return await localGenerate(messages); } catch (e) { console.warn('[JARVIS] local failed:', e?.message); }
+    try { return await localGenerate(messages); } catch { /* silent: fall through to offline notes */ }
   }
   const lastUser = [...messages].reverse().find(m => m.role === 'user')?.content || '';
   return { text: await offlineAnswer(lastUser), via: 'offline' };
@@ -549,7 +557,7 @@ async function runReport(q, setStatus) {
       });
       const t = toText(r);
       if (t) return t;
-    } catch (e) { console.warn('[JARVIS] pipeline module failed, using built-in stages:', e?.message); }
+    } catch { /* fall back to built-in stages */ }
   }
   const ctx = await kbContext(q);
   let carry = `Request: ${q}${ctx ? '\n\n' + ctx : ''}`;
@@ -676,13 +684,13 @@ function remember(role, text) {
   lsSet(LS.hist, S.hist);
 }
 
-function friendlyError(q, e) {
+function friendlyError(q) {
   const lang = detectLang(q);
   return ({
     ta: 'மன்னிச்சிடுங்க, இப்போ ஏதோ தடங்கல் ஆச்சு. இன்னொரு முறை முயற்சி பண்ணலாமா?',
     tg: 'Sorry macha, ippo oru thadangal aachu. Marubadiyum try pannalama?',
     en: 'I\'m sorry, something got in the way just now. Shall we try once more?'
-  })[lang] + (e?.message ? `\n(${String(e.message).slice(0, 120)})` : '');
+  })[lang];
 }
 
 async function converse(raw, { show = true } = {}) {
@@ -704,8 +712,8 @@ async function converse(raw, { show = true } = {}) {
     remember('bot', out);
     if (show && speakOn()) speak(out);
     return out;
-  } catch (e) {
-    const msg = friendlyError(q, e);
+  } catch {
+    const msg = friendlyError(q);
     if (holder) setMsg(holder, msg);
     return msg;
   } finally {
@@ -717,39 +725,35 @@ async function converse(raw, { show = true } = {}) {
 /* ---------------- UI ---------------- */
 
 const CSS = `
-.nj-root{position:fixed;inset:0;z-index:9990;pointer-events:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.nj-back{position:absolute;inset:0;background:rgba(2,6,23,.6);opacity:0;transition:opacity .2s;pointer-events:none}
-.nj-panel{position:absolute;top:0;right:0;bottom:0;width:min(440px,100vw);background:#0f172a;color:#f8fafc;opacity:1;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease;box-shadow:-8px 0 28px rgba(0,0,0,.55);pointer-events:auto;box-sizing:border-box}
-.nj-root.nj-open{pointer-events:auto}
-.nj-root.nj-open .nj-back{opacity:1;pointer-events:auto}
+#jarvis-drawer.nj-root{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;visibility:hidden;opacity:0;pointer-events:none;transition:opacity .18s ease,visibility 0s linear .18s}
+#jarvis-drawer.nj-root.nj-open{visibility:visible;opacity:1;pointer-events:auto;transition:opacity .18s ease}
+.nj-back{position:absolute;inset:0;background:rgba(2,6,23,.72)}
+.nj-panel{position:relative;width:100%;height:100%;max-width:560px;background:#0f172a;color:#f8fafc;opacity:1;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;transform:translateY(12px);transition:transform .2s ease}
 .nj-root.nj-open .nj-panel{transform:none}
-.nj-root.nj-embed{position:relative;inset:auto;width:100%;height:calc(100dvh - 130px);min-height:420px;z-index:auto}
-.nj-embed .nj-back{display:none}
-.nj-embed .nj-panel{position:relative;top:auto;right:auto;bottom:auto;width:100%;height:100%;transform:none;transition:none;box-shadow:none;border-radius:16px;border:1px solid #1e293b}
-.nj-embed .nj-close{display:none}
-.nj-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1e293b;background:#0f172a;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
+@media (min-width:700px){.nj-panel{height:min(92vh,780px);border-radius:20px;border:1px solid #1e293b;box-shadow:0 20px 60px rgba(0,0,0,.6)}}
+.nj-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1e293b;background:#0f172a;flex:none}
 .nj-title{flex:1;font-weight:700;font-size:16px;color:#f8fafc}
 .nj-sub{font-size:11px;color:#94a3b8;font-weight:400;display:block}
 .nj-ib{background:transparent;border:0;color:#f8fafc;font-size:20px;line-height:1;padding:8px 10px;cursor:pointer;border-radius:10px;min-width:40px;min-height:40px}
 .nj-ib:active{background:#1e293b}
-.nj-msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;background:#0f172a}
+.nj-msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;background:#0f172a}
 .nj-m{max-width:86%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;font-size:14.5px;line-height:1.5}
 .nj-user{align-self:flex-end;background:#2563eb;color:#fff;border-bottom-right-radius:6px}
 .nj-bot{align-self:flex-start;background:#1e293b;color:#f8fafc;border:1px solid #334155;border-bottom-left-radius:6px}
 .nj-pending{opacity:.75;font-style:italic}
-.nj-bar{display:flex;align-items:flex-end;gap:6px;padding:10px;border-top:1px solid #1e293b;background:#0f172a;border-radius:inherit;border-top-left-radius:0;border-top-right-radius:0}
+.nj-bar{display:flex;align-items:flex-end;gap:6px;padding:10px;border-top:1px solid #1e293b;background:#0f172a;flex:none}
 .nj-vb{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid #334155;background:#1e293b;color:#f8fafc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .nj-vb:active{background:#334155}
 .nj-vb.nj-rec{background:#dc2626;border-color:#dc2626;animation:njpulse 1s infinite}
 .nj-vb.nj-on{background:#0e7490;border-color:#06b6d4}
 .nj-vl{font-size:12px;font-weight:700}
 @keyframes njpulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.6)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
-.nj-in{flex:1;min-width:0;min-height:42px;max-height:120px;resize:none;border-radius:21px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px 14px;font:inherit;font-size:15px;box-sizing:border-box;outline:none}
+.nj-in{flex:1;min-width:0;min-height:42px;max-height:120px;resize:none;border-radius:21px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px 14px;font:inherit;font-size:16px;box-sizing:border-box;outline:none}
 .nj-in::placeholder{color:#94a3b8}
 .nj-in:focus{border-color:#3b82f6}
 .nj-send{flex:none;height:42px;border:0;border-radius:21px;padding:0 18px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
 .nj-send:disabled{opacity:.5}
-.nj-set{display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column;gap:12px;background:#0f172a}
+.nj-set{display:none;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px;flex-direction:column;gap:12px;background:#0f172a}
 .nj-panel.nj-settings .nj-set{display:flex}
 .nj-panel.nj-settings .nj-msgs,.nj-panel.nj-settings .nj-bar{display:none}
 .nj-h{font-weight:700;font-size:14px;color:#f8fafc}
@@ -767,13 +771,36 @@ const CSS = `
 .nj-gate-t{font-weight:700;margin-bottom:6px}
 .nj-gate-p{max-height:220px;overflow:auto;font-size:11.5px;white-space:pre-wrap;margin:0 0 8px;color:#e2e8f0}
 .nj-sw{display:flex;align-items:center;gap:10px;color:#f8fafc;font-size:14px}
-.nj-card{border:1px solid #334155;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;background:#111c33}
+.nj-card{border:1px solid #334155;border-radius:14px;padding:0;background:#111c33;color:#f8fafc}
+.nj-card>summary{cursor:pointer;list-style:none;padding:13px 14px;font-weight:700;font-size:14px}
+.nj-card>summary::-webkit-details-marker{display:none}
+.nj-card>summary::after{content:'▸';float:right;opacity:.7}
+.nj-card[open]>summary::after{content:'▾'}
+.nj-card-b{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px}
 `;
 
 function ensureStyle() {
   let s = document.getElementById('nj-style');
   if (!s) { s = el('style', { id: 'nj-style' }); document.head.append(s); }
   s.textContent = CSS;
+}
+
+function lockScroll() {
+  if (S.locked) return;
+  S.locked = true;
+  S.scrollY = window.scrollY || 0;
+  S.prevHtml = document.documentElement.style.overflow;
+  S.prevBody = document.body.style.overflow;
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+}
+
+function unlockScroll() {
+  if (!S.locked) return;
+  S.locked = false;
+  document.documentElement.style.overflow = S.prevHtml;
+  document.body.style.overflow = S.prevBody;
+  try { window.scrollTo(0, S.scrollY); } catch { /* noop */ }
 }
 
 function scrollDown() {
@@ -854,30 +881,31 @@ function buildSettings() {
   const prep = el('button', { class: 'nj-btn', type: 'button', text: 'Prepare local brain now', onclick: () => {
     lsSet(LS.local, true);
     sw.checked = true;
+    local.failedAt = 0;
     loadLocalBrain().catch(() => {}).finally(renderLocalStatus);
   } });
   local.onStatus = () => renderLocalStatus();
 
-  return el('div', { class: 'nj-set' }, [
-    el('div', { class: 'nj-card' }, [
-      el('div', { class: 'nj-h', text: 'Universal key box' }),
-      ta,
-      el('div', { class: 'nj-row' }, [save, clear]),
-      msg,
-      S.ui.chips,
-      S.ui.total
-    ]),
-    el('div', { class: 'nj-card' }, [
-      el('div', { class: 'nj-h', text: 'Built-in Local Brain (No Key / Offline)' }),
+  const dKeys = el('details', { class: 'nj-card' }, [
+    el('summary', { text: 'Universal key box' }),
+    el('div', { class: 'nj-card-b' }, [ta, el('div', { class: 'nj-row' }, [save, clear]), msg, S.ui.chips, S.ui.total])
+  ]);
+  const dLocal = el('details', { class: 'nj-card' }, [
+    el('summary', { text: 'Built-in Local Brain (No Key / Offline)' }),
+    el('div', { class: 'nj-card-b' }, [
       el('label', { class: 'nj-sw', for: 'nj-local-sw' }, [sw, el('span', { text: 'Use on-device AI when keys or internet are missing' })]),
       S.ui.localStatus,
       el('div', { class: 'nj-note', text: 'Runs inside your browser with WebGPU or WASM and works with the local HSE notes. Keys stay on this device.' }),
       prep
     ])
   ]);
+  S.details = [dKeys, dLocal];
+
+  const back = el('button', { class: 'nj-btn', type: 'button', text: '← Back to chat', onclick: () => S.ui.panel?.classList.remove('nj-settings') });
+  return el('div', { class: 'nj-set' }, [back, dKeys, dLocal]);
 }
 
-function buildUI(container) {
+function buildUI() {
   ensureStyle();
   document.getElementById('jarvis-drawer')?.remove();
   stopListening();
@@ -911,8 +939,8 @@ function buildUI(container) {
   });
 
   const settingsBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Settings', text: '⚙' });
-  const closeBtn = el('button', { class: 'nj-ib nj-close', type: 'button', 'aria-label': 'Close', text: '✕' });
-  const panel = el('div', { class: 'nj-panel', role: 'dialog', 'aria-label': 'JARVIS' }, [
+  const closeBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Close', text: '✕' });
+  const panel = el('div', { class: 'nj-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'JARVIS' }, [
     el('div', { class: 'nj-head' }, [
       el('div', { class: 'nj-title' }, ['JARVIS', el('span', { class: 'nj-sub', text: 'Your friend and partner' })]),
       settingsBtn, closeBtn
@@ -923,15 +951,8 @@ function buildUI(container) {
   ]);
   const back = el('div', { class: 'nj-back' });
   const root = el('div', { class: 'nj-root', id: 'jarvis-drawer' }, [back, panel]);
+  document.body.append(root);
 
-  if (container) {
-    container.textContent = '';
-    root.classList.add('nj-embed', 'nj-open');
-    container.append(root);
-  } else {
-    document.body.append(root);
-  }
-  S.embed = !!container;
   S.ui = { ...S.ui, root, panel, msgs, input, send, mic, spk };
 
   const doSend = () => {
@@ -949,7 +970,10 @@ function buildUI(container) {
     if (e.key === 'Enter' && !e.shiftKey && !coarse) { e.preventDefault(); doSend(); }
   });
   input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; });
-  settingsBtn.addEventListener('click', () => { panel.classList.toggle('nj-settings'); renderChips(); renderLocalStatus(); });
+  settingsBtn.addEventListener('click', () => {
+    const on = panel.classList.toggle('nj-settings');
+    if (on) { renderChips(); renderLocalStatus(); }
+  });
   closeBtn.addEventListener('click', () => inst().close());
   back.addEventListener('click', () => inst().close());
 
@@ -961,7 +985,7 @@ function buildUI(container) {
 
 /* ---------------- instance, wiring, exports ---------------- */
 
-function escHandler(e) { if (e.key === 'Escape' && S.open && !S.embed) inst().close(); }
+function escHandler(e) { if (e.key === 'Escape' && S.open) inst().close(); }
 
 const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
 
@@ -986,19 +1010,28 @@ function inst() {
     open() {
       if (!S.mounted || !S.ui.root) return;
       S.open = true;
-      S.ui.root.classList.add('nj-open');
       S.ui.panel?.classList.remove('nj-settings');
-      setTimeout(() => S.ui.input?.focus(), 250);
+      S.details.forEach(d => { d.open = false; });
+      lockScroll();
+      S.ui.root.classList.add('nj-open');
+      requestAnimationFrame(scrollDown);
     },
     close() {
-      if (S.embed) return;
       S.open = false;
       S.ui.root?.classList.remove('nj-open');
       stopListening();
+      stopSpeaking();
+      try { document.activeElement?.blur?.(); } catch { /* noop */ }
+      unlockScroll();
     },
-    toggle() { S.open && !S.embed ? this.close() : this.open(); },
+    toggle() { S.open ? this.close() : this.open(); },
     isOpen: () => S.open,
-    openSettings() { this.open(); S.ui.panel?.classList.add('nj-settings'); renderChips(); renderLocalStatus(); },
+    openSettings() {
+      this.open();
+      S.ui.panel?.classList.add('nj-settings');
+      renderChips();
+      renderLocalStatus();
+    },
     ask: (q, o) => askJarvis(q, o),
     keyCounts: () => poolCounts(S.pool),
     setKeysFromText: async text => {
@@ -1018,10 +1051,10 @@ function inst() {
       window.removeEventListener('nasur:keys-changed', onKeysChanged);
       stopListening();
       stopSpeaking();
+      unlockScroll();
       S.ui.root?.remove();
       S.mounted = false;
       S.open = false;
-      S.embed = false;
       S.wired = false;
     }
   };
@@ -1056,27 +1089,19 @@ function wireOnce() {
 export async function mountJarvis(opts = {}) {
   if (typeof document === 'undefined') return inst();
   const o = opts && typeof opts === 'object' ? opts : {};
-  const container = o.container && o.container.nodeType === 1 ? o.container : null;
-  const root = document.getElementById('jarvis-drawer');
 
-  if (S.mounted && root) {
-    if (!container) { if (o.open) inst().open(); return inst(); }
-    if (root.parentElement === container) { inst().open(); return inst(); }
+  if (S.mounted && document.getElementById('jarvis-drawer')) {
+    if (o.open) inst().open();
+    return inst();
   }
 
   S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), S.pool);
-  buildUI(container);
+  buildUI();
   S.mounted = true;
+  S.open = false;
   wireOnce();
   refreshPool().catch(() => {});
-
-  if (container) {
-    S.open = true;
-    setTimeout(() => S.ui.input?.focus(), 200);
-  } else {
-    S.open = false;
-    if (o.open) inst().open();
-  }
+  if (o.open) inst().open();
   return inst();
 }
 
@@ -1091,9 +1116,10 @@ export async function askJarvis(question, opts = {}) {
   return run;
 }
 
+// mount(container, ctx): opens the modal chat directly; the container is left untouched.
 export async function mount(container, ctx = {}) {
   const base = ctx && typeof ctx === 'object' ? ctx : {};
-  return mountJarvis({ ...base, container: container && container.nodeType === 1 ? container : null, open: true });
+  return mountJarvis({ ...base, open: true });
 }
 
 export async function render(a, b) {
