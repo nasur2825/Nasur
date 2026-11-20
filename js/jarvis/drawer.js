@@ -158,6 +158,7 @@ function mergePools(...pools) {
 }
 
 const countKeys = pool => PROVIDERS.reduce((n, p) => n + (pool[p.id]?.length || 0), 0);
+const poolCounts = pool => Object.fromEntries(PROVIDERS.map(p => [p.id, pool[p.id].length]));
 
 async function readConfigPool() {
   try {
@@ -170,28 +171,52 @@ async function readConfigPool() {
   } catch { return emptyPool(); }
 }
 
+function mirrorToLocalStorage(apiKeys) {
+  for (const name of ['apiKeys', 'nasur.apiKeys', 'nasur_apiKeys']) {
+    try {
+      const raw = localStorage.getItem(name);
+      let cur = {};
+      if (raw) { const p = JSON.parse(raw); if (p && typeof p === 'object' && !Array.isArray(p)) cur = p; }
+      localStorage.setItem(name, JSON.stringify({ ...cur, ...apiKeys }));
+    } catch { /* ignore */ }
+  }
+}
+
+// Sync the whole pool to: services/config (apiKeys + apiKeyPool), services/settings (JARVIS Studio), localStorage mirrors.
 async function writeConfigPool(pool) {
+  const apiKeys = {};
+  for (const { id } of PROVIDERS) apiKeys[id] = pool[id][0] || '';
+  apiKeys.google = apiKeys.gemini;
+  apiKeys.nim = apiKeys.nvidia;
+
   try {
     const cm = await mods.config();
     const get = pick(cm, ['getUserConfig', 'loadUserConfig']);
     const upd = pick(cm, ['updateUserConfig']);
     if (upd) {
       const cfg = (get ? await get() : null) || {};
-      const apiKeys = { ...(cfg.apiKeys && typeof cfg.apiKeys === 'object' ? cfg.apiKeys : {}) };
-      for (const { id } of PROVIDERS) apiKeys[id] = pool[id][0] || '';
-      await upd({ apiKeys, apiKeyPool: pool });
+      const merged = { ...(cfg.apiKeys && typeof cfg.apiKeys === 'object' ? cfg.apiKeys : {}), ...apiKeys };
+      await upd({ apiKeys: merged, apiKeyPool: pool });
     }
-  } catch { /* config sync is best-effort */ }
+  } catch { /* best-effort */ }
+
   try {
     const sm = await mods.settings();
-    for (const n of ['setApiKeys', 'saveApiKeys', 'syncApiKeys']) {
-      if (typeof sm?.[n] === 'function') { await sm[n](pool); break; }
+    if (sm) {
+      const one = pick(sm, ['setApiKey', 'saveApiKey']);
+      if (one) {
+        for (const { id } of PROVIDERS) {
+          if (pool[id][0]) { try { await one(id, pool[id][0]); } catch { /* next */ } }
+        }
+      }
+      const many = pick(sm, ['setApiKeys', 'saveApiKeys', 'syncApiKeys', 'updateApiKeys']);
+      if (many) { try { await many(apiKeys); } catch { try { await many(pool); } catch { /* ignore */ } } }
     }
   } catch { /* optional */ }
+
+  mirrorToLocalStorage(apiKeys);
   try { window.dispatchEvent(new CustomEvent('nasur:keys-changed', { detail: { counts: poolCounts(pool) } })); } catch { /* noop */ }
 }
-
-const poolCounts = pool => Object.fromEntries(PROVIDERS.map(p => [p.id, pool[p.id].length]));
 
 /* ---------------- cloud providers with rotation ---------------- */
 
@@ -425,6 +450,8 @@ const S = {
   prevHtml: '',
   prevBody: '',
   busy: false,
+  mounting: null,
+  synced: false,
   chain: Promise.resolve(),
   pool: emptyPool(),
   hist: lsGet(LS.hist, []).slice(-30),
@@ -987,17 +1014,9 @@ function buildUI() {
 
 function escHandler(e) { if (e.key === 'Escape' && S.open) inst().close(); }
 
-const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
-
-function onDocClick(e) {
-  const t = e.target?.closest?.(OPEN_SEL);
-  if (t && S.mounted) { e.preventDefault(); inst().open(); }
-}
-
 function onOpenEvt(ev) {
-  inst().open();
   const q = ev?.detail?.q || ev?.detail?.query;
-  if (q) askJarvis(q);
+  if (q) askJarvis(q, { open: true }); else mountJarvis({ open: true });
 }
 
 const OPEN_EVENTS = ['jarvis:open', 'nasur:jarvis-open', 'nasur:open-jarvis'];
@@ -1034,6 +1053,7 @@ function inst() {
     },
     ask: (q, o) => askJarvis(q, o),
     keyCounts: () => poolCounts(S.pool),
+    resyncKeys: async () => { await writeConfigPool(S.pool); return poolCounts(S.pool); },
     setKeysFromText: async text => {
       const { pool } = detectKeys(text);
       S.pool = mergePools(S.pool, pool);
@@ -1045,7 +1065,6 @@ function inst() {
     destroy() {
       S.unsubs.forEach(f => { try { f(); } catch { /* noop */ } });
       S.unsubs = [];
-      document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', escHandler);
       OPEN_EVENTS.forEach(n => window.removeEventListener(n, onOpenEvt));
       window.removeEventListener('nasur:keys-changed', onKeysChanged);
@@ -1070,7 +1089,6 @@ async function refreshPool() {
 function wireOnce() {
   if (S.wired) return;
   S.wired = true;
-  document.addEventListener('click', onDocClick);
   document.addEventListener('keydown', escHandler);
   OPEN_EVENTS.forEach(n => window.addEventListener(n, onOpenEvt));
   window.addEventListener('nasur:keys-changed', onKeysChanged);
@@ -1090,17 +1108,27 @@ export async function mountJarvis(opts = {}) {
   if (typeof document === 'undefined') return inst();
   const o = opts && typeof opts === 'object' ? opts : {};
 
+  if (S.mounting) { await S.mounting; if (o.open) inst().open(); return inst(); }
+
   if (S.mounted && document.getElementById('jarvis-drawer')) {
     if (o.open) inst().open();
     return inst();
   }
 
-  S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), S.pool);
-  buildUI();
-  S.mounted = true;
-  S.open = false;
-  wireOnce();
-  refreshPool().catch(() => {});
+  S.mounting = (async () => {
+    S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), S.pool);
+    buildUI();
+    S.mounted = true;
+    S.open = false;
+    wireOnce();
+    try { await refreshPool(); } catch { /* noop */ }
+    if (!S.synced && countKeys(S.pool) > 0) {
+      S.synced = true;
+      writeConfigPool(S.pool).catch(() => {});
+    }
+  })();
+  try { await S.mounting; } finally { S.mounting = null; }
+
   if (o.open) inst().open();
   return inst();
 }
@@ -1127,5 +1155,98 @@ export async function render(a, b) {
   const ctx = container ? b : a;
   return mount(container, ctx);
 }
+
+/* ---------------- global triggers: work even before the drawer is mounted ---------------- */
+
+const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
+const ASK_PLACEHOLDER = /ask\s*jarvis/i;
+const CLICKABLE = 'a,button,[role="button"],.tile,.quick-action,.qa-tile,.action-tile,[data-route],[data-href]';
+
+function askInputFor(node) {
+  let cur = node;
+  for (let i = 0; i < 5 && cur && cur !== document.body; i++) {
+    const found = cur.querySelectorAll?.('input,textarea');
+    if (found) {
+      for (const f of found) {
+        if (f.closest('#jarvis-drawer')) continue;
+        if (ASK_PLACEHOLDER.test(f.getAttribute('placeholder') || '') || ASK_PLACEHOLDER.test(f.getAttribute('aria-label') || '')) return f;
+      }
+    }
+    cur = cur.parentElement;
+  }
+  return null;
+}
+
+function isAskTile(node) {
+  const t = (node.textContent || '').replace(/\s+/g, ' ').trim();
+  return t.length > 0 && t.length < 70 && /^\S{0,3}\s*ask\s+jarvis\b/i.test(t);
+}
+
+function submitFromInput(inp) {
+  const text = String(inp.value || '').trim();
+  inp.value = '';
+  try { inp.blur(); } catch { /* noop */ }
+  if (text) askJarvis(text, { open: true }).catch(() => {});
+  else mountJarvis({ open: true }).catch(() => {});
+}
+
+function onClickCapture(e) {
+  const tgt = e.target;
+  if (!tgt || !tgt.closest || tgt.closest('#jarvis-drawer')) return;
+
+  const btn = tgt.closest('button,[role="button"],input[type="submit"],a');
+  if (btn) {
+    const inp = askInputFor(btn);
+    if (inp) {
+      const label = ((btn.textContent || '') + ' ' + (btn.getAttribute('aria-label') || '') + ' ' + (btn.getAttribute('title') || '')).trim();
+      if (btn.type === 'submit' || /^(ask|go|send|submit|➤|→|›|>)\b/i.test(label) || /ask|send|submit/i.test(label)) {
+        e.preventDefault();
+        e.stopPropagation();
+        submitFromInput(inp);
+        return;
+      }
+    }
+  }
+
+  const direct = tgt.closest(OPEN_SEL);
+  const tile = direct || (() => { const c = tgt.closest(CLICKABLE); return c && isAskTile(c) ? c : null; })();
+  if (tile) {
+    e.preventDefault();
+    e.stopPropagation();
+    mountJarvis({ open: true }).catch(() => {});
+  }
+}
+
+function onSubmitCapture(e) {
+  const form = e.target;
+  if (!form || form.closest?.('#jarvis-drawer')) return;
+  const inp = askInputFor(form);
+  if (inp && form.contains(inp)) {
+    e.preventDefault();
+    e.stopPropagation();
+    submitFromInput(inp);
+  }
+}
+
+function onKeyCapture(e) {
+  if (e.key !== 'Enter' || e.shiftKey) return;
+  const t = e.target;
+  if (!t || !t.matches || !t.matches('input,textarea') || t.closest('#jarvis-drawer')) return;
+  if (!ASK_PLACEHOLDER.test(t.getAttribute('placeholder') || '') && !ASK_PLACEHOLDER.test(t.getAttribute('aria-label') || '')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  submitFromInput(t);
+}
+
+function installGlobalTriggers() {
+  if (typeof document === 'undefined' || window.__njTriggers) return;
+  window.__njTriggers = true;
+  document.addEventListener('click', onClickCapture, true);
+  document.addEventListener('submit', onSubmitCapture, true);
+  document.addEventListener('keydown', onKeyCapture, true);
+  for (const n of OPEN_EVENTS) window.addEventListener(n, onOpenEvt);
+}
+
+installGlobalTriggers();
 
 export default { mountJarvis, getJarvis, askJarvis, mount, render };
