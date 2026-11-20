@@ -5,7 +5,9 @@ const LS = {
   pool: 'nasur.jarvis.keyPool.v1',
   cursor: 'nasur.jarvis.keyCursor.v1',
   local: 'nasur.jarvis.localBrain.v1',
-  hist: 'nasur.jarvis.history.v1'
+  hist: 'nasur.jarvis.history.v1',
+  speak: 'nasur.jarvis.speakReply.v1',
+  vlang: 'nasur.jarvis.voiceLang.v1'
 };
 
 const PROVIDERS = [
@@ -408,11 +410,13 @@ async function offlineAnswer(query) {
   return `${intro}\n\n${hits.map(h => `• ${h.text}`).join('\n')}\n\n${tail}`;
 }
 
-/* ---------------- unified generation: cloud → local → offline ---------------- */
+/* ---------------- state ---------------- */
 
 const S = {
   mounted: false,
   open: false,
+  embed: false,
+  wired: false,
   busy: false,
   chain: Promise.resolve(),
   pool: emptyPool(),
@@ -424,6 +428,8 @@ const S = {
 
 const hasCloud = () => countKeys(S.pool) > 0 && (typeof navigator === 'undefined' || navigator.onLine !== false);
 const localEnabled = () => lsGet(LS.local, false) === true;
+
+/* ---------------- unified generation: cloud → local → offline ---------------- */
 
 async function generate(messages, opts = {}) {
   if (hasCloud()) {
@@ -559,6 +565,7 @@ async function runReport(q, setStatus) {
 
 function approvalGate(info) {
   return new Promise(resolve => {
+    if (!S.ui.msgs) { resolve(false); return; }
     const preview = (toText(info) || (info ? JSON.stringify(info, null, 2) : 'Proposed change')).slice(0, 2500);
     const card = el('div', { class: 'nj-gate' }, [
       el('div', { class: 'nj-gate-t', text: 'Approval needed before I save anything' }),
@@ -568,9 +575,8 @@ function approvalGate(info) {
         el('button', { class: 'nj-btn nj-no', type: 'button', text: 'Reject', onclick: () => { card.remove(); resolve(false); } })
       ])
     ]);
-    S.ui.msgs?.append(card);
+    S.ui.msgs.append(card);
     scrollDown();
-    if (!S.ui.msgs) resolve(false);
   });
 }
 
@@ -587,6 +593,79 @@ async function runBuild(q, setStatus) {
     onProgress: s => setStatus(typeof s === 'string' ? s : (s?.name || 'Building…'))
   });
   return toText(r) || 'Done. Everything stayed behind your approval.';
+}
+
+/* ---------------- voice: speak reply + mic ---------------- */
+
+const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+const voice = { rec: null, on: false };
+
+const speakOn = () => lsGet(LS.speak, false) === true;
+
+function stopSpeaking() {
+  try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+}
+
+function speak(text) {
+  try {
+    const ss = window.speechSynthesis;
+    if (!ss || !text) return;
+    ss.cancel();
+    const clean = String(text).replace(/[*_`#>•]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1500);
+    if (!clean) return;
+    const u = new SpeechSynthesisUtterance(clean);
+    u.lang = /[\u0B80-\u0BFF]/.test(clean) ? 'ta-IN' : 'en-IN';
+    u.rate = 1;
+    ss.speak(u);
+  } catch { /* noop */ }
+}
+
+function stopListening() {
+  try { voice.rec?.stop(); } catch { /* noop */ }
+  voice.on = false;
+  S.ui.mic?.classList.remove('nj-rec');
+}
+
+function startListening() {
+  if (!SR) {
+    if (S.ui.msgs) addMsg('bot', 'Voice input is not supported in this browser. Chrome on Android works best.');
+    return;
+  }
+  if (voice.on) { stopListening(); return; }
+  try {
+    const r = new SR();
+    r.lang = lsGet(LS.vlang, 'en-IN');
+    r.interimResults = true;
+    r.continuous = false;
+    r.maxAlternatives = 1;
+    let finalText = '';
+    r.onresult = e => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t; else interim += t;
+      }
+      if (S.ui.input) S.ui.input.value = (finalText + interim).trim();
+    };
+    r.onerror = () => { voice.on = false; S.ui.mic?.classList.remove('nj-rec'); };
+    r.onend = () => {
+      voice.on = false;
+      S.ui.mic?.classList.remove('nj-rec');
+      const t = finalText.trim();
+      if (t && S.ui.input) {
+        S.ui.input.value = '';
+        S.ui.input.style.height = 'auto';
+        S.chain = S.chain.then(() => converse(t)).catch(() => {});
+      }
+    };
+    voice.rec = r;
+    voice.on = true;
+    S.ui.mic?.classList.add('nj-rec');
+    stopSpeaking();
+    r.start();
+  } catch {
+    stopListening();
+  }
 }
 
 /* ---------------- conversation runner ---------------- */
@@ -623,6 +702,7 @@ async function converse(raw, { show = true } = {}) {
     if (holder) setMsg(holder, out);
     remember('user', q);
     remember('bot', out);
+    if (show && speakOn()) speak(out);
     return out;
   } catch (e) {
     const msg = friendlyError(q, e);
@@ -638,51 +718,62 @@ async function converse(raw, { show = true } = {}) {
 
 const CSS = `
 .nj-root{position:fixed;inset:0;z-index:9990;pointer-events:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.nj-back{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .2s;pointer-events:none}
-.nj-panel{position:absolute;top:0;right:0;bottom:0;width:min(440px,100vw);background:var(--surface,var(--card,#0f1722));color:var(--text,#e8eef6);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease;box-shadow:-6px 0 24px rgba(0,0,0,.4);pointer-events:auto}
+.nj-back{position:absolute;inset:0;background:rgba(2,6,23,.6);opacity:0;transition:opacity .2s;pointer-events:none}
+.nj-panel{position:absolute;top:0;right:0;bottom:0;width:min(440px,100vw);background:#0f172a;color:#f8fafc;opacity:1;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s ease;box-shadow:-8px 0 28px rgba(0,0,0,.55);pointer-events:auto;box-sizing:border-box}
 .nj-root.nj-open{pointer-events:auto}
 .nj-root.nj-open .nj-back{opacity:1;pointer-events:auto}
 .nj-root.nj-open .nj-panel{transform:none}
-.nj-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid rgba(127,127,127,.25)}
-.nj-title{flex:1;font-weight:700;font-size:16px}
-.nj-sub{font-size:11px;opacity:.65;font-weight:400;display:block}
-.nj-ib{background:transparent;border:0;color:inherit;font-size:20px;padding:6px 10px;cursor:pointer;border-radius:8px}
-.nj-ib:active{background:rgba(127,127,127,.25)}
-.nj-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
-.nj-m{max-width:88%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word;font-size:14.5px;line-height:1.45}
-.nj-user{align-self:flex-end;background:var(--primary,#2563eb);color:#fff;border-bottom-right-radius:4px}
-.nj-bot{align-self:flex-start;background:rgba(127,127,127,.18);border-bottom-left-radius:4px}
-.nj-pending{opacity:.7;font-style:italic}
-.nj-bar{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(127,127,127,.25)}
-.nj-in{flex:1;min-height:42px;max-height:120px;resize:none;border-radius:12px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;padding:9px 11px;font:inherit}
-.nj-send{border:0;border-radius:12px;padding:0 16px;background:var(--primary,#2563eb);color:#fff;font-weight:600;cursor:pointer}
+.nj-root.nj-embed{position:relative;inset:auto;width:100%;height:calc(100dvh - 130px);min-height:420px;z-index:auto}
+.nj-embed .nj-back{display:none}
+.nj-embed .nj-panel{position:relative;top:auto;right:auto;bottom:auto;width:100%;height:100%;transform:none;transition:none;box-shadow:none;border-radius:16px;border:1px solid #1e293b}
+.nj-embed .nj-close{display:none}
+.nj-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1e293b;background:#0f172a;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.nj-title{flex:1;font-weight:700;font-size:16px;color:#f8fafc}
+.nj-sub{font-size:11px;color:#94a3b8;font-weight:400;display:block}
+.nj-ib{background:transparent;border:0;color:#f8fafc;font-size:20px;line-height:1;padding:8px 10px;cursor:pointer;border-radius:10px;min-width:40px;min-height:40px}
+.nj-ib:active{background:#1e293b}
+.nj-msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;background:#0f172a}
+.nj-m{max-width:86%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;font-size:14.5px;line-height:1.5}
+.nj-user{align-self:flex-end;background:#2563eb;color:#fff;border-bottom-right-radius:6px}
+.nj-bot{align-self:flex-start;background:#1e293b;color:#f8fafc;border:1px solid #334155;border-bottom-left-radius:6px}
+.nj-pending{opacity:.75;font-style:italic}
+.nj-bar{display:flex;align-items:flex-end;gap:6px;padding:10px;border-top:1px solid #1e293b;background:#0f172a;border-radius:inherit;border-top-left-radius:0;border-top-right-radius:0}
+.nj-vb{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid #334155;background:#1e293b;color:#f8fafc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.nj-vb:active{background:#334155}
+.nj-vb.nj-rec{background:#dc2626;border-color:#dc2626;animation:njpulse 1s infinite}
+.nj-vb.nj-on{background:#0e7490;border-color:#06b6d4}
+.nj-vl{font-size:12px;font-weight:700}
+@keyframes njpulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.6)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
+.nj-in{flex:1;min-width:0;min-height:42px;max-height:120px;resize:none;border-radius:21px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px 14px;font:inherit;font-size:15px;box-sizing:border-box;outline:none}
+.nj-in::placeholder{color:#94a3b8}
+.nj-in:focus{border-color:#3b82f6}
+.nj-send{flex:none;height:42px;border:0;border-radius:21px;padding:0 18px;background:#2563eb;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
 .nj-send:disabled{opacity:.5}
-.nj-set{display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column;gap:12px}
+.nj-set{display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column;gap:12px;background:#0f172a}
 .nj-panel.nj-settings .nj-set{display:flex}
 .nj-panel.nj-settings .nj-msgs,.nj-panel.nj-settings .nj-bar{display:none}
-.nj-h{font-weight:700;font-size:14px}
-.nj-note{font-size:12px;opacity:.7;line-height:1.4}
-.nj-keys{width:100%;min-height:130px;border-radius:10px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;box-sizing:border-box}
+.nj-h{font-weight:700;font-size:14px;color:#f8fafc}
+.nj-note{font-size:12px;color:#94a3b8;line-height:1.4}
+.nj-keys{width:100%;min-height:130px;border-radius:12px;border:1px solid #334155;background:#1e293b;color:#f8fafc;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;box-sizing:border-box}
 .nj-chips{display:flex;flex-wrap:wrap;gap:6px}
-.nj-chip{padding:4px 10px;border-radius:999px;background:rgba(127,127,127,.2);font-size:12px}
-.nj-chip b{margin-left:4px}
+.nj-chip{padding:4px 10px;border-radius:999px;background:#1e293b;border:1px solid #334155;color:#f8fafc;font-size:12px}
+.nj-chip b{margin-left:6px;color:#38bdf8}
 .nj-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.nj-btn{border:0;border-radius:10px;padding:9px 14px;background:rgba(127,127,127,.28);color:inherit;font-weight:600;cursor:pointer}
+.nj-btn{border:0;border-radius:12px;padding:10px 14px;background:#334155;color:#f8fafc;font-weight:600;cursor:pointer}
 .nj-btn.nj-ok{background:#16a34a;color:#fff}
 .nj-btn.nj-no{background:#dc2626;color:#fff}
-.nj-btn.nj-pri{background:var(--primary,#2563eb);color:#fff}
-.nj-gate{align-self:stretch;border:1px solid rgba(127,127,127,.4);border-radius:12px;padding:10px;background:rgba(250,204,21,.08)}
+.nj-btn.nj-pri{background:#2563eb;color:#fff}
+.nj-gate{align-self:stretch;border:1px solid #854d0e;border-radius:14px;padding:12px;background:#1c1917;color:#f8fafc}
 .nj-gate-t{font-weight:700;margin-bottom:6px}
-.nj-gate-p{max-height:220px;overflow:auto;font-size:11.5px;white-space:pre-wrap;margin:0 0 8px}
-.nj-sw{display:flex;align-items:center;gap:10px}
-.nj-card{border:1px solid rgba(127,127,127,.3);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.nj-gate-p{max-height:220px;overflow:auto;font-size:11.5px;white-space:pre-wrap;margin:0 0 8px;color:#e2e8f0}
+.nj-sw{display:flex;align-items:center;gap:10px;color:#f8fafc;font-size:14px}
+.nj-card{border:1px solid #334155;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;background:#111c33}
 `;
 
 function ensureStyle() {
-  if (document.getElementById('nj-style')) return;
-  const s = el('style', { id: 'nj-style' });
+  let s = document.getElementById('nj-style');
+  if (!s) { s = el('style', { id: 'nj-style' }); document.head.append(s); }
   s.textContent = CSS;
-  document.head.append(s);
 }
 
 function scrollDown() {
@@ -701,7 +792,7 @@ function addMsg(role, text) {
 
 function setMsg(node, text) {
   node.textContent = text;
-  node.classList.toggle('nj-pending', text === '…' || /…$/.test(text) && text.length < 60);
+  node.classList.toggle('nj-pending', text === '…' || (/…$/.test(text) && text.length < 60));
   scrollDown();
 }
 
@@ -767,7 +858,7 @@ function buildSettings() {
   } });
   local.onStatus = () => renderLocalStatus();
 
-  const wrap = el('div', { class: 'nj-set' }, [
+  return el('div', { class: 'nj-set' }, [
     el('div', { class: 'nj-card' }, [
       el('div', { class: 'nj-h', text: 'Universal key box' }),
       ta,
@@ -784,19 +875,43 @@ function buildSettings() {
       prep
     ])
   ]);
-  return wrap;
 }
 
-function buildUI() {
+function buildUI(container) {
   ensureStyle();
-  const existing = document.getElementById('jarvis-drawer');
-  if (existing) existing.remove();
+  document.getElementById('jarvis-drawer')?.remove();
+  stopListening();
 
   const msgs = el('div', { class: 'nj-msgs', id: 'jarvis-messages' });
   const input = el('textarea', { class: 'nj-in', id: 'jarvis-input', rows: '1', placeholder: 'Sollunga, naan kekkuren…', maxlength: String(MAX_INPUT) });
   const send = el('button', { class: 'nj-send', id: 'jarvis-send', type: 'button', text: 'Send' });
+
+  const mic = el('button', { class: 'nj-vb', id: 'jarvis-mic', type: 'button', 'aria-label': 'Voice input', title: 'Voice input', text: '🎤' });
+  const spk = el('button', { class: 'nj-vb', id: 'jarvis-speak', type: 'button', 'aria-label': 'Speak reply', title: 'Speak reply' });
+  const vl = el('button', { class: 'nj-vb nj-vl', id: 'jarvis-vlang', type: 'button', 'aria-label': 'Voice language', title: 'Voice language' });
+
+  const paintVoice = () => {
+    const on = speakOn();
+    spk.textContent = on ? '🔊' : '🔇';
+    spk.classList.toggle('nj-on', on);
+    vl.textContent = lsGet(LS.vlang, 'en-IN') === 'ta-IN' ? 'த' : 'EN';
+  };
+  paintVoice();
+
+  mic.addEventListener('click', startListening);
+  spk.addEventListener('click', () => {
+    const next = !speakOn();
+    lsSet(LS.speak, next);
+    if (!next) stopSpeaking();
+    paintVoice();
+  });
+  vl.addEventListener('click', () => {
+    lsSet(LS.vlang, lsGet(LS.vlang, 'en-IN') === 'ta-IN' ? 'en-IN' : 'ta-IN');
+    paintVoice();
+  });
+
   const settingsBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Settings', text: '⚙' });
-  const closeBtn = el('button', { class: 'nj-ib', type: 'button', 'aria-label': 'Close', text: '✕' });
+  const closeBtn = el('button', { class: 'nj-ib nj-close', type: 'button', 'aria-label': 'Close', text: '✕' });
   const panel = el('div', { class: 'nj-panel', role: 'dialog', 'aria-label': 'JARVIS' }, [
     el('div', { class: 'nj-head' }, [
       el('div', { class: 'nj-title' }, ['JARVIS', el('span', { class: 'nj-sub', text: 'Your friend and partner' })]),
@@ -804,13 +919,20 @@ function buildUI() {
     ]),
     msgs,
     buildSettings(),
-    el('div', { class: 'nj-bar' }, [input, send])
+    el('div', { class: 'nj-bar' }, [mic, spk, vl, input, send])
   ]);
   const back = el('div', { class: 'nj-back' });
   const root = el('div', { class: 'nj-root', id: 'jarvis-drawer' }, [back, panel]);
-  document.body.append(root);
 
-  S.ui = { ...S.ui, root, panel, msgs, input, send };
+  if (container) {
+    container.textContent = '';
+    root.classList.add('nj-embed', 'nj-open');
+    container.append(root);
+  } else {
+    document.body.append(root);
+  }
+  S.embed = !!container;
+  S.ui = { ...S.ui, root, panel, msgs, input, send, mic, spk };
 
   const doSend = () => {
     const v = input.value;
@@ -818,6 +940,7 @@ function buildUI() {
     input.value = '';
     input.style.height = 'auto';
     panel.classList.remove('nj-settings');
+    stopListening();
     S.chain = S.chain.then(() => converse(v)).catch(() => {});
   };
   send.addEventListener('click', doSend);
@@ -829,7 +952,6 @@ function buildUI() {
   settingsBtn.addEventListener('click', () => { panel.classList.toggle('nj-settings'); renderChips(); renderLocalStatus(); });
   closeBtn.addEventListener('click', () => inst().close());
   back.addEventListener('click', () => inst().close());
-  document.addEventListener('keydown', escHandler);
 
   for (const h of S.hist.slice(-12)) addMsg(h.role === 'bot' ? 'bot' : 'user', h.text);
   if (!S.hist.length) addMsg('bot', 'Vanakkam Nasur! I\'m right here with you. Sollunga, enna venum?');
@@ -837,21 +959,44 @@ function buildUI() {
   renderLocalStatus();
 }
 
-function escHandler(e) { if (e.key === 'Escape' && S.open) inst().close(); }
+/* ---------------- instance, wiring, exports ---------------- */
 
-/* ---------------- instance + exports ---------------- */
+function escHandler(e) { if (e.key === 'Escape' && S.open && !S.embed) inst().close(); }
+
+const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
+
+function onDocClick(e) {
+  const t = e.target?.closest?.(OPEN_SEL);
+  if (t && S.mounted) { e.preventDefault(); inst().open(); }
+}
+
+function onOpenEvt(ev) {
+  inst().open();
+  const q = ev?.detail?.q || ev?.detail?.query;
+  if (q) askJarvis(q);
+}
+
+const OPEN_EVENTS = ['jarvis:open', 'nasur:jarvis-open', 'nasur:open-jarvis'];
+
+function onKeysChanged() { renderChips(); }
 
 function inst() {
   if (S.inst) return S.inst;
   S.inst = {
     open() {
-      if (!S.mounted) return;
+      if (!S.mounted || !S.ui.root) return;
       S.open = true;
       S.ui.root.classList.add('nj-open');
+      S.ui.panel?.classList.remove('nj-settings');
       setTimeout(() => S.ui.input?.focus(), 250);
     },
-    close() { S.open = false; S.ui.root?.classList.remove('nj-open'); },
-    toggle() { S.open ? this.close() : this.open(); },
+    close() {
+      if (S.embed) return;
+      S.open = false;
+      S.ui.root?.classList.remove('nj-open');
+      stopListening();
+    },
+    toggle() { S.open && !S.embed ? this.close() : this.open(); },
     isOpen: () => S.open,
     openSettings() { this.open(); S.ui.panel?.classList.add('nj-settings'); renderChips(); renderLocalStatus(); },
     ask: (q, o) => askJarvis(q, o),
@@ -867,20 +1012,20 @@ function inst() {
     destroy() {
       S.unsubs.forEach(f => { try { f(); } catch { /* noop */ } });
       S.unsubs = [];
+      document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', escHandler);
+      OPEN_EVENTS.forEach(n => window.removeEventListener(n, onOpenEvt));
+      window.removeEventListener('nasur:keys-changed', onKeysChanged);
+      stopListening();
+      stopSpeaking();
       S.ui.root?.remove();
       S.mounted = false;
       S.open = false;
+      S.embed = false;
+      S.wired = false;
     }
   };
   return S.inst;
-}
-
-const OPEN_SEL = '[data-jarvis-open],#jarvis-btn,#jarvisBtn,#ask-jarvis,.jarvis-fab,[data-action="ask-jarvis"]';
-
-function onDocClick(e) {
-  const t = e.target?.closest?.(OPEN_SEL);
-  if (t && S.mounted) { e.preventDefault(); inst().open(); }
 }
 
 async function refreshPool() {
@@ -889,60 +1034,66 @@ async function refreshPool() {
   renderChips();
 }
 
-export async function mountJarvis(opts = {}) {
-  if (S.mounted && document.getElementById('jarvis-drawer')) return inst();
-  if (typeof document === 'undefined') return inst();
-  S.pool = mergePools(lsGet(LS.pool, null) || emptyPool());
-  buildUI();
-  S.mounted = true;
+function wireOnce() {
+  if (S.wired) return;
+  S.wired = true;
   document.addEventListener('click', onDocClick);
-  S.unsubs.push(() => document.removeEventListener('click', onDocClick));
+  document.addEventListener('keydown', escHandler);
+  OPEN_EVENTS.forEach(n => window.addEventListener(n, onOpenEvt));
+  window.addEventListener('nasur:keys-changed', onKeysChanged);
+  (async () => {
+    try {
+      const [bus, core] = await Promise.all([mods.bus(), mods.coreCfg()]);
+      const evName = core?.EVENTS?.CONFIG_CHANGED;
+      if (bus && typeof bus.on === 'function' && evName) {
+        const off = bus.on(evName, () => refreshPool().catch(() => {}));
+        if (typeof off === 'function') S.unsubs.push(off);
+      }
+    } catch { /* optional */ }
+  })();
+}
 
-  const onOpen = ev => { inst().open(); const q = ev?.detail?.q || ev?.detail?.query; if (q) askJarvis(q); };
-  for (const n of ['jarvis:open', 'nasur:jarvis-open', 'nasur:open-jarvis']) {
-    window.addEventListener(n, onOpen);
-    S.unsubs.push(() => window.removeEventListener(n, onOpen));
+export async function mountJarvis(opts = {}) {
+  if (typeof document === 'undefined') return inst();
+  const o = opts && typeof opts === 'object' ? opts : {};
+  const container = o.container && o.container.nodeType === 1 ? o.container : null;
+  const root = document.getElementById('jarvis-drawer');
+
+  if (S.mounted && root) {
+    if (!container) { if (o.open) inst().open(); return inst(); }
+    if (root.parentElement === container) { inst().open(); return inst(); }
   }
-  window.addEventListener('nasur:keys-changed', () => { renderChips(); });
 
+  S.pool = mergePools(lsGet(LS.pool, null) || emptyPool(), S.pool);
+  buildUI(container);
+  S.mounted = true;
+  wireOnce();
   refreshPool().catch(() => {});
-  try {
-    const [bus, core] = await Promise.all([mods.bus(), mods.coreCfg()]);
-    const evName = core?.EVENTS?.CONFIG_CHANGED;
-    if (bus && typeof bus.on === 'function' && evName) {
-      const off = bus.on(evName, () => refreshPool().catch(() => {}));
-      if (typeof off === 'function') S.unsubs.push(off);
-    }
-  } catch { /* optional */ }
 
-  if (opts.open) inst().open();
+  if (container) {
+    S.open = true;
+    setTimeout(() => S.ui.input?.focus(), 200);
+  } else {
+    S.open = false;
+    if (o.open) inst().open();
+  }
   return inst();
 }
 
 export function getJarvis() { return S.inst && S.mounted ? S.inst : null; }
 
 export async function askJarvis(question, opts = {}) {
+  const o = opts && typeof opts === 'object' ? opts : {};
   const i = await mountJarvis();
-  if (opts.open) i.open();
-  const run = S.chain.then(() => converse(question, { show: opts.show !== false }));
+  if (o.open) i.open();
+  const run = S.chain.then(() => converse(question, { show: o.show !== false }));
   S.chain = run.catch(() => {});
   return run;
 }
 
 export async function mount(container, ctx = {}) {
-  const i = await mountJarvis(ctx && typeof ctx === 'object' ? ctx : {});
-  if (container && container.nodeType === 1) {
-    container.textContent = '';
-    container.append(el('div', { class: 'nj-card' }, [
-      el('div', { class: 'nj-h', text: 'JARVIS' }),
-      el('div', { class: 'nj-note', text: 'Your friend and partner is ready whenever you are.' }),
-      el('div', { class: 'nj-row' }, [
-        el('button', { class: 'nj-btn nj-pri', type: 'button', text: 'Talk to JARVIS', onclick: () => i.open() }),
-        el('button', { class: 'nj-btn', type: 'button', text: '⚙ Keys & Local Brain', onclick: () => i.openSettings() })
-      ])
-    ]));
-  }
-  return i;
+  const base = ctx && typeof ctx === 'object' ? ctx : {};
+  return mountJarvis({ ...base, container: container && container.nodeType === 1 ? container : null, open: true });
 }
 
 export async function render(a, b) {
